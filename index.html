@@ -99,9 +99,9 @@
     background:rgba(253,252,248,0.82);backdrop-filter:blur(3px);
     border-radius:16px;display:flex;align-items:center;justify-content:center;
     flex-direction:column;gap:10px;
-    transition:opacity .35s,pointer-events .35s;
+    transition:opacity .35s;
   }
-  .lock-overlay.unlocked{opacity:0;pointer-events:none;}
+  .lock-overlay.unlocked{opacity:0;pointer-events:none;visibility:hidden;}
   .lock-icon{font-size:2.2rem;}
   .lock-msg{font-size:.92rem;font-weight:600;color:var(--muted);text-align:center;padding:0 16px;}
 
@@ -1010,7 +1010,9 @@
   function unlockSection(overlayId) {
     const overlay = document.getElementById(overlayId);
     overlay.classList.add('unlocked');
-    // backdrop-filter blocks IntersectionObserver — force-reveal fade-in children
+    // Remove from DOM after transition so backdrop-filter can't linger
+    setTimeout(() => { overlay.style.display = 'none'; }, 400);
+    // Force-reveal fade-in children (backdrop-filter blocks IntersectionObserver)
     const container = overlay.parentElement;
     if (container) {
       setTimeout(() => {
