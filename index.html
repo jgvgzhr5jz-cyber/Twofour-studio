@@ -1884,14 +1884,6 @@
     loadHistory();
   }
 
-  nameInput.addEventListener('blur', function() {
-    setTimeout(function() {
-      var overlay = document.getElementById('modal');
-      overlay.style.alignItems = '';
-      overlay.style.paddingTop = '';
-    }, 100);
-  });
-
   /* ─── INIT ─── */
   try { initSupabase(); } catch(e) { console.error('Supabase init failed:', e); }
   buildSchedule(weekdaySlots, weekdays, 'weekday-body');
