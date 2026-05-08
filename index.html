@@ -1008,7 +1008,17 @@
 
   /* ─── LOCK/UNLOCK ─── */
   function unlockSection(overlayId) {
-    document.getElementById(overlayId).classList.add('unlocked');
+    const overlay = document.getElementById(overlayId);
+    overlay.classList.add('unlocked');
+    // backdrop-filter blocks IntersectionObserver — force-reveal fade-in children
+    const container = overlay.parentElement;
+    if (container) {
+      setTimeout(() => {
+        container.querySelectorAll('.fade-in').forEach((el, i) => {
+          setTimeout(() => el.classList.add('visible'), i * 80);
+        });
+      }, 50);
+    }
   }
 
   /* ─── INSTRUMENT ─── */
