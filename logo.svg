@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="600" height="600" viewBox="0 0 600 600"
+     xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;display=swap');
+    </style>
+    <pattern id="dots" x="0" y="0" width="28" height="28" patternUnits="userSpaceOnUse">
+      <circle cx="14" cy="14" r="1.4" fill="#c0a070" opacity="0.28"/>
+    </pattern>
+  </defs>
+
+  <!-- Background -->
+  <rect width="600" height="600" fill="#f9f5ec"/>
+  <!-- Dot grid -->
+  <rect width="600" height="600" fill="url(#dots)"/>
+
+  <!-- TWOFOUR -->
+  <text
+    x="300"
+    y="298"
+    text-anchor="middle"
+    font-family="'Bebas Neue', Impact, 'Arial Black', sans-serif"
+    font-size="114"
+    font-weight="400"
+    letter-spacing="3"
+    textLength="528"
+    lengthAdjust="spacingAndGlyphs"
+    fill="#1a1208">TWOFOUR</text>
+
+  <!-- STUDIO -->
+  <text
+    x="300"
+    y="412"
+    text-anchor="middle"
+    font-family="'Bebas Neue', Impact, 'Arial Black', sans-serif"
+    font-size="114"
+    font-weight="400"
+    letter-spacing="3"
+    textLength="528"
+    lengthAdjust="spacingAndGlyphs"
+    fill="#c8870a">STUDIO</text>
+
+</svg>

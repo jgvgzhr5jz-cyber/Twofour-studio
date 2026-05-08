@@ -1,0 +1,1889 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Twofour Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=Sarabun:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  :root {
+    --bg:     #fdfcf8;
+    --bg2:    #f5f0e6;
+    --card:   #ffffff;
+    --amber:  #e8960a;
+    --amber2: #c97d08;
+    --teal:   #0b9488;
+    --text:   #1a1208;
+    --muted:  #8b7a60;
+    --border: #e8e0cc;
+    --sh:     0 2px 16px rgba(0,0,0,0.07);
+    --sh2:    0 8px 40px rgba(0,0,0,0.12);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'Sarabun','DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+  /* NAV */
+  nav{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 48px;
+    background:rgba(253,252,248,0.94);backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border);box-shadow:0 1px 10px rgba(0,0,0,0.06);
+  }
+  .logo{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:2px;}
+  .logo span{color:var(--amber);}
+  .nav-right{display:flex;align-items:center;gap:24px;}
+  .nav-links{display:flex;gap:22px;}
+  .nav-links a{color:var(--muted);text-decoration:none;font-size:.9rem;font-weight:600;transition:color .2s;}
+  .nav-links a:hover{color:var(--amber);}
+  .lang-toggle{display:flex;background:var(--bg2);border:1px solid var(--border);border-radius:100px;padding:3px;gap:2px;}
+  .lang-btn{padding:5px 13px;border-radius:100px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.74rem;letter-spacing:1px;background:transparent;color:var(--muted);transition:background .2s,color .2s;}
+  .lang-btn.active{background:var(--amber);color:#fff;}
+
+  /* HERO */
+  #hero{
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:120px 24px 80px;position:relative;overflow:hidden;
+    background:linear-gradient(160deg,#fdfcf8 0%,#f9f3e4 60%,#fdfcf8 100%);
+  }
+  .hero-dots{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(circle,rgba(232,150,10,0.13) 1px,transparent 1px);background-size:28px 28px;}
+  h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(4rem,12vw,9rem);line-height:.95;letter-spacing:3px;animation:fadeDown .9s .1s ease both;position:relative;}
+  h1 span{color:var(--amber);}
+  .hero-sub{color:var(--muted);font-size:1.1rem;max-width:500px;margin:22px auto 0;line-height:1.8;animation:fadeDown 1s .2s ease both;position:relative;}
+  .cta-btn{
+    display:inline-flex;align-items:center;gap:10px;margin-top:40px;
+    background:var(--amber);color:#fff;font-weight:700;font-size:1rem;
+    padding:15px 36px;border-radius:100px;border:none;cursor:pointer;text-decoration:none;
+    transition:transform .2s,box-shadow .2s;animation:fadeDown 1s .35s ease both;
+    font-family:'Sarabun',sans-serif;position:relative;box-shadow:0 6px 24px rgba(232,150,10,0.35);
+  }
+  .cta-btn:hover{transform:translateY(-3px);box-shadow:0 12px 36px rgba(232,150,10,0.4);}
+  .cta-btn svg{transition:transform .2s;}
+  .cta-btn:hover svg{transform:translateX(4px);}
+
+  /* PROGRESS STEPPER */
+  .stepper{
+    display:flex;align-items:center;justify-content:center;gap:0;
+    max-width:640px;margin:0 auto 52px;
+  }
+  .step{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;}
+  .step-circle{
+    width:40px;height:40px;border-radius:50%;border:2px solid var(--border);
+    background:var(--card);display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:.88rem;color:var(--muted);
+    transition:border-color .3s,background .3s,color .3s;
+    position:relative;z-index:1;
+  }
+  .step.done .step-circle{background:var(--amber);border-color:var(--amber);color:#fff;}
+  .step.active .step-circle{border-color:var(--amber);color:var(--amber);box-shadow:0 0 0 4px rgba(232,150,10,0.15);}
+  .step-label{font-size:.75rem;font-weight:700;color:var(--muted);text-align:center;line-height:1.3;transition:color .3s;}
+  .step.done .step-label,.step.active .step-label{color:var(--amber2);}
+  .step-line{flex:1;height:2px;background:var(--border);margin-top:-20px;transition:background .3s;}
+  .step-line.done{background:var(--amber);}
+
+  /* SECTIONS */
+  section{padding:80px 24px;max-width:1200px;margin:0 auto;}
+  .section-label{display:inline-flex;align-items:center;gap:8px;font-size:.78rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--amber);margin-bottom:12px;}
+  .section-label::before{content:'';display:block;width:4px;height:18px;background:var(--amber);border-radius:2px;}
+  .section-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.2rem,6vw,4rem);letter-spacing:2px;line-height:1.05;margin-bottom:36px;}
+
+  /* LOCKED OVERLAY */
+  .section-lock{position:relative;}
+  .lock-overlay{
+    position:absolute;inset:0;z-index:10;
+    background:rgba(253,252,248,0.82);backdrop-filter:blur(3px);
+    border-radius:16px;display:flex;align-items:center;justify-content:center;
+    flex-direction:column;gap:10px;
+    transition:opacity .35s,pointer-events .35s;
+  }
+  .lock-overlay.unlocked{opacity:0;pointer-events:none;}
+  .lock-icon{font-size:2.2rem;}
+  .lock-msg{font-size:.92rem;font-weight:600;color:var(--muted);text-align:center;padding:0 16px;}
+
+  /* PATHS */
+  .paths-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;}
+  .path-card{
+    background:var(--card);border:2px solid var(--border);border-radius:18px;
+    padding:26px 12px;text-align:center;cursor:pointer;
+    transition:border-color .25s,transform .22s,box-shadow .25s;
+    position:relative;overflow:hidden;box-shadow:var(--sh);
+  }
+  .path-card:hover{border-color:rgba(232,150,10,.5);transform:translateY(-4px);box-shadow:var(--sh2);}
+  .path-card.active{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber),0 10px 32px rgba(232,150,10,.18);}
+  .path-icon{width:54px;height:54px;border-radius:50%;background:rgba(232,150,10,.1);border:1.5px solid rgba(232,150,10,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:1.5rem;transition:background .25s;}
+  .path-card.active .path-icon,.path-card:hover .path-icon{background:rgba(232,150,10,.18);}
+  .path-card h3{font-size:1rem;font-weight:700;margin-bottom:5px;}
+  .path-card p{color:var(--muted);font-size:.76rem;line-height:1.5;}
+  .path-card .selected-badge{position:absolute;top:9px;right:9px;background:var(--amber);color:#fff;font-size:.58rem;font-weight:700;padding:2px 7px;border-radius:100px;opacity:0;transform:scale(.8);transition:opacity .25s,transform .25s;}
+  .path-card.active .selected-badge{opacity:1;transform:scale(1);}
+
+  /* PACKAGES */
+  .packages-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+  .pkg-card{
+    background:var(--card);border:2px solid var(--border);border-radius:20px;
+    padding:28px 24px;transition:border-color .25s,transform .22s,box-shadow .25s;
+    position:relative;overflow:hidden;display:flex;flex-direction:column;
+    box-shadow:var(--sh);cursor:pointer;
+  }
+  .pkg-card.featured{border-color:var(--amber);background:linear-gradient(160deg,rgba(232,150,10,.05),#fff);box-shadow:0 4px 28px rgba(232,150,10,.14);}
+  .pkg-card.selected-pkg{border-color:var(--amber);box-shadow:0 0 0 2px var(--amber),0 10px 36px rgba(232,150,10,.2);}
+  .pkg-card:hover{border-color:rgba(232,150,10,.5);transform:translateY(-4px);box-shadow:var(--sh2);}
+  .pkg-badge{position:absolute;top:16px;right:16px;background:var(--amber);color:#fff;font-size:.64rem;font-weight:700;padding:3px 10px;border-radius:100px;}
+  .pkg-selected-check{position:absolute;top:14px;left:14px;width:22px;height:22px;border-radius:50%;background:var(--amber);color:#fff;font-size:.7rem;display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(.7);transition:opacity .25s,transform .25s;}
+  .pkg-card.selected-pkg .pkg-selected-check{opacity:1;transform:scale(1);}
+  .pkg-tier{font-size:.76rem;font-weight:700;color:var(--muted);margin-bottom:4px;}
+  .pkg-name{font-family:'Bebas Neue',sans-serif;font-size:1.9rem;letter-spacing:2px;}
+  .pkg-name.gold{color:var(--amber);}
+  .pkg-price{font-size:1.9rem;font-weight:700;margin:10px 0 2px;}
+  .pkg-price span{font-size:.88rem;font-weight:400;color:var(--muted);}
+  .pkg-hours{color:var(--muted);font-size:.84rem;margin-bottom:5px;}
+  .pkg-tagline{font-size:.82rem;color:var(--muted);line-height:1.5;margin-bottom:12px;border-left:3px solid rgba(232,150,10,.4);padding-left:9px;}
+  .pkg-note{display:inline-flex;align-items:center;gap:5px;background:rgba(232,150,10,.1);border:1px solid rgba(232,150,10,.3);border-radius:8px;padding:4px 10px;font-size:.74rem;color:var(--amber2);font-weight:700;margin-bottom:10px;}
+  .pkg-divider{border:none;border-top:1px solid var(--border);margin:12px 0;}
+  .pkg-benefit{display:flex;align-items:flex-start;gap:7px;font-size:.84rem;margin-bottom:6px;color:var(--text);}
+  .pkg-benefit::before{content:'✓';color:var(--amber);font-weight:700;flex-shrink:0;}
+  .pkg-select-btn{
+    width:100%;margin-top:auto;padding:11px;border-radius:12px;
+    border:2px solid rgba(232,150,10,.35);background:transparent;color:var(--amber);
+    font-family:'Sarabun',sans-serif;font-weight:700;font-size:.9rem;
+    cursor:pointer;transition:background .22s,color .22s;
+  }
+  .pkg-card.featured .pkg-select-btn,.pkg-card:hover .pkg-select-btn,.pkg-card.selected-pkg .pkg-select-btn{background:var(--amber);color:#fff;border-color:var(--amber);}
+  .pkg-card.trial-card{border-color:rgba(11,148,136,.4);background:linear-gradient(160deg,rgba(11,148,136,.04),#fff);}
+  .pkg-card.trial-card:hover{border-color:var(--teal);transform:translateY(-4px);box-shadow:var(--sh2);}
+  .pkg-card.trial-card.selected-pkg{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal),0 10px 36px rgba(11,148,136,.2);}
+  .pkg-card.trial-card .pkg-selected-check{background:var(--teal);}
+  .pkg-card.trial-card .pkg-select-btn{border-color:rgba(11,148,136,.4);color:var(--teal);}
+  .pkg-card.trial-card:hover .pkg-select-btn,.pkg-card.trial-card.selected-pkg .pkg-select-btn{background:var(--teal);color:#fff;border-color:var(--teal);}
+  .pkg-card.trial-card .pkg-benefit::before{color:var(--teal);}
+  .trial-free-badge{display:inline-block;background:var(--teal);color:#fff;font-size:.64rem;font-weight:700;padding:3px 10px;border-radius:100px;position:absolute;top:16px;right:16px;}
+
+  /* SPECIAL SKILL ACCORDION */
+  .skill-accordion{margin-top:10px;}
+  .skill-cat{border:1px solid var(--border);border-radius:9px;overflow:hidden;margin-bottom:6px;}
+  .skill-cat-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer;background:var(--bg2);transition:background .18s;font-size:.78rem;font-weight:700;color:var(--amber2);}
+  .skill-cat-header:hover{background:rgba(232,150,10,.08);}
+  .skill-cat-arrow{transition:transform .22s;font-size:.66rem;}
+  .skill-cat.open .skill-cat-arrow{transform:rotate(180deg);}
+  .skill-cat-body{display:none;padding:7px 12px 9px;}
+  .skill-cat.open .skill-cat-body{display:block;}
+  .skill-item{font-size:.78rem;color:var(--muted);padding:4px 0;border-bottom:1px solid var(--border);line-height:1.4;}
+  .skill-item:last-child{border-bottom:none;}
+  .skill-item strong{color:var(--text);display:block;font-size:.8rem;}
+
+  /* SCHEDULE */
+  #schedule{background:var(--bg2);max-width:100%;padding:80px 24px;}
+  .schedule-inner{max-width:1200px;margin:0 auto;}
+  .schedule-tabs{display:flex;gap:6px;margin-bottom:24px;background:rgba(255,255,255,.75);border:1px solid var(--border);border-radius:11px;padding:4px;width:fit-content;}
+  .tab-btn{padding:9px 26px;border-radius:8px;border:none;cursor:pointer;font-family:'Sarabun',sans-serif;font-weight:600;font-size:.9rem;background:transparent;color:var(--muted);transition:background .22s,color .22s;}
+  .tab-btn.active{background:var(--amber);color:#fff;}
+  .schedule-grid{overflow-x:auto;}
+  table{width:100%;border-collapse:separate;border-spacing:6px;min-width:440px;}
+  th{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:12px 16px;font-size:.78rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--amber);box-shadow:var(--sh);}
+  .time-col{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:12px 16px;font-size:.82rem;font-weight:600;color:var(--muted);white-space:nowrap;text-align:center;box-shadow:var(--sh);}
+  .slot{
+    background:var(--card);border:1.5px solid var(--border);border-radius:9px;
+    padding:12px 10px;text-align:center;cursor:pointer;
+    transition:border-color .18s,background .18s,transform .13s;
+    color:var(--teal);font-size:.85rem;font-weight:600;user-select:none;box-shadow:var(--sh);
+  }
+  .slot:hover{border-color:rgba(11,148,136,.45);background:rgba(11,148,136,.06);transform:scale(1.04);}
+  .slot.booked{cursor:default;color:#ccc;font-size:.78rem;background:#fafafa;box-shadow:none;border-color:#eee;}
+  .slot.pending{cursor:default;color:#e8960a;font-size:.72rem;background:#fffbf0;box-shadow:none;border-color:rgba(232,150,10,.3);}
+  .slot.selected{background:rgba(232,150,10,.12);border-color:var(--amber);color:var(--amber2);font-weight:700;}
+
+  /* BOOKING SUMMARY BAR */
+  .booking-bar{
+    background:var(--card);border:1.5px solid var(--border);border-radius:16px;
+    padding:20px 26px;display:flex;align-items:center;justify-content:space-between;
+    margin-top:20px;flex-wrap:wrap;gap:14px;box-shadow:var(--sh);
+  }
+  .booking-items{display:flex;gap:28px;flex-wrap:wrap;}
+  .booking-info{}
+  .booking-label{font-size:.7rem;font-weight:700;letter-spacing:1.2px;color:var(--amber);text-transform:uppercase;}
+  .booking-detail{font-size:.95rem;font-weight:600;margin-top:3px;min-height:22px;color:var(--text);}
+  .booking-detail.empty{color:var(--muted);font-weight:400;font-style:italic;}
+
+  /* LINE BUTTON */
+  .line-btn{
+    display:inline-flex;align-items:center;gap:10px;
+    background:#06C755;color:#fff;border:none;border-radius:100px;
+    padding:14px 28px;font-weight:700;font-size:.95rem;
+    cursor:pointer;font-family:'Sarabun',sans-serif;
+    transition:transform .18s,box-shadow .18s;white-space:nowrap;text-decoration:none;
+    box-shadow:0 4px 18px rgba(6,199,85,.3);
+  }
+  .line-btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(6,199,85,.4);}
+  .line-btn:disabled,.line-btn.disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none;pointer-events:none;}
+  .line-icon{width:22px;height:22px;flex-shrink:0;}
+
+  /* FEATURES */
+  .features-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;}
+  .feature-card{background:var(--card);border:1.5px solid var(--border);border-radius:18px;padding:28px 24px;transition:border-color .25s,box-shadow .25s;box-shadow:var(--sh);}
+  .feature-card:hover{border-color:rgba(232,150,10,.4);box-shadow:var(--sh2);}
+  .feature-icon{font-size:2rem;margin-bottom:14px;}
+  .feature-card h3{font-size:1.05rem;font-weight:700;margin-bottom:6px;}
+  .feature-card p{color:var(--muted);font-size:.88rem;line-height:1.7;}
+
+  /* CONTACT */
+  .contact-card{background:var(--card);border:1.5px solid var(--border);border-radius:24px;padding:40px;display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap;box-shadow:var(--sh2);}
+  .contact-info{flex:1;min-width:240px;}
+  .contact-info h2{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:2px;margin-bottom:22px;}
+  .contact-item{display:flex;align-items:flex-start;gap:12px;margin-bottom:13px;}
+  .contact-item-icon{width:42px;height:42px;border-radius:11px;flex-shrink:0;background:rgba(232,150,10,.1);border:1.5px solid rgba(232,150,10,.25);display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
+  .contact-item-text{font-weight:500;font-size:.92rem;line-height:1.5;}
+  .contact-item-text small{display:block;color:var(--muted);font-size:.74rem;margin-bottom:1px;}
+  .qr-box{flex:1;min-width:200px;text-align:center;background:var(--bg2);border:1.5px solid var(--border);border-radius:18px;padding:28px 20px;}
+  .qr-box img{width:100%;max-width:180px;border-radius:10px;display:block;margin:0 auto 12px;}
+  .qr-label{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;color:var(--amber);margin-bottom:3px;}
+  .qr-sub{color:var(--muted);font-size:.84rem;}
+
+  /* FOOTER */
+  footer{background:var(--text);text-align:center;padding:26px;color:rgba(255,255,255,.45);font-size:.84rem;}
+  footer strong{color:var(--amber);}
+
+  /* MODAL */
+  .modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(26,18,8,.6);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity .3s;overflow-y:auto;}
+  .modal-overlay.open{opacity:1;pointer-events:all;}
+  .modal{background:var(--card);border:2px solid var(--amber);border-radius:24px;padding:40px;max-width:460px;width:100%;transform:translateY(28px) scale(.97);transition:transform .3s;text-align:center;box-shadow:0 20px 60px rgba(232,150,10,.18);}
+  .modal-overlay.open .modal{transform:translateY(0) scale(1);}
+  .modal-icon{font-size:3rem;margin-bottom:16px;}
+  .modal h2{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px;margin-bottom:10px;}
+  .modal p{color:var(--muted);line-height:1.7;margin-bottom:6px;font-size:.9rem;}
+  .modal .highlight{color:var(--amber2);font-weight:700;font-size:1rem;}
+  .modal-summary{background:var(--bg2);border-radius:12px;padding:14px 18px;margin:14px 0;text-align:left;}
+  .modal-summary div{font-size:.88rem;padding:3px 0;color:var(--text);}
+  .modal-summary span{color:var(--muted);font-size:.8rem;}
+  .modal-actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;justify-content:center;}
+  .modal-line-btn{display:inline-flex;align-items:center;gap:9px;background:#06C755;color:#fff;border:none;border-radius:100px;padding:13px 28px;font-weight:700;font-size:.92rem;cursor:pointer;font-family:'Sarabun',sans-serif;text-decoration:none;box-shadow:0 4px 18px rgba(6,199,85,.3);transition:transform .18s,box-shadow .18s;}
+  .modal-line-btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(6,199,85,.4);}
+  .modal-close-btn{padding:13px 22px;background:transparent;border:1.5px solid var(--border);border-radius:100px;color:var(--muted);font-family:'Sarabun',sans-serif;font-weight:600;font-size:.88rem;cursor:pointer;transition:border-color .18s,color .18s;}
+  .modal-close-btn:hover{border-color:var(--amber);color:var(--amber);}
+
+  /* ANIM */
+  @keyframes fadeDown{from{opacity:0;transform:translateY(-18px);}to{opacity:1;transform:translateY(0);}}
+  .fade-in{opacity:0;transform:translateY(22px);transition:opacity .55s,transform .55s;}
+  .fade-in.visible{opacity:1;transform:translateY(0);}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:26px;right:26px;z-index:300;background:var(--text);border-radius:12px;padding:13px 18px;display:flex;align-items:center;gap:9px;font-weight:500;font-size:.88rem;color:#fff;transform:translateY(80px);opacity:0;transition:transform .32s,opacity .32s;box-shadow:0 6px 28px rgba(0,0,0,.2);font-family:'Sarabun',sans-serif;max-width:280px;}
+  .toast.show{transform:translateY(0);opacity:1;}
+
+  @media(max-width:1024px){.packages-grid{grid-template-columns:1fr 1fr;}.packages-grid .pkg-card:last-child{grid-column:1/-1;}}
+  @media(max-width:900px){.paths-grid{grid-template-columns:repeat(3,1fr);}}
+  @media(max-width:768px){
+    nav{padding:13px 18px;}.nav-links{display:none;}
+    .paths-grid{grid-template-columns:repeat(2,1fr);}
+    .packages-grid{grid-template-columns:1fr;}.packages-grid .pkg-card:last-child{grid-column:auto;}
+    .features-grid{grid-template-columns:1fr;}
+    .booking-bar{flex-direction:column;align-items:flex-start;}
+    .contact-card{flex-direction:column;padding:24px;}
+    .stepper{gap:0;}
+    .step-label{font-size:.68rem;}
+  }
+  @media(max-width:480px){.paths-grid{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">TWOFOUR <span>STUDIO</span></div>
+  <div class="nav-right">
+    <div class="nav-links">
+      <a href="#paths"    data-th="เครื่องดนตรี" data-en="Instrument">เครื่องดนตรี</a>
+      <a href="#packages" data-th="แพ็กเกจ"      data-en="Packages">แพ็กเกจ</a>
+      <a href="#schedule" data-th="ตารางเรียน"   data-en="Schedule">ตารางเรียน</a>
+      <a href="#contact"  data-th="ติดต่อ"        data-en="Contact">ติดต่อ</a>
+    </div>
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setLang('th')">TH</button>
+      <button class="lang-btn"        onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-dots"></div>
+  <h1 style="animation:fadeDown .9s .1s ease both;">TWOFOUR<br><span>STUDIO</span></h1>
+  <p class="hero-sub"
+    data-th="เลือกเครื่องดนตรี เลือกแพ็กเกจ แล้วจองวันเวลาได้เลย — ง่าย ใช้เวลาไม่ถึงนาที"
+    data-en="Pick your instrument, choose a package, then book your slot — easy and under a minute.">
+    เลือกเครื่องดนตรี เลือกแพ็กเกจ แล้วจองวันเวลาได้เลย — ง่าย ใช้เวลาไม่ถึงนาที
+  </p>
+  <a href="#paths" class="cta-btn">
+    <span data-th="เริ่มจองเลย" data-en="Start Booking">เริ่มจองเลย</span>
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+  </a>
+</section>
+
+<!-- STEP 1: INSTRUMENT -->
+<section id="paths">
+  <!-- STEPPER -->
+  <div class="stepper" id="stepper">
+    <div class="step active" id="step1">
+      <div class="step-circle">1</div>
+      <div class="step-label" data-th="เครื่องดนตรี" data-en="Instrument">เครื่องดนตรี</div>
+    </div>
+    <div class="step-line" id="line1"></div>
+    <div class="step" id="step2">
+      <div class="step-circle">2</div>
+      <div class="step-label" data-th="แพ็กเกจ" data-en="Package">แพ็กเกจ</div>
+    </div>
+    <div class="step-line" id="line2"></div>
+    <div class="step" id="step3">
+      <div class="step-circle">3</div>
+      <div class="step-label" data-th="วัน & เวลา" data-en="Date & Time">วัน &amp; เวลา</div>
+    </div>
+  </div>
+
+  <div class="section-label" data-th="ขั้นตอนที่ 1" data-en="Step 1">ขั้นตอนที่ 1</div>
+  <h2 class="section-title" data-th="เลือกเครื่องดนตรี" data-en="CHOOSE YOUR INSTRUMENT">เลือกเครื่องดนตรี</h2>
+  <div class="paths-grid">
+    <div class="path-card" onclick="selectPath(this,'กีตาร์','Guitar')">
+      <div class="selected-badge" data-th="เลือกแล้ว" data-en="SELECTED">เลือกแล้ว</div>
+      <div class="path-icon">🎸</div>
+      <h3 data-th="กีตาร์" data-en="Guitar">กีตาร์</h3>
+      <p data-th="ไฟฟ้าและโปร่ง ตามระดับของคุณ" data-en="Electric & acoustic, your level.">ไฟฟ้าและโปร่ง ตามระดับของคุณ</p>
+    </div>
+    <div class="path-card" onclick="selectPath(this,'เบส','Bass')">
+      <div class="selected-badge" data-th="เลือกแล้ว" data-en="SELECTED">เลือกแล้ว</div>
+      <div class="path-icon">🎵</div>
+      <h3 data-th="เบส" data-en="Bass">เบส</h3>
+      <p data-th="จังหวะ สเกล และ groove ทุกแนว" data-en="Rhythm, scales & groove.">จังหวะ สเกล และ groove ทุกแนว</p>
+    </div>
+    <div class="path-card" onclick="selectPath(this,'กลอง','Drums')">
+      <div class="selected-badge" data-th="เลือกแล้ว" data-en="SELECTED">เลือกแล้ว</div>
+      <div class="path-icon">🥁</div>
+      <h3 data-th="กลอง" data-en="Drums">กลอง</h3>
+      <p data-th="พื้นฐานจนถึงขั้นสูง ห้องซ้อมเงียบ" data-en="Beginner to advanced.">พื้นฐานจนถึงขั้นสูง ห้องซ้อมเงียบ</p>
+    </div>
+    <div class="path-card" onclick="selectPath(this,'คีย์บอร์ด','Keyboard')">
+      <div class="selected-badge" data-th="เลือกแล้ว" data-en="SELECTED">เลือกแล้ว</div>
+      <div class="path-icon">🎹</div>
+      <h3 data-th="คีย์บอร์ด" data-en="Keyboard">คีย์บอร์ด</h3>
+      <p data-th="คลาสสิกและร่วมสมัย ทฤษฎีครบ" data-en="Classical & contemporary.">คลาสสิกและร่วมสมัย ทฤษฎีครบ</p>
+    </div>
+    <div class="path-card" onclick="selectPath(this,'ร้องเพลง','Vocals')">
+      <div class="selected-badge" data-th="เลือกแล้ว" data-en="SELECTED">เลือกแล้ว</div>
+      <div class="path-icon">🎤</div>
+      <h3 data-th="ร้องเพลง" data-en="Vocals">ร้องเพลง</h3>
+      <p data-th="เทคนิค pitch และการแสดงบนเวที" data-en="Technique, pitch & stage.">เทคนิค pitch และการแสดงบนเวที</p>
+    </div>
+  </div>
+</section>
+
+<!-- STEP 2: PACKAGES -->
+<section id="packages" style="background:var(--bg2);max-width:100%;padding:80px 24px;">
+  <div style="max-width:1200px;margin:0 auto;position:relative;">
+    <div class="lock-overlay" id="pkg-lock">
+      <div class="lock-icon">🔒</div>
+      <div class="lock-msg" data-th="เลือกเครื่องดนตรีก่อน" data-en="Choose an instrument first">เลือกเครื่องดนตรีก่อน</div>
+    </div>
+    <div class="section-label" data-th="ขั้นตอนที่ 2" data-en="Step 2">ขั้นตอนที่ 2</div>
+    <h2 class="section-title fade-in" data-th="เลือกแพ็กเกจ" data-en="CHOOSE YOUR PACKAGE">เลือกแพ็กเกจ</h2>
+    <div class="packages-grid">
+
+      <!-- TRIAL -->
+      <div class="pkg-card trial-card fade-in" onclick="selectPackage(this,'ทดลองเรียนฟรี','ฟรี','ทดลองเรียนฟรี (20 นาที)')">
+        <div class="pkg-selected-check">✓</div>
+        <div class="trial-free-badge" data-th="ฟรี!" data-en="FREE!">ฟรี!</div>
+        <div class="pkg-tier" data-th="ลองก่อนตัดสินใจ" data-en="Try before you commit">ลองก่อนตัดสินใจ</div>
+        <div class="pkg-name" style="color:var(--teal);">ทดลองเรียนฟรี</div>
+        <div class="pkg-price" style="color:var(--teal);">ฟรี</div>
+        <div class="pkg-hours" data-th="20 นาที • พบครูตัวต่อตัว" data-en="20 min • meet your teacher 1-on-1">20 นาที • พบครูตัวต่อตัว</div>
+        <div class="pkg-tagline" style="border-color:rgba(11,148,136,.4);" data-th="ไม่มีข้อผูกมัด นัดได้เลย" data-en="No commitment, just come and try.">ไม่มีข้อผูกมัด นัดได้เลย</div>
+        <hr class="pkg-divider">
+        <div class="pkg-benefit" style="color:var(--text);" data-th="ไม่มีค่าใช้จ่าย" data-en="Completely free">ไม่มีค่าใช้จ่าย</div>
+        <div class="pkg-benefit" style="color:var(--text);" data-th="ครูประเมินระดับให้ฟรี" data-en="Free level assessment">ครูประเมินระดับให้ฟรี</div>
+        <div class="pkg-benefit" style="color:var(--text);" data-th="ไม่ต้องมีอุปกรณ์" data-en="No equipment needed">ไม่ต้องมีอุปกรณ์</div>
+        <button class="pkg-select-btn">
+          <span data-th="นัดทดลองเรียน →" data-en="Book Free Trial →">นัดทดลองเรียน →</span>
+        </button>
+      </div>
+
+      <!-- SHORT -->
+      <div class="pkg-card fade-in" onclick="selectPackage(this,'Short Course','฿2,000','Short Course (฿2,000 / 4 ครั้ง)')">
+        <div class="pkg-selected-check">✓</div>
+        <div class="pkg-tier" data-th="คอร์สเริ่มต้น" data-en="Starter">คอร์สเริ่มต้น</div>
+        <div class="pkg-name">Short Course</div>
+        <div class="pkg-price">฿2,000 <span data-th="/ แพ็กเกจ" data-en="/ package">/ แพ็กเกจ</span></div>
+        <div class="pkg-hours" data-th="4 ชั่วโมง • ครั้งละ 1 ชม." data-en="4 hours • 1 hr/session">4 ชั่วโมง • ครั้งละ 1 ชม.</div>
+        <div class="pkg-tagline" data-th="เข้าถึงง่าย ตัดสินใจเร็ว" data-en="Easy to start, quick to commit.">เข้าถึงง่าย ตัดสินใจเร็ว</div>
+        <div class="pkg-note">📅 <span data-th="อย่างน้อย 1 ครั้ง / สัปดาห์" data-en="Min. 1 session / week">อย่างน้อย 1 ครั้ง / สัปดาห์</span></div>
+        <hr class="pkg-divider">
+        <div class="pkg-benefit" data-th="รวมค่าใช้อุปกรณ์" data-en="Equipment included">รวมค่าใช้อุปกรณ์</div>
+        <div class="pkg-benefit" data-th="สรุปบทเรียนทุกครั้ง" data-en="Notes every session">สรุปบทเรียนทุกครั้ง</div>
+        <div class="pkg-benefit" data-th="สอนตัวต่อตัว 100%" data-en="100% one-on-one">สอนตัวต่อตัว 100%</div>
+        <button class="pkg-select-btn">
+          <span data-th="ดูตารางเรียน →" data-en="See Schedule →">ดูตารางเรียน →</span>
+        </button>
+      </div>
+
+      <!-- FULL -->
+      <div class="pkg-card featured fade-in" onclick="selectPackage(this,'Full Course','฿5,500','Full Course (฿5,500 / 12 ครั้ง)')">
+        <div class="pkg-selected-check">✓</div>
+        <div class="pkg-badge" data-th="แนะนำ" data-en="POPULAR">แนะนำ</div>
+        <div class="pkg-tier" data-th="คอร์สหลัก" data-en="Standard">คอร์สหลัก</div>
+        <div class="pkg-name gold">Full Course</div>
+        <div class="pkg-price">฿5,500 <span data-th="/ แพ็กเกจ" data-en="/ package">/ แพ็กเกจ</span></div>
+        <div class="pkg-hours" data-th="12 ชั่วโมง • ครั้งละ 1 ชม." data-en="12 hours • 1 hr/session">12 ชั่วโมง • ครั้งละ 1 ชม.</div>
+        <div class="pkg-tagline" data-th="สร้างความต่อเนื่องและทักษะที่เห็นผล" data-en="Build continuity and real visible results.">สร้างความต่อเนื่องและทักษะที่เห็นผล</div>
+        <div class="pkg-note">📅 <span data-th="อย่างน้อย 1 ครั้ง / สัปดาห์" data-en="Min. 1 session / week">อย่างน้อย 1 ครั้ง / สัปดาห์</span></div>
+        <hr class="pkg-divider">
+        <div class="pkg-benefit" data-th="รวมค่าใช้อุปกรณ์" data-en="Equipment included">รวมค่าใช้อุปกรณ์</div>
+        <div class="pkg-benefit" data-th="สรุปบทเรียนทุกครั้ง" data-en="Notes every session">สรุปบทเรียนทุกครั้ง</div>
+        <div class="pkg-benefit" data-th="สอนตัวต่อตัว 100%" data-en="100% one-on-one">สอนตัวต่อตัว 100%</div>
+        <div class="pkg-benefit" data-th="วางแผนหลักสูตรเฉพาะบุคคล" data-en="Personalised curriculum">วางแผนหลักสูตรเฉพาะบุคคล</div>
+        <button class="pkg-select-btn">
+          <span data-th="ดูตารางเรียน →" data-en="See Schedule →">ดูตารางเรียน →</span>
+        </button>
+      </div>
+
+      <!-- SPECIAL -->
+      <div class="pkg-card fade-in" style="border-color:rgba(11,148,136,.3);" onclick="selectPackage(this,'Special Skill','฿6,000','Special Skill (฿6,000 / 8 ครั้ง)')">
+        <div class="pkg-selected-check" style="background:var(--teal);">✓</div>
+        <div class="pkg-badge" style="background:var(--teal);" data-th="เฉพาะทาง" data-en="ADVANCED">เฉพาะทาง</div>
+        <div class="pkg-tier" data-th="คอร์สพิเศษ" data-en="Special">คอร์สพิเศษ</div>
+        <div class="pkg-name" style="color:var(--teal);">Special Skill</div>
+        <div class="pkg-price">฿6,000 <span data-th="/ แพ็กเกจ" data-en="/ package">/ แพ็กเกจ</span></div>
+        <div class="pkg-hours" data-th="8 ชั่วโมง • เฉพาะทางตามสาย" data-en="8 hours • Specialised track">8 ชั่วโมง • เฉพาะทางตามสาย</div>
+        <div class="pkg-note" style="border-color:rgba(11,148,136,.3);color:var(--teal);">🎯 <span data-th="เลือก 1 สายวิชาด้านล่าง" data-en="Pick 1 track below">เลือก 1 สายวิชาด้านล่าง</span></div>
+        <div class="skill-accordion" onclick="event.stopPropagation()">
+          <div class="skill-cat">
+            <div class="skill-cat-header" onclick="toggleCat(this.parentElement)">
+              <span data-th="1. สายวิชาการ & การแข่งขัน" data-en="1. Academic & Competition">1. สายวิชาการ &amp; การแข่งขัน</span>
+              <span class="skill-cat-arrow">▾</span>
+            </div>
+            <div class="skill-cat-body">
+              <div class="skill-item"><strong>Pre-College Intensive</strong><span data-th="ติวเข้มสอบเข้าดุริยางคศิลป์" data-en="Prep for music college entrance.">ติวเข้มสอบเข้าดุริยางคศิลป์</span></div>
+              <div class="skill-item"><strong>Exam Grade Prep</strong><span data-th="ABRSM / Trinity / Rockschool" data-en="ABRSM / Trinity / Rockschool.">ABRSM / Trinity / Rockschool</span></div>
+              <div class="skill-item"><strong>Music Theory & Solfège</strong><span data-th="ทฤษฎีดนตรีและโสตทักษะ" data-en="Theory & ear training.">ทฤษฎีดนตรีและโสตทักษะ</span></div>
+            </div>
+          </div>
+          <div class="skill-cat">
+            <div class="skill-cat-header" onclick="toggleCat(this.parentElement)">
+              <span>2. Improvise &amp; Styles</span>
+              <span class="skill-cat-arrow">▾</span>
+            </div>
+            <div class="skill-cat-body">
+              <div class="skill-item"><strong>Master of Improvisation</strong><span data-th="Scale & Mode โซโล่ขั้นสูง" data-en="Scales, modes & soloing.">Scale &amp; Mode โซโล่ขั้นสูง</span></div>
+              <div class="skill-item"><strong>Genre Mastery</strong><span>Jazz, Blues, Funk, Rock</span></div>
+              <div class="skill-item"><strong>Groove & Rhythm Section</strong><span data-th="Interplay เหมือนมืออาชีพ" data-en="Professional interplay.">Interplay เหมือนมืออาชีพ</span></div>
+            </div>
+          </div>
+          <div class="skill-cat">
+            <div class="skill-cat-header" onclick="toggleCat(this.parentElement)">
+              <span>3. Vocal Excellence</span>
+              <span class="skill-cat-arrow">▾</span>
+            </div>
+            <div class="skill-cat-body">
+              <div class="skill-item"><strong>Vocal Styling & Technique</strong><span>Riffs, Runs, Power Belting</span></div>
+              <div class="skill-item"><strong>Singer-Songwriter</strong><span data-th="ร้อง-เล่น-แต่ง ต้นฉบับ" data-en="Sing, play & write originals.">ร้อง-เล่น-แต่ง ต้นฉบับ</span></div>
+              <div class="skill-item"><strong>Stage Performance</strong><span data-th="สื่ออารมณ์บนเวที" data-en="Stage presence & delivery.">สื่ออารมณ์บนเวที</span></div>
+            </div>
+          </div>
+          <div class="skill-cat">
+            <div class="skill-cat-header" onclick="toggleCat(this.parentElement)">
+              <span>4. Technology &amp; Career</span>
+              <span class="skill-cat-arrow">▾</span>
+            </div>
+            <div class="skill-cat-body">
+              <div class="skill-item"><strong>Modern Music Production</strong><span>Logic / Ableton</span></div>
+              <div class="skill-item"><strong>Smart Musician</strong><span data-th="Setup อุปกรณ์ & Multi-Effects" data-en="Gear setup & multi-effects.">Setup อุปกรณ์ &amp; Multi-Effects</span></div>
+            </div>
+          </div>
+        </div>
+        <button class="pkg-select-btn" style="border-color:rgba(11,148,136,.4);color:var(--teal);margin-top:12px;">
+          <span data-th="ดูตารางเรียน →" data-en="See Schedule →">ดูตารางเรียน →</span>
+        </button>
+      </div>
+
+    </div>
+    <p style="color:var(--muted);font-size:.84rem;margin-top:16px;">
+      <span data-th="* ต้องเรียนอย่างน้อย 1 ครั้งต่อสัปดาห์เพื่อความต่อเนื่อง"
+            data-en="* Min. 1 session/week to maintain progress.">
+        * ต้องเรียนอย่างน้อย 1 ครั้งต่อสัปดาห์เพื่อความต่อเนื่อง
+      </span>
+    </p>
+  </div>
+</section>
+
+<!-- STEP 3: SCHEDULE -->
+<div id="schedule">
+  <div class="schedule-inner" style="position:relative;">
+    <div class="lock-overlay" id="sched-lock">
+      <div class="lock-icon">🔒</div>
+      <div class="lock-msg" data-th="เลือกแพ็กเกจก่อน" data-en="Choose a package first">เลือกแพ็กเกจก่อน</div>
+    </div>
+    <div class="section-label" data-th="ขั้นตอนที่ 3" data-en="Step 3">ขั้นตอนที่ 3</div>
+    <h2 class="section-title fade-in" data-th="เลือกวันและเวลา" data-en="PICK YOUR TIME SLOT">เลือกวันและเวลา</h2>
+    <div class="schedule-tabs">
+      <button class="tab-btn active" onclick="switchTab('weekday',this)"
+        data-th="จันทร์ – ศุกร์" data-en="Mon – Fri">จันทร์ – ศุกร์</button>
+      <button class="tab-btn" onclick="switchTab('weekend',this)"
+        data-th="เสาร์ – อาทิตย์" data-en="Sat – Sun">เสาร์ – อาทิตย์</button>
+    </div>
+
+    <div class="schedule-grid" id="weekday-schedule">
+      <table>
+        <thead><tr>
+          <th style="background:transparent;border:none;box-shadow:none;"></th>
+          <th data-th="จันทร์"  data-en="MON">จันทร์</th>
+          <th data-th="อังคาร" data-en="TUE">อังคาร</th>
+          <th data-th="พุธ"    data-en="WED">พุธ</th>
+          <th data-th="พฤหัส" data-en="THU">พฤหัส</th>
+          <th data-th="ศุกร์"  data-en="FRI">ศุกร์</th>
+        </tr></thead>
+        <tbody id="weekday-body"></tbody>
+      </table>
+    </div>
+    <div class="schedule-grid" id="weekend-schedule" style="display:none;">
+      <table>
+        <thead><tr>
+          <th style="background:transparent;border:none;box-shadow:none;"></th>
+          <th data-th="เสาร์"   data-en="SAT">เสาร์</th>
+          <th data-th="อาทิตย์" data-en="SUN">อาทิตย์</th>
+        </tr></thead>
+        <tbody id="weekend-body"></tbody>
+      </table>
+    </div>
+
+    <!-- BOOKING SUMMARY + LINE BUTTON -->
+    <div class="booking-bar">
+      <div class="booking-items">
+        <div class="booking-info">
+          <div class="booking-label" data-th="เครื่องดนตรี" data-en="Instrument">เครื่องดนตรี</div>
+          <div class="booking-detail empty" id="disp-instrument"
+            data-empty-th="—" data-empty-en="—">—</div>
+        </div>
+        <div class="booking-info">
+          <div class="booking-label" data-th="แพ็กเกจ" data-en="Package">แพ็กเกจ</div>
+          <div class="booking-detail empty" id="disp-package"
+            data-empty-th="—" data-empty-en="—">—</div>
+        </div>
+        <div class="booking-info">
+          <div class="booking-label" data-th="วัน & เวลา" data-en="Date & Time">วัน &amp; เวลา</div>
+          <div class="booking-detail empty" id="disp-slot"
+            data-empty-th="—" data-empty-en="—">—</div>
+        </div>
+      </div>
+      <a id="line-confirm-btn" class="line-btn disabled" href="#" onclick="return openBookingModal(event)">
+        <svg class="line-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="48" height="48" rx="12" fill="white" fill-opacity="0.2"/>
+          <path d="M24 8C15.163 8 8 14.268 8 22c0 5.437 3.455 10.178 8.64 12.883-.378 1.41-1.371 5.117-1.571 5.908-.247.974.355 1.96 1.33 1.96.247 0 .5-.07.726-.213L23.957 38.8c.013 0 .028.002.043.002C32.837 38.802 40 32.534 40 22 40 14.268 32.837 8 24 8z" fill="white"/>
+          <path d="M34 20.5h-4v7h4v-2h-2.5v-1H34v-2h-2.5v-1H34v-1zM28 27.5h-5v-7h2v5h3v2zM21 27.5h-2v-7h2v7zM18 20.5h-4v7h2v-2.5h2v-1.5h-2v-1.5h2v-2z" fill="#06C755"/>
+        </svg>
+        <span data-th="ส่งข้อความจอง LINE" data-en="Book via LINE">ส่งข้อความจอง LINE</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section id="features" style="background:var(--bg2);max-width:100%;padding:72px 24px;">
+  <div style="max-width:1200px;margin:0 auto;">
+    <div class="section-label" data-th="จุดเด่นของเรา" data-en="Why Us">จุดเด่นของเรา</div>
+    <h2 class="section-title fade-in" data-th="ทำไมต้อง TWOFOUR?" data-en="WHY TWOFOUR?">ทำไมต้อง TWOFOUR?</h2>
+    <div class="features-grid">
+      <div class="feature-card fade-in">
+        <div class="feature-icon">🎯</div>
+        <h3 data-th="โฟกัส 100%" data-en="Precision Focus">โฟกัส 100%</h3>
+        <p data-th="ครูอุทิศเวลาทั้งหมดให้กับผู้เรียนคนเดียว พัฒนาได้รวดเร็วและตรงจุดกว่าเรียนกลุ่ม"
+           data-en="Full mentor attention on you — faster, more targeted than any group class.">ครูอุทิศเวลาทั้งหมดให้กับผู้เรียนคนเดียว พัฒนาได้รวดเร็วและตรงจุดกว่าเรียนกลุ่ม</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon">📚</div>
+        <h3 data-th="หลักสูตรเฉพาะบุคคล" data-en="Custom Curriculum">หลักสูตรเฉพาะบุคคล</h3>
+        <p data-th="ข้ามสิ่งที่รู้อยู่แล้ว เน้นเฉพาะจุดที่ต้องพัฒนา ไม่เสียเวลา"
+           data-en="Skip what you know, focus only on your gaps — no wasted sessions.">ข้ามสิ่งที่รู้อยู่แล้ว เน้นเฉพาะจุดที่ต้องพัฒนา ไม่เสียเวลา</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon">⏱️</div>
+        <h3 data-th="ก้าวตามจังหวะของคุณ" data-en="Your Own Pace">ก้าวตามจังหวะของคุณ</h3>
+        <p data-th="ไม่มีความกดดัน เรียนช้าหรือเร็วได้ตามต้องการ เราปรับตามคุณเสมอ"
+           data-en="No pressure. Go fast or slow — we always adapt to your needs.">ไม่มีความกดดัน เรียนช้าหรือเร็วได้ตามต้องการ เราปรับตามคุณเสมอ</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon">🛡️</div>
+        <h3 data-th="บรรยากาศปลอดภัย" data-en="Safe Space">บรรยากาศปลอดภัย</h3>
+        <p data-th="สภาพแวดล้อมส่วนตัว กล้าผิด กล้าทดลอง และค้นพบเสียงดนตรีของตัวเอง"
+           data-en="Private space to make mistakes, experiment, and find your musical voice.">สภาพแวดล้อมส่วนตัว กล้าผิด กล้าทดลอง และค้นพบเสียงดนตรีของตัวเอง</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="contact-card fade-in">
+    <div class="contact-info">
+      <h2 data-th="ติดต่อเรา" data-en="GET IN TOUCH">ติดต่อเรา</h2>
+      <div class="contact-item">
+        <div class="contact-item-icon">💬</div>
+        <div class="contact-item-text">
+          <small>LINE</small>
+          <a href="https://line.me/ti/p/@948fqjac" target="_blank" style="color:var(--text);font-weight:700;">@948fqjac</a>
+        </div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-item-icon">📸</div>
+        <div class="contact-item-text">
+          <small>Instagram</small>
+          <a href="https://instagram.com/taah.wav" target="_blank" style="color:var(--text);font-weight:700;">taah.wav</a>
+        </div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-item-icon">📍</div>
+        <div class="contact-item-text">
+          <small data-th="สถานที่" data-en="Location">สถานที่</small>
+          <span data-th="50 เทศบาลสาย 9 ต.ท่าใหม่ อ.ท่าใหม่ จันทบุรี"
+                data-en="50 Tessaban Sai 9, Tha Mai, Chanthaburi">50 เทศบาลสาย 9 ต.ท่าใหม่ อ.ท่าใหม่ จันทบุรี</span>
+        </div>
+      </div>
+      <div style="margin-top:20px;">
+        <a href="https://line.me/ti/p/@948fqjac" target="_blank" class="line-btn" style="display:inline-flex;">
+          <svg class="line-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" rx="12" fill="white" fill-opacity="0.2"/><path d="M24 8C15.163 8 8 14.268 8 22c0 5.437 3.455 10.178 8.64 12.883-.378 1.41-1.371 5.117-1.571 5.908-.247.974.355 1.96 1.33 1.96.247 0 .5-.07.726-.213L23.957 38.8c.013 0 .028.002.043.002C32.837 38.802 40 32.534 40 22 40 14.268 32.837 8 24 8z" fill="white"/><path d="M34 20.5h-4v7h4v-2h-2.5v-1H34v-2h-2.5v-1H34v-1zM28 27.5h-5v-7h2v5h3v2zM21 27.5h-2v-7h2v7zM18 20.5h-4v7h2v-2.5h2v-1.5h-2v-1.5h2v-2z" fill="#06C755"/></svg>
+          <span data-th="คุยกับเราใน LINE" data-en="Chat on LINE">คุยกับเราใน LINE</span>
+        </a>
+      </div>
+    </div>
+    <div class="qr-box">
+      <img src="line-qr.png" alt="LINE QR @948fqjac">
+      <div class="qr-label">ADD LINE</div>
+      <div class="qr-sub">@948fqjac</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <strong>TWOFOUR STUDIO</strong> — 50 เทศบาลสาย 9 ท่าใหม่ จันทบุรี
+  &nbsp;|&nbsp; LINE: @948fqjac &nbsp;|&nbsp; IG: taah.wav<br>
+  <span style="font-size:.76rem;margin-top:5px;display:block;">© 2025 Twofour Studio. สงวนลิขสิทธิ์.</span>
+</footer>
+
+<!-- BOOKING MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-actions">
+      <button id="modal-line-link" class="modal-line-btn" onclick="confirmBooking()" style="width:100%;">
+        <svg class="line-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" rx="12" fill="white" fill-opacity="0.2"/><path d="M24 8C15.163 8 8 14.268 8 22c0 5.437 3.455 10.178 8.64 12.883-.378 1.41-1.371 5.117-1.571 5.908-.247.974.355 1.96 1.33 1.96.247 0 .5-.07.726-.213L23.957 38.8c.013 0 .028.002.043.002C32.837 38.802 40 32.534 40 22 40 14.268 32.837 8 24 8z" fill="white"/><path d="M34 20.5h-4v7h4v-2h-2.5v-1H34v-2h-2.5v-1H34v-1zM28 27.5h-5v-7h2v5h3v2zM21 27.5h-2v-7h2v7zM18 20.5h-4v7h2v-2.5h2v-1.5h-2v-1.5h2v-2z" fill="#06C755"/></svg>
+        <span id="modal-line-label">ส่งข้อความจอง LINE</span>
+      </button>
+      <button class="modal-close-btn" onclick="closeModal()">
+        <span data-th="ยกเลิก" data-en="Cancel">ยกเลิก</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- NO-LUID MODAL -->
+<div id="no-luid-modal" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(26,18,8,.6);backdrop-filter:blur(10px);align-items:center;justify-content:center;padding:24px;">
+  <div style="background:#fff;border-radius:20px;padding:28px 24px;max-width:340px;width:100%;text-align:center;">
+    <div style="font-size:2.2rem;margin-bottom:12px;">📲</div>
+    <h3 style="margin:0 0 8px;font-size:1.05rem;">ต้องแอด LINE OA ก่อนจองนะครับ</h3>
+    <p style="margin:0 0 20px;font-size:.88rem;color:#666;line-height:1.6;">กดปุ่มด้านล่างเพื่อแอด LINE แล้วรับลิงก์จองส่วนตัว<br>ระบบจะจำ LINE ของคุณอัตโนมัติ</p>
+    <a href="https://line.me/ti/p/@948fqjac" target="_blank"
+       style="display:inline-flex;align-items:center;gap:8px;background:#06C755;color:#fff;border:none;border-radius:100px;padding:13px 28px;font-weight:700;font-size:.92rem;text-decoration:none;margin-bottom:12px;">
+      <svg viewBox="0 0 48 48" fill="none" width="22" height="22"><rect width="48" height="48" rx="12" fill="white" fill-opacity="0.2"/><path d="M24 8C15.163 8 8 14.268 8 22c0 5.437 3.455 10.178 8.64 12.883-.378 1.41-1.371 5.117-1.571 5.908-.247.974.355 1.96 1.33 1.96.247 0 .5-.07.726-.213L23.957 38.8c.013 0 .028.002.043.002C32.837 38.802 40 32.534 40 22 40 14.268 32.837 8 24 8z" fill="white"/><path d="M34 20.5h-4v7h4v-2h-2.5v-1H34v-2h-2.5v-1H34v-1zM28 27.5h-5v-7h2v5h3v2zM21 27.5h-2v-7h2v7zM18 20.5h-4v7h2v-2.5h2v-1.5h-2v-1.5h2v-2z" fill="#06C755"/></svg>
+      แอด LINE TWOFOUR Studio
+    </a><br>
+    <button onclick="document.getElementById('no-luid-modal').style.display='none'" style="background:none;border:none;color:#999;font-size:.85rem;cursor:pointer;padding:4px 0;">ปิด</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span>✅</span><span id="toast-msg"></span>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="admin-overlay" style="display:none;position:fixed;inset:0;background:#f9f5ec;z-index:9999;overflow-y:auto;">
+  <div style="max-width:480px;margin:0 auto;padding:24px 16px 60px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+      <div style="font-size:1.4rem;font-weight:800;color:#1a1208;">TWOFOUR <span style="color:#e8960a;">ADMIN</span></div>
+      <button onclick="adminLogout()" style="margin-left:auto;padding:7px 14px;border:1.5px solid #e8960a;border-radius:100px;background:transparent;color:#e8960a;font-size:.8rem;cursor:pointer;">ออกจากระบบ</button>
+    </div>
+    <div id="admin-login" style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(0,0,0,.06);">
+      <p style="font-weight:700;margin:0 0 12px;">ลงชื่อเข้าใช้ Admin</p>
+      <input id="admin-email" type="email" placeholder="Email" style="width:100%;padding:12px;border:1.5px solid #e0d8c8;border-radius:10px;font-size:1rem;box-sizing:border-box;margin-bottom:8px;"/>
+      <input id="admin-pw" type="password" placeholder="Password" style="width:100%;padding:12px;border:1.5px solid #e0d8c8;border-radius:10px;font-size:1rem;box-sizing:border-box;margin-bottom:10px;"/>
+      <button onclick="adminLogin()" style="width:100%;padding:13px;background:#e8960a;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;">เข้าสู่ระบบ</button>
+      <p id="admin-err" style="color:#c0392b;font-size:.82rem;margin:8px 0 0;display:none;">Email หรือ Password ไม่ถูกต้อง</p>
+    </div>
+    <div id="admin-content" style="display:none;">
+      <div id="notif-bar" style="background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <span id="notif-status" style="font-size:.82rem;color:#888;">🔔 สถานะแจ้งเตือน: กำลังตรวจสอบ...</span>
+        <button id="notif-btn" onclick="enableNotifications()" style="padding:6px 14px;background:#e8960a;color:#fff;border:none;border-radius:100px;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;display:none;">เปิดแจ้งเตือน</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+        <button id="tab-list-btn" onclick="adminTab('list')" style="flex:1;padding:10px;background:#1a1208;color:#fff;border:none;border-radius:10px;font-size:.88rem;font-weight:700;cursor:pointer;">📋 จอง</button>
+        <button id="tab-students-btn" onclick="adminTab('students')" style="flex:1;padding:10px;background:#fff;color:#1a1208;border:1.5px solid #e0d8c8;border-radius:10px;font-size:.88rem;font-weight:700;cursor:pointer;">👨‍🎓 นักเรียน</button>
+        <button id="tab-sched-btn" onclick="adminTab('sched')" style="flex:1;padding:10px;background:#fff;color:#1a1208;border:1.5px solid #e0d8c8;border-radius:10px;font-size:.88rem;font-weight:700;cursor:pointer;">📅 ตาราง</button>
+        <button id="tab-hist-btn" onclick="adminTab('hist')" style="flex:1;padding:10px;background:#fff;color:#1a1208;border:1.5px solid #e0d8c8;border-radius:10px;font-size:.88rem;font-weight:700;cursor:pointer;">📊 ประวัติ</button>
+        <button id="tab-absent-btn" onclick="adminTab('absent')" style="flex:1;padding:10px;background:#fff;color:#1a1208;border:1.5px solid #e0d8c8;border-radius:10px;font-size:.88rem;font-weight:700;cursor:pointer;">🙏 คำขอลา</button>
+      </div>
+
+      <div id="admin-tab-list">
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px;flex-wrap:wrap;">
+          <button onclick="clearAllBookings()" style="padding:6px 14px;border:none;border-radius:100px;background:#c0392b;color:#fff;font-size:.8rem;font-weight:700;cursor:pointer;">🗑️ ล้างทั้งหมด</button>
+          <button onclick="loadAdminBookings()" style="padding:6px 14px;border:1.5px solid #e8960a;border-radius:100px;background:transparent;color:#e8960a;font-size:.8rem;cursor:pointer;">🔄 รีเฟรช</button>
+        </div>
+        <div id="admin-list"></div>
+      </div>
+
+      <div id="admin-tab-sched" style="display:none;">
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px;flex-wrap:wrap;">
+          <button onclick="blockAllSlots()" style="padding:6px 14px;border:none;border-radius:100px;background:#c0392b;color:#fff;font-size:.8rem;font-weight:700;cursor:pointer;">🔒 ปิดทั้งหมด</button>
+          <button onclick="unblockAllSlots()" style="padding:6px 14px;border:none;border-radius:100px;background:#27ae60;color:#fff;font-size:.8rem;font-weight:700;cursor:pointer;">🔓 เปิดทั้งหมด</button>
+          <button onclick="loadAdminSchedule()" style="padding:6px 14px;border:1.5px solid #e8960a;border-radius:100px;background:transparent;color:#e8960a;font-size:.8rem;cursor:pointer;">🔄 รีเฟรช</button>
+        </div>
+        <div id="admin-sched"></div>
+      </div>
+
+      <div id="admin-tab-hist" style="display:none;">
+        <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">
+          <button id="hf-all" onclick="setHistFilter('all')" style="padding:5px 14px;background:#1a1208;color:#fff;border:none;border-radius:100px;font-size:.78rem;font-weight:700;cursor:pointer;">ทั้งหมด</button>
+          <button id="hf-completed" onclick="setHistFilter('completed')" style="padding:5px 14px;background:#fff;color:#27ae60;border:1.5px solid #27ae60;border-radius:100px;font-size:.78rem;cursor:pointer;">✅ จบคอร์ส</button>
+          <button id="hf-cancelled" onclick="setHistFilter('cancelled')" style="padding:5px 14px;background:#fff;color:#c0392b;border:1.5px solid #c0392b;border-radius:100px;font-size:.78rem;cursor:pointer;">❌ ยกเลิก</button>
+          <button id="hf-student_deleted" onclick="setHistFilter('student_deleted')" style="padding:5px 14px;background:#fff;color:#888;border:1.5px solid #bbb;border-radius:100px;font-size:.78rem;cursor:pointer;">🗑️ ลบนักเรียน</button>
+          <button onclick="loadHistory()" style="margin-left:auto;padding:5px 12px;border:1.5px solid #e8960a;border-radius:100px;background:transparent;color:#e8960a;font-size:.78rem;cursor:pointer;">🔄</button>
+        </div>
+        <div id="admin-hist"></div>
+      </div>
+
+      <div id="admin-tab-students" style="display:none;">
+        <!-- Add student form -->
+        <div id="student-form-wrap" style="display:none;background:#fff;border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.06);">
+          <p style="font-weight:700;margin:0 0 12px;font-size:.95rem;">➕ เพิ่มนักเรียนใหม่</p>
+          <input id="sf-name" placeholder="ชื่อ *" style="width:100%;padding:10px 12px;border:1.5px solid #e0d8c8;border-radius:10px;font-size:.88rem;font-family:'Sarabun',sans-serif;box-sizing:border-box;margin-bottom:8px;"/>
+          <div style="display:flex;gap:8px;margin-bottom:8px;">
+            <select id="sf-instrument" style="flex:1;padding:10px 8px;border:1.5px solid #e0d8c8;border-radius:10px;font-size:.88rem;font-family:'Sarabun',sans-serif;background:#fff;">
+              <option value="">เครื่องดนตรี</option>
+              <option>กีตาร์</option><option>เบส</option><option>กลอง</option><option>เปียโน</option><option>ร้องเพลง</option><option>อื่นๆ</option>
+            </select>
+            <select id="sf-package" style="flex:1;padding:10px 8px;border:1.5px solid #e0d8c8;border-radius:10px;font-size:.88rem;font-family:'Sarabun',sans-serif;background:#fff;">
+              <option value="">แพ็กเกจ</option>
+              <option>4 ครั้ง / เดือน</option><option>8 ครั้ง / เดือน</option><option>12 ครั้ง / เดือน</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:8px;">
+            <input id="sf-sessions-total" type="number" min="0" placeholder="ครั้งทั้งหมด" style="flex:1;padding:10px 12px;border:1.5px solid #e0d8c8;border-radius:10px;font-size:.88rem;font-family:'Sarabun',sans-serif;box-sizing:border-box;"/>
+            <input id="sf-sessions-used" type="number" min="0" placeholder="ใช้ไปแล้ว" style="flex:1;padding:10px 12px;border:1.5px solid #e0d8c8;border-radius:10px;font-size:.88rem;font-family:'Sarabun',sans-serif;box-sizing:border-box;"/>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:8px;">
+            <input id="sf-day" placeholder="วันประจำ (เช่น จันทร์)" style="flex:1;padding:10px 12px;border:1.5px solid #e0d8c8;border-radius:10px;font-size:.88rem;font-family:'Sarabun',sans-serif;box-sizing:border-box;"/>
+            <input id="sf-time" placeholder="เวลา (เช่น 15:00)" style="flex:1;padding:10px 12px;border:1.5px solid #e0d8c8;border-radius:10px;font-size:.88rem;font-family:'Sarabun',sans-serif;box-sizing:border-box;"/>
+          </div>
+          <input id="sf-line" placeholder="LINE ID หรือชื่อ LINE" style="width:100%;padding:10px 12px;border:1.5px solid #e0d8c8;border-radius:10px;font-size:.88rem;font-family:'Sarabun',sans-serif;box-sizing:border-box;margin-bottom:8px;"/>
+          <textarea id="sf-notes" placeholder="หมายเหตุ" rows="2" style="width:100%;padding:10px 12px;border:1.5px solid #e0d8c8;border-radius:10px;font-size:.88rem;font-family:'Sarabun',sans-serif;box-sizing:border-box;resize:none;margin-bottom:10px;"></textarea>
+          <div style="display:flex;gap:8px;">
+            <button onclick="saveStudent()" style="flex:1;padding:11px;background:#e8960a;color:#fff;border:none;border-radius:10px;font-size:.88rem;font-weight:700;cursor:pointer;">💾 บันทึก</button>
+            <button onclick="document.getElementById('student-form-wrap').style.display='none';window._editStudentId=null;" style="padding:11px 18px;background:transparent;border:1.5px solid #e0d8c8;border-radius:10px;font-size:.88rem;cursor:pointer;">ยกเลิก</button>
+          </div>
+        </div>
+        <!-- Toolbar -->
+        <div style="display:flex;gap:8px;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <span id="student-count" style="font-size:.82rem;color:#888;"></span>
+          <div style="display:flex;gap:8px;">
+            <button onclick="loadStudents()" style="padding:6px 14px;border:1.5px solid #e8960a;border-radius:100px;background:transparent;color:#e8960a;font-size:.8rem;cursor:pointer;">🔄</button>
+            <button onclick="openStudentForm()" style="padding:6px 16px;background:#e8960a;color:#fff;border:none;border-radius:100px;font-size:.82rem;font-weight:700;cursor:pointer;">+ เพิ่มนักเรียน</button>
+          </div>
+        </div>
+        <div id="admin-students"></div>
+      </div>
+
+      <div id="admin-tab-absent" style="display:none;">
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px;">
+          <button onclick="loadAbsences()" style="padding:6px 14px;border:1.5px solid #e8960a;border-radius:100px;background:transparent;color:#e8960a;font-size:.8rem;cursor:pointer;">🔄 รีเฟรช</button>
+        </div>
+        <div id="admin-absences"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const LINE_ID = '948fqjac';
+
+  // ── SUPABASE CONFIG ──────────────────────────────────────────
+  // 1. ไปที่ supabase.com → สร้าง project → Settings → API
+  // 2. ก็อป "Project URL" และ "anon public" key มาใส่ด้านล่าง
+  const SUPABASE_URL  = 'https://cwktzexjynavgshdlvhw.supabase.co';
+  const SUPABASE_ANON = 'sb_publishable_4lqHvl0baVHhPKbloiGWQw_fbaYWHpq';
+  // ─────────────────────────────────────────────────────────────
+
+  let db = null;
+  let dynamicBooked = new Set();
+  let adminBlocked = new Set();
+  window._pendingSlots = new Set();
+
+  // Read LINE User ID from ?luid= URL param → save to localStorage for future visits
+  (function() {
+    var fromUrl = new URLSearchParams(window.location.search).get('luid');
+    if (fromUrl) {
+      localStorage.setItem('twofour_luid', fromUrl);
+      window._lineUserId = fromUrl;
+    } else {
+      window._lineUserId = localStorage.getItem('twofour_luid') || null;
+    }
+  })();
+
+  function initSupabase() {
+    if (SUPABASE_URL.startsWith('YOUR')) return;
+    db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+      }
+    });
+    loadDynamicBookings();
+    subscribeRealtime();
+  }
+
+  async function loadDynamicBookings() {
+    if (!db) return;
+    const [bookRes, blockRes] = await Promise.all([
+      db.from('bookings').select('day_th, time_slot, status').in('status', ['confirmed', 'trial', 'pending']),
+      db.from('blocked_slots').select('day_th, time_slot')
+    ]);
+    dynamicBooked.clear();
+    adminBlocked.clear();
+    const pendingSlots = new Set();
+    window._pendingSlots = pendingSlots;
+    (bookRes.data || []).forEach(b => {
+      const key = b.day_th + '-' + b.time_slot;
+      dynamicBooked.add(key);
+      if (b.status === 'pending' || b.status === 'trial') pendingSlots.add(key);
+    });
+    (blockRes.data || []).forEach(b => {
+      adminBlocked.add(b.day_th + '-' + b.time_slot);
+      dynamicBooked.add(b.day_th + '-' + b.time_slot);
+    });
+    buildSchedule(weekdaySlots, weekdays, 'weekday-body');
+    buildSchedule(weekendSlots, weekends, 'weekend-body');
+    if (selectedSlot && dynamicBooked.has(selectedSlot)) {
+      selectedSlot = null; selectedSlotDisplay = null;
+      refreshDisplays(); updateStepper(); updateLineBtn();
+      showToast('⚠️ ช่วงเวลานี้ถูกจองไปแล้ว กรุณาเลือกใหม่');
+    }
+  }
+
+  function isAdminOpen() {
+    return document.getElementById('admin-overlay').style.display !== 'none' &&
+           document.getElementById('admin-content').style.display !== 'none';
+  }
+
+  function subscribeRealtime() {
+    if (!db) return;
+    db.channel('bookings-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, function(payload) {
+        loadDynamicBookings();
+        if (isAdminOpen()) loadAdminBookings();
+        if (payload.eventType === 'INSERT') {
+          var b = payload.new;
+          var title = b.status === 'trial' ? '🎵 นัดทดลองเรียนใหม่!' : '🎵 มีการจองใหม่!';
+          var body = (b.student_name || 'ไม่ระบุชื่อ') + ' · ' + b.instrument + ' · ' + b.day_th + ' ' + b.time_slot;
+          sendPushNotification(title, body);
+        }
+      })
+      .subscribe();
+    db.channel('blocked-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'blocked_slots' }, function() {
+        loadDynamicBookings();
+        if (isAdminOpen()) loadAdminSchedule();
+      })
+      .subscribe();
+  }
+
+  function sendPushNotification(title, body) {
+    if (Notification.permission !== 'granted') return;
+    new Notification(title, { body, icon: '/logo.svg' });
+  }
+
+  function updateNotifStatus() {
+    if (!('Notification' in window)) {
+      document.getElementById('notif-status').textContent = '❌ อุปกรณ์นี้ไม่รองรับการแจ้งเตือน';
+      return;
+    }
+    const p = Notification.permission;
+    const statusEl = document.getElementById('notif-status');
+    const btnEl = document.getElementById('notif-btn');
+    if (p === 'granted') {
+      statusEl.textContent = '✅ เปิดการแจ้งเตือนแล้ว';
+      statusEl.style.color = '#27ae60';
+      btnEl.textContent = '🔔 ทดสอบ';
+      btnEl.style.display = 'block';
+      btnEl.onclick = () => sendPushNotification('🎵 ทดสอบการแจ้งเตือน', 'ระบบแจ้งเตือนทำงานปกติ!');
+    } else if (p === 'denied') {
+      statusEl.textContent = '🚫 ถูกบล็อก — ไปเปิดใน Settings ของเบราว์เซอร์';
+      statusEl.style.color = '#c0392b';
+      btnEl.style.display = 'none';
+    } else {
+      statusEl.textContent = '🔔 ยังไม่ได้เปิดการแจ้งเตือน';
+      statusEl.style.color = '#e8960a';
+      btnEl.textContent = 'เปิดแจ้งเตือน';
+      btnEl.style.display = 'block';
+      btnEl.onclick = enableNotifications;
+    }
+  }
+
+  async function enableNotifications() {
+    if (!('Notification' in window)) return;
+    await Notification.requestPermission();
+    updateNotifStatus();
+  }
+
+  function requestNotificationPermission() {
+    updateNotifStatus();
+  }
+
+  async function createBooking() {
+    if (!db) return;
+    const dashIdx = selectedSlot.indexOf('-');
+    const dayTh   = selectedSlot.substring(0, dashIdx);
+    const timeSlot = selectedSlot.substring(dashIdx + 1);
+    let studentName = '';
+    if (window._lineUserId) {
+      const { data: follower } = await db.from('line_followers').select('display_name').eq('line_user_id', window._lineUserId).single();
+      if (follower?.display_name) studentName = follower.display_name;
+    }
+    const { error } = await db.from('bookings').insert({
+      instrument:    selectedInstrument,
+      package:       selectedPkgFull,
+      day_th:        dayTh,
+      time_slot:     timeSlot,
+      status:        selectedPkg === 'ทดลองเรียนฟรี' ? 'trial' : 'pending',
+      student_name:  studentName,
+      line_user_id:  window._lineUserId || null
+    });
+    if (error) console.error('Booking insert error:', error);
+  }
+
+  let currentLang = 'th';
+  let selectedInstrument = null, selectedInstrumentEn = null;
+  let selectedPkg = null, selectedPkgPrice = null, selectedPkgFull = null;
+  let selectedPkgCard = null;
+  let selectedSlot = null, selectedSlotDisplay = null;
+
+  /* ─── LANGUAGE ─── */
+  function setLang(lang) {
+    currentLang = lang;
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.lang-btn[onclick="setLang('${lang}')"]`).classList.add('active');
+    document.querySelectorAll('[data-th]').forEach(el => {
+      el.textContent = el.getAttribute('data-' + lang) || el.textContent;
+    });
+    refreshDisplays();
+    buildSchedule(weekdaySlots, weekdays, 'weekday-body');
+    buildSchedule(weekendSlots, weekends, 'weekend-body');
+    if (selectedSlot) {
+      document.querySelectorAll('.slot').forEach(s => {
+        if (s.dataset.key === selectedSlot) s.classList.add('selected');
+      });
+    }
+  }
+
+  /* ─── STEPPER ─── */
+  function updateStepper() {
+    const s1 = document.getElementById('step1');
+    const s2 = document.getElementById('step2');
+    const s3 = document.getElementById('step3');
+    const l1 = document.getElementById('line1');
+    const l2 = document.getElementById('line2');
+    const step = selectedInstrument ? (selectedPkg ? (selectedSlot ? 3 : 3) : 2) : 1;
+
+    s1.className = 'step ' + (selectedInstrument ? 'done' : 'active');
+    l1.className = 'step-line ' + (selectedInstrument ? 'done' : '');
+    s2.className = 'step ' + (selectedPkg ? 'done' : (selectedInstrument ? 'active' : ''));
+    l2.className = 'step-line ' + (selectedPkg ? 'done' : '');
+    s3.className = 'step ' + (selectedSlot ? 'done' : (selectedPkg ? 'active' : ''));
+  }
+
+  /* ─── LOCK/UNLOCK ─── */
+  function unlockSection(overlayId) {
+    document.getElementById(overlayId).classList.add('unlocked');
+  }
+
+  /* ─── INSTRUMENT ─── */
+  function selectPath(card, th, en) {
+    document.querySelectorAll('.path-card').forEach(c => c.classList.remove('active'));
+    card.classList.add('active');
+    selectedInstrument = th; selectedInstrumentEn = en;
+    refreshDisplays();
+    updateStepper();
+    unlockSection('pkg-lock');
+    showToast((currentLang === 'th' ? 'เลือก: ' : 'Selected: ') + (currentLang === 'en' ? en : th));
+    setTimeout(() => document.getElementById('packages').scrollIntoView({behavior:'smooth', block:'start'}), 200);
+  }
+
+  /* ─── PACKAGE ─── */
+  function selectPackage(card, name, price, fullLabel) {
+    if (selectedPkgCard) selectedPkgCard.classList.remove('selected-pkg');
+    card.classList.add('selected-pkg');
+    selectedPkgCard = card;
+    selectedPkg = name; selectedPkgPrice = price; selectedPkgFull = fullLabel;
+    refreshDisplays();
+    updateStepper();
+    unlockSection('sched-lock');
+    showToast((currentLang === 'th' ? 'เลือก ' : 'Selected ') + name + ' ' + price);
+    setTimeout(() => document.getElementById('schedule').scrollIntoView({behavior:'smooth', block:'start'}), 220);
+  }
+
+  /* ─── SCHEDULE DATA ─── */
+  const weekdaySlots = ['16:00 – 17:00','17:00 – 18:00','18:00 – 19:00'];
+  const weekdays = [
+    {th:'จันทร์',en:'MON'},{th:'อังคาร',en:'TUE'},{th:'พุธ',en:'WED'},
+    {th:'พฤหัส',en:'THU'},{th:'ศุกร์',en:'FRI'}
+  ];
+  const weekendSlots = ['10:00 – 11:00','11:00 – 12:00','13:00 – 14:00','14:00 – 15:00','15:00 – 16:00'];
+  const weekends = [{th:'เสาร์',en:'SAT'},{th:'อาทิตย์',en:'SUN'}];
+  const booked = new Set([]);
+
+  function buildSchedule(slots, days, bodyId) {
+    const body = document.getElementById(bodyId);
+    body.innerHTML = '';
+    slots.forEach(time => {
+      const tr = document.createElement('tr');
+      const tc = document.createElement('td');
+      tc.className = 'time-col'; tc.textContent = time; tr.appendChild(tc);
+      days.forEach(day => {
+        const td = document.createElement('td');
+        const key = `${day.th}-${time}`;
+        if (adminBlocked.has(key) || (dynamicBooked.has(key) && !(window._pendingSlots && window._pendingSlots.has(key)))) {
+          td.className = 'slot booked';
+          td.textContent = currentLang === 'th' ? 'ไม่ว่าง' : 'Booked';
+        } else if (window._pendingSlots && window._pendingSlots.has(key)) {
+          td.className = 'slot pending';
+          td.textContent = currentLang === 'th' ? 'รอยืนยัน' : 'Pending';
+        } else {
+          td.className = 'slot'; td.dataset.key = key;
+          td.textContent = currentLang === 'th' ? 'ว่าง' : 'Open';
+          if (selectedSlot === key) td.classList.add('selected');
+          td.onclick = () => selectSlot(td, day, time);
+        }
+        tr.appendChild(td);
+      });
+      body.appendChild(tr);
+    });
+  }
+
+  function selectSlot(td, day, time) {
+    document.querySelectorAll('.slot').forEach(s => { if (!s.classList.contains('booked')) s.classList.remove('selected'); });
+    td.classList.add('selected');
+    selectedSlot = `${day.th}-${time}`;
+    selectedSlotDisplay = `${currentLang === 'en' ? day.en : day.th} · ${time}`;
+    refreshDisplays();
+    updateStepper();
+    updateLineBtn();
+  }
+
+  function switchTab(tab, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('weekday-schedule').style.display = tab === 'weekday' ? '' : 'none';
+    document.getElementById('weekend-schedule').style.display = tab === 'weekend' ? '' : 'none';
+    selectedSlot = null; selectedSlotDisplay = null;
+    refreshDisplays(); updateStepper(); updateLineBtn();
+  }
+
+  /* ─── DISPLAY REFRESH ─── */
+  function refreshDisplays() {
+    const instrEl = document.getElementById('disp-instrument');
+    const pkgEl   = document.getElementById('disp-package');
+    const slotEl  = document.getElementById('disp-slot');
+
+    if (selectedInstrument) {
+      instrEl.textContent = currentLang === 'en' ? selectedInstrumentEn : selectedInstrument;
+      instrEl.classList.remove('empty');
+    } else {
+      instrEl.textContent = '—'; instrEl.classList.add('empty');
+    }
+    if (selectedPkg) {
+      pkgEl.textContent = selectedPkg + ' ' + selectedPkgPrice;
+      pkgEl.classList.remove('empty');
+    } else {
+      pkgEl.textContent = '—'; pkgEl.classList.add('empty');
+    }
+    if (selectedSlot) {
+      slotEl.textContent = selectedSlotDisplay;
+      slotEl.classList.remove('empty');
+    } else {
+      slotEl.textContent = '—'; slotEl.classList.add('empty');
+    }
+    updateLineBtn();
+  }
+
+  function updateLineBtn() {
+    const btn = document.getElementById('line-confirm-btn');
+    const ready = selectedInstrument && selectedPkg && selectedSlot;
+    if (ready) btn.classList.remove('disabled');
+    else btn.classList.add('disabled');
+  }
+
+  /* ─── MODAL ─── */
+  function openBookingModal(e) {
+    e.preventDefault();
+    if (!selectedInstrument || !selectedPkg || !selectedSlot) return false;
+
+    // ต้องมี LINE ID ถึงจะจองได้
+    if (!window._lineUserId) {
+      document.getElementById('no-luid-modal').style.display = 'flex';
+      return false;
+    }
+
+    const isTrial = selectedPkg === 'ทดลองเรียนฟรี';
+    document.getElementById('modal-line-label').textContent = isTrial
+      ? 'เปิด LINE นัดทดลองเรียน'
+      : (currentLang === 'en' ? 'Open LINE to book' : 'ส่งข้อความจอง LINE');
+
+    document.getElementById('modal').classList.add('open');
+    return false;
+  }
+
+  async function confirmBooking() {
+    window.open(`https://line.me/ti/p/@${LINE_ID}`, '_blank');
+    await createBooking();
+    closeModal();
+  }
+
+  function closeModal() {
+    var overlay = document.getElementById('modal');
+    overlay.classList.remove('open');
+    overlay.style.height = '';
+    overlay.style.top = '';
+  }
+  document.getElementById('modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+
+  /* ─── ACCORDION ─── */
+  function toggleCat(cat) { cat.classList.toggle('open'); }
+
+  /* ─── TOAST ─── */
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  /* ─── ADMIN ─── */
+  async function adminLogin() {
+    const email = document.getElementById('admin-email').value.trim();
+    const pw = document.getElementById('admin-pw').value;
+    const errEl = document.getElementById('admin-err');
+    errEl.style.display = 'none';
+    if (!email || !pw) { errEl.textContent = 'กรุณากรอก Email และ Password'; errEl.style.display = 'block'; return; }
+    const { error } = await db.auth.signInWithPassword({ email, password: pw });
+    if (error) { errEl.textContent = 'Email หรือ Password ไม่ถูกต้อง'; errEl.style.display = 'block'; return; }
+    showAdminContent();
+  }
+
+  function showAdminContent() {
+    document.getElementById('admin-login').style.display = 'none';
+    document.getElementById('admin-content').style.display = 'block';
+    requestNotificationPermission();
+    loadAdminBookings();
+  }
+
+  document.getElementById('admin-pw').addEventListener('keydown', e => { if (e.key === 'Enter') adminLogin(); });
+
+  async function adminLogout() {
+    await db.auth.signOut();
+    document.getElementById('admin-overlay').style.display = 'none';
+    document.getElementById('admin-login').style.display = 'block';
+    document.getElementById('admin-content').style.display = 'none';
+    document.getElementById('admin-email').value = '';
+    document.getElementById('admin-pw').value = '';
+  }
+
+  async function loadAdminBookings() {
+    if (!db) return;
+    const list = document.getElementById('admin-list');
+    list.innerHTML = '<p style="color:#999;font-size:.85rem;">กำลังโหลด...</p>';
+    const { data, error } = await db.from('bookings').select('*').order('created_at', { ascending: false });
+    if (error) { list.innerHTML = '<p style="color:#c0392b;font-size:.85rem;">❌ ' + error.message + '</p>'; return; }
+    if (!data || !data.length) { list.innerHTML = '<p style="color:#999;font-size:.85rem;">ไม่มีรายการจอง</p>'; return; }
+    list.innerHTML = data.map(b => {
+      const date = new Date(b.created_at).toLocaleString('th-TH', {dateStyle:'short', timeStyle:'short'});
+      const statusColor = b.status === 'confirmed' ? '#27ae60' : b.status === 'cancelled' ? '#c0392b' : b.status === 'trial' ? '#0b9488' : '#e8960a';
+      const statusLabel = b.status === 'confirmed' ? 'ยืนยันแล้ว' : b.status === 'cancelled' ? 'ยกเลิก' : b.status === 'trial' ? '🎵 ทดลองเรียน' : 'รอดำเนินการ';
+      const sessions = b.sessions_done || 0;
+      const pkgMatch = b.package && b.package.match(/(\d+) ครั้ง/);
+      const totalSessions = pkgMatch ? parseInt(pkgMatch[1]) : 4;
+      const dots = Array.from({length: totalSessions}, (_, i) =>
+        `<span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${i < sessions ? '#27ae60' : '#e0d8c8'};margin-right:3px;"></span>`
+      ).join('');
+      return `<div style="background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-size:.72rem;color:#999;">${date}</span>
+          <span style="font-size:.72rem;font-weight:700;color:${statusColor};background:${statusColor}18;padding:3px 10px;border-radius:100px;">${statusLabel}</span>
+        </div>
+        <div style="font-size:.88rem;color:#1a1208;line-height:1.7;">
+          👤 ${b.student_name || '-'}${b.student_nickname ? ' (' + b.student_nickname + ')' : ''}
+          ${b.student_id ? '<span style="font-size:.68rem;background:#e8f5e9;color:#27ae60;padding:2px 7px;border-radius:100px;margin-left:6px;font-weight:700;">🔗 เชื่อมแล้ว</span>' : ''}<br>🎸 ${b.instrument}<br>📦 ${b.package}<br>📅 ${b.day_th} ${b.time_slot}
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          ${b.status === 'pending' ? `<button data-id="${b.id}" data-luid="${b.line_user_id || ''}" data-name="${(b.student_name||'').replace(/"/g,'&quot;')}" data-action="confirm" style="flex:1;padding:10px;background:#27ae60;color:#fff;border:none;border-radius:10px;font-size:.85rem;font-weight:700;cursor:pointer;">✅ ยืนยัน</button>` : ''}
+          ${b.status === 'trial' ? `<button data-id="${b.id}" data-luid="${b.line_user_id || ''}" data-name="${(b.student_name||'').replace(/"/g,'&quot;')}" data-action="confirm-trial" style="flex:1;padding:10px;background:#0b9488;color:#fff;border:none;border-radius:10px;font-size:.85rem;font-weight:700;cursor:pointer;">✅ ยืนยันทดลอง</button>` : ''}
+          ${!b.line_user_id && (b.status === 'pending' || b.status === 'trial') ? `<button data-id="${b.id}" data-name="${(b.student_name||'').replace(/"/g,'&quot;')}" data-action="send-line" style="padding:10px 12px;background:#06C755;color:#fff;border:none;border-radius:10px;font-size:.85rem;font-weight:700;cursor:pointer;">📲</button>` : ''}
+          <button data-id="${b.id}" data-action="cancel" style="flex:1;padding:10px;background:#fff;color:#c0392b;border:1.5px solid #c0392b;border-radius:10px;font-size:.85rem;font-weight:700;cursor:pointer;">❌ ยกเลิก</button>
+        </div>
+      </div>`;
+    }).join('');
+    list.querySelectorAll('button[data-id]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var id = this.getAttribute('data-id');
+        var action = this.getAttribute('data-action');
+        if (action === 'confirm' || action === 'confirm-trial') {
+          var luid = this.getAttribute('data-luid') || '';
+          // ยืนยันทันที ไม่ว่าจะมี LINE ID หรือไม่
+          updateBooking(id, 'confirmed', luid || null);
+        }
+        else if (action === 'send-line') {
+          var name = this.getAttribute('data-name') || '';
+          showLineConfirmPicker(id, this, name);
+        }
+        else if (action === 'cancel') updateBooking(id, 'cancelled');
+      });
+    });
+  }
+
+  async function addSession(id, total) {
+    if (!db) return;
+    var { data, error } = await db.from('bookings').select('sessions_done, student_id').eq('id', id).single();
+    if (error) { showToast('❌ ' + error.message); return; }
+    var newCount = (data.sessions_done || 0) + 1;
+
+    // อัปเดต sessions_used ของนักเรียนที่เชื่อมอยู่ด้วย
+    if (data.student_id) {
+      var { data: stu } = await db.from('students').select('sessions_used, sessions_total, name').eq('id', data.student_id).single();
+      if (stu) {
+        await db.from('students').update({ sessions_used: (stu.sessions_used || 0) + 1 }).eq('id', data.student_id);
+      }
+    }
+
+    if (newCount >= total) {
+      var { data: bk } = await db.from('bookings').select('*').eq('id', id).single();
+      if (bk) {
+        await db.from('booking_history').insert({
+          instrument: bk.instrument, package: bk.package,
+          day_th: bk.day_th, time_slot: bk.time_slot,
+          sessions_done: newCount, total_sessions: total,
+          outcome: 'completed', started_at: bk.created_at,
+          student_name: bk.student_name || null,
+          student_nickname: bk.student_nickname || null
+        });
+      }
+      var { error: delErr } = await db.from('bookings').delete().eq('id', id);
+      if (delErr) { showToast('❌ ' + delErr.message); return; }
+      showToast('🎉 ครบ ' + total + ' ครั้งแล้ว!');
+    } else {
+      var { error: upErr } = await db.from('bookings').update({ sessions_done: newCount }).eq('id', id);
+      if (upErr) { showToast('❌ ' + upErr.message); return; }
+      showToast('✅ ครั้งที่ ' + newCount + '/' + total + (data.student_id ? ' · อัปเดตนักเรียนแล้ว' : ''));
+    }
+    loadAdminBookings();
+    loadAdminSchedule();
+    loadDynamicBookings();
+  }
+
+  async function showLineConfirmPicker(bookingId, btn, studentName) {
+    var existing = document.getElementById('line-picker-' + bookingId);
+    if (existing) { existing.remove(); return; }
+
+    var { data: followers } = await db.from('line_followers').select('line_user_id, display_name');
+    followers = (followers || []).filter(function(f) { return f.line_user_id !== 'TEST_USER_123'; });
+
+    // หา best match โดยเทียบชื่อนักเรียน
+    var bestMatch = '';
+    if (studentName) {
+      var nameLower = studentName.toLowerCase();
+      var matched = followers.find(function(f) {
+        var dn = (f.display_name || '').toLowerCase();
+        return dn.includes(nameLower) || nameLower.includes(dn);
+      });
+      if (matched) bestMatch = matched.line_user_id;
+    }
+
+    var picker = document.createElement('div');
+    picker.id = 'line-picker-' + bookingId;
+    picker.style.cssText = 'margin-top:10px;padding:12px;background:#f0faf4;border-radius:10px;border:1.5px solid #27ae60;';
+
+    var opts = followers.map(function(f) {
+      var label = f.display_name || f.line_user_id.slice(0,12) + '…';
+      var sel = f.line_user_id === bestMatch ? ' selected' : '';
+      return '<option value="' + f.line_user_id + '"' + sel + '>' + label + '</option>';
+    }).join('');
+
+    var matchHint = bestMatch
+      ? '<div style="font-size:.75rem;color:#27ae60;margin-bottom:6px;">✨ พบชื่อที่ใกล้เคียง — ตรวจสอบก่อนยืนยัน</div>'
+      : '<div style="font-size:.75rem;color:#999;margin-bottom:6px;">ไม่พบชื่อตรงกัน — เลือกเอง</div>';
+
+    picker.innerHTML =
+      '<div style="font-size:.82rem;font-weight:700;margin-bottom:4px;color:#1a1208;">📲 เชื่อม LINE: <span style="color:#e8960a;">' + (studentName || '?') + '</span></div>' +
+      matchHint +
+      '<input type="text" placeholder="🔍 พิมพ์ชื่อเพื่อค้นหา" oninput="filterLineSelect(this,\'line-select-' + bookingId + '\')" style="width:100%;padding:7px 10px;border:1.5px solid #e0d8c8;border-radius:8px;font-size:.83rem;margin-bottom:6px;box-sizing:border-box;font-family:Sarabun,sans-serif;">' +
+      '<select id="line-select-' + bookingId + '" size="4" style="width:100%;padding:4px;border-radius:8px;border:1.5px solid #e0d8c8;font-size:.85rem;margin-bottom:8px;">' +
+      '<option value="">— ไม่ส่ง LINE —</option>' + opts + '</select>' +
+      '<div style="display:flex;gap:8px;">' +
+      '<button onclick="doConfirm(\'' + bookingId + '\')" style="flex:1;padding:8px;background:#27ae60;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;">✅ ยืนยัน</button>' +
+      '<button onclick="document.getElementById(\'line-picker-' + bookingId + '\').remove()" style="padding:8px 14px;background:#fff;border:1.5px solid #ccc;border-radius:8px;cursor:pointer;">ยกเลิก</button>' +
+      '</div>';
+
+    btn.parentElement.after(picker);
+  }
+
+  function filterLineSelect(input, selectId) {
+    var q = input.value.toLowerCase();
+    var sel = document.getElementById(selectId);
+    if (!sel) return;
+    Array.from(sel.options).forEach(function(opt) {
+      if (!opt.value) return; // keep "ไม่ส่ง"
+      opt.hidden = q && !opt.text.toLowerCase().includes(q);
+    });
+  }
+
+  async function doConfirm(bookingId) {
+    var sel = document.getElementById('line-select-' + bookingId);
+    var lineUserId = sel ? sel.value : '';
+    var picker = document.getElementById('line-picker-' + bookingId);
+    if (picker) picker.remove();
+    await updateBooking(bookingId, 'confirmed', lineUserId || null);
+  }
+
+  async function updateBooking(id, status, lineUserId) {
+    if (!db) { showToast('❌ db ไม่ได้เชื่อมต่อ'); return; }
+    var error;
+    if (status === 'cancelled') {
+      var { data: bk } = await db.from('bookings').select('*').eq('id', id).single();
+      if (bk) {
+        var pkgMatch = bk.package && bk.package.match(/(\d+) ครั้ง/);
+        await db.from('booking_history').insert({
+          instrument: bk.instrument, package: bk.package,
+          day_th: bk.day_th, time_slot: bk.time_slot,
+          sessions_done: bk.sessions_done || 0,
+          total_sessions: pkgMatch ? parseInt(pkgMatch[1]) : null,
+          outcome: 'cancelled', started_at: bk.created_at,
+          student_name: bk.student_name || null,
+          student_nickname: bk.student_nickname || null
+        });
+      }
+      var res = await db.from('bookings').delete().eq('id', id);
+      error = res.error;
+    } else {
+      var patch = { status: status };
+      if (lineUserId) patch.line_user_id = lineUserId;
+      var res = await db.from('bookings').update(patch).eq('id', id);
+      error = res.error;
+    }
+    if (error) { showToast('❌ ' + error.message); return; }
+
+    // ── AUTO-LINK STUDENT WHEN CONFIRMED ──
+    if (status === 'confirmed') {
+      var { data: bk } = await db.from('bookings').select('*').eq('id', id).single();
+      if (bk && bk.student_name && bk.package !== 'ทดลองเรียนฟรี (20 นาที)') {
+        var pkgMatch = bk.package && bk.package.match(/(\d+) ครั้ง/);
+        var totalSessions = pkgMatch ? parseInt(pkgMatch[1]) : 4;
+        var { data: found } = await db.from('students').select('*').ilike('name', bk.student_name.trim());
+        var studentId = null;
+        if (found && found.length > 0) {
+          studentId = found[0].id;
+          // เติม instrument/package/วันเวลาถ้ายังว่าง
+          var patch = {};
+          if (!found[0].instrument) patch.instrument = bk.instrument;
+          if (!found[0].package)    patch.package    = bk.package;
+          if (!found[0].regular_day)  patch.regular_day  = bk.day_th;
+          if (!found[0].regular_time) patch.regular_time = bk.time_slot;
+          if (!found[0].sessions_total) patch.sessions_total = totalSessions;
+          if (Object.keys(patch).length) await db.from('students').update(patch).eq('id', studentId);
+          showToast('🔗 เชื่อมกับนักเรียน ' + found[0].name + ' แล้ว');
+        } else {
+          // สร้างนักเรียนใหม่อัตโนมัติ
+          var { data: newS } = await db.from('students').insert({
+            name: bk.student_name, instrument: bk.instrument,
+            package: bk.package, sessions_total: totalSessions, sessions_used: 0,
+            regular_day: bk.day_th, regular_time: bk.time_slot
+          }).select().single();
+          if (newS) { studentId = newS.id; showToast('👤 สร้างนักเรียน ' + bk.student_name + ' แล้ว'); }
+        }
+        if (studentId) await db.from('bookings').update({ student_id: studentId }).eq('id', id);
+      } else {
+        showToast('✅ ยืนยันแล้ว');
+      }
+    } else {
+      showToast('✅ อัปเดตสำเร็จ');
+    }
+    loadAdminBookings();
+    loadAdminSchedule();
+    loadDynamicBookings();
+  }
+
+  function adminTab(tab) {
+    ['list','students','sched','hist','absent'].forEach(function(t) {
+      document.getElementById('admin-tab-' + t).style.display = tab === t ? 'block' : 'none';
+      var btn = document.getElementById('tab-' + t + '-btn');
+      btn.style.background = tab === t ? '#1a1208' : '#fff';
+      btn.style.color = tab === t ? '#fff' : '#1a1208';
+      btn.style.border = tab === t ? 'none' : '1.5px solid #e0d8c8';
+    });
+    if (tab === 'sched') loadAdminSchedule();
+    if (tab === 'hist') loadHistory();
+    if (tab === 'students') loadStudents();
+    if (tab === 'absent') loadAbsences();
+  }
+
+  /* ─── ABSENCES ─── */
+  async function loadAbsences() {
+    var el = document.getElementById('admin-absences');
+    el.innerHTML = '<p style="color:#aaa;font-size:.85rem;text-align:center;padding:20px;">กำลังโหลด...</p>';
+    var { data, error } = await db.from('absences').select('*').order('created_at', { ascending: false }).limit(20);
+    if (error || !data || data.length === 0) {
+      el.innerHTML = '<p style="color:#aaa;font-size:.85rem;text-align:center;padding:20px;">ไม่มีคำขอลา</p>';
+      return;
+    }
+    var statusLabel = { pending: '🟠 รอยืนยัน', confirmed: '🟢 ยืนยันแล้ว', cancelled: '🔴 ยกเลิก' };
+    var statusColor = { pending: '#e8960a', confirmed: '#27ae60', cancelled: '#c0392b' };
+    el.innerHTML = data.map(function(a) {
+      var badge = '<span style="background:' + (statusColor[a.status] || '#aaa') + ';color:#fff;border-radius:100px;padding:2px 10px;font-size:.75rem;font-weight:700;">' + (statusLabel[a.status] || a.status) + '</span>';
+      var makeupForm = '';
+      if (a.status === 'pending') {
+        if (a.makeup_date) {
+          // นักเรียนเลือกวันมาแล้ว — แสดงปุ่มยืนยันทันที
+          makeupForm = '<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">' +
+            '<span style="flex:1;font-size:.83rem;color:#555;">🔁 ' + a.makeup_date + (a.makeup_time ? ' · ' + a.makeup_time : '') + '</span>' +
+            '<button onclick="confirmMakeup(\'' + a.id + '\',\'' + a.makeup_date + '\',\'' + (a.makeup_time || '') + '\',\'' + (a.line_user_id || '') + '\',\'' + (a.student_name || '').replace(/'/g,"\\'"  ) + '\')" style="padding:8px 14px;background:#27ae60;color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;">✅ ยืนยันวันชดเชย</button>' +
+            '<button onclick="this.closest(\'div\').innerHTML=openMakeupForm(\'' + a.id + '\',\'' + (a.line_user_id || '') + '\',\'' + (a.student_name || '').replace(/'/g,"\\'") + '\')" style="padding:8px 10px;background:#fff;color:#888;border:1.5px solid #ccc;border-radius:8px;font-size:.78rem;cursor:pointer;">✏️ เปลี่ยน</button>' +
+            '</div>';
+        } else {
+          // ยังไม่มีวันชดเชย — แสดง form ให้ admin กรอก
+          makeupForm = '<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">' +
+            '<input id="mu-date-' + a.id + '" type="text" placeholder="วันชดเชย (เช่น จันทร์)" style="flex:1;min-width:140px;padding:8px 10px;border:1.5px solid #e0d8c8;border-radius:8px;font-size:.82rem;font-family:\'Sarabun\',sans-serif;"/>' +
+            '<input id="mu-time-' + a.id + '" type="text" placeholder="เวลา (เช่น 16:00)" style="width:100px;padding:8px 10px;border:1.5px solid #e0d8c8;border-radius:8px;font-size:.82rem;font-family:\'Sarabun\',sans-serif;"/>' +
+            '<button onclick="confirmMakeup(\'' + a.id + '\',document.getElementById(\'mu-date-' + a.id + '\').value,document.getElementById(\'mu-time-' + a.id + '\').value,\'' + (a.line_user_id || '') + '\',\'' + (a.student_name || '').replace(/'/g,"\\'") + '\')" style="padding:8px 14px;background:#27ae60;color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;">✅ ยืนยัน</button>' +
+            '</div>';
+        }
+      }
+      return '<div style="background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.06);">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">' +
+        '<div><p style="font-weight:700;margin:0 0 4px;font-size:.95rem;">👤 ' + (a.student_name || '-') + '</p>' +
+        '<p style="margin:0;font-size:.85rem;color:#666;">📅 วันที่ลา: ' + (a.absent_date || '-') + (a.absent_time ? ' ' + a.absent_time : '') + '</p>' +
+        (a.makeup_date ? '<p style="margin:4px 0 0;font-size:.82rem;color:#27ae60;">🔁 วันชดเชย: ' + a.makeup_date + (a.makeup_time ? ' เวลา ' + a.makeup_time : '') + '</p>' : '') +
+        '</div>' +
+        '<div style="display:flex;gap:8px;align-items:center;">' + badge +
+        '<button onclick="deleteAbsence(\'' + a.id + '\')" style="padding:4px 10px;background:#fff;color:#c0392b;border:1.5px solid #c0392b;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;">🗑 ลบ</button>' +
+        '</div></div>' + makeupForm + '</div>';
+    }).join('');
+  }
+
+  async function confirmMakeup(id, makeupDate, makeupTime, lineUserId, studentName) {
+    if (!makeupDate) { alert('กรุณากรอกวันชดเชย'); return; }
+    var { error } = await db.from('absences').update({ makeup_date: makeupDate, makeup_time: makeupTime, status: 'confirmed' }).eq('id', id);
+    if (error) { alert('เกิดข้อผิดพลาด: ' + error.message); return; }
+    if (lineUserId) {
+      try {
+        await fetch('https://cwktzexjynavgshdlvhw.supabase.co/functions/v1/notify-makeup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_ANON },
+          body: JSON.stringify({ line_user_id: lineUserId, makeup_date: makeupDate, makeup_time: makeupTime, student_name: studentName })
+        });
+      } catch(e) { console.warn('notify-makeup failed', e); }
+    }
+    showToast('✅ ยืนยันวันชดเชยแล้ว');
+    loadAbsences();
+  }
+
+  async function deleteAbsence(id) {
+    if (!confirm('ลบคำขอลานี้?')) return;
+    var { error } = await db.from('absences').delete().eq('id', id);
+    if (error) { alert('เกิดข้อผิดพลาด: ' + error.message); return; }
+    showToast('🗑 ลบแล้ว');
+    loadAbsences();
+  }
+
+  /* ─── STUDENTS ─── */
+  window._editStudentId = null;
+  window._studentsMap = {};
+
+  function openStudentForm(s) {
+    window._editStudentId = s ? s.id : null;
+    document.getElementById('sf-name').value        = s ? s.name : '';
+    document.getElementById('sf-instrument').value  = s ? s.instrument : '';
+    document.getElementById('sf-package').value     = s ? s.package : '';
+    document.getElementById('sf-sessions-total').value = s ? s.sessions_total : '';
+    document.getElementById('sf-sessions-used').value  = s ? s.sessions_used : 0;
+    document.getElementById('sf-day').value         = s ? s.regular_day : '';
+    document.getElementById('sf-time').value        = s ? s.regular_time : '';
+    document.getElementById('sf-line').value        = s ? s.line_id : '';
+    document.getElementById('sf-notes').value       = s ? s.notes : '';
+    document.getElementById('student-form-wrap').style.display = 'block';
+    document.getElementById('student-form-wrap').scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
+
+  async function saveStudent() {
+    var name = document.getElementById('sf-name').value.trim();
+    if (!name) { showToast('⚠️ กรุณากรอกชื่อ'); return; }
+    var data = {
+      name, instrument: document.getElementById('sf-instrument').value,
+      package: document.getElementById('sf-package').value,
+      sessions_total: parseInt(document.getElementById('sf-sessions-total').value) || 0,
+      sessions_used:  parseInt(document.getElementById('sf-sessions-used').value)  || 0,
+      regular_day:  document.getElementById('sf-day').value.trim(),
+      regular_time: document.getElementById('sf-time').value.trim(),
+      line_id: document.getElementById('sf-line').value.trim(),
+      notes:   document.getElementById('sf-notes').value.trim()
+    };
+    var err;
+    if (window._editStudentId) {
+      ({ error: err } = await db.from('students').update(data).eq('id', window._editStudentId));
+    } else {
+      ({ error: err } = await db.from('students').insert(data));
+    }
+    if (err) { showToast('❌ ' + err.message); return; }
+    showToast(window._editStudentId ? '✅ แก้ไขแล้ว' : '✅ เพิ่มนักเรียนแล้ว');
+    window._editStudentId = null;
+    document.getElementById('student-form-wrap').style.display = 'none';
+    loadStudents();
+  }
+
+  async function deductSession(id, used, total) {
+    if (used >= total) { showToast('⚠️ หมดครั้งแล้ว'); return; }
+    var newUsed = used + 1;
+    var { error } = await db.from('students').update({ sessions_used: newUsed }).eq('id', id);
+    if (error) { showToast('❌ ' + error.message); return; }
+
+    // หาและอัปเดต booking ที่เชื่อมอยู่
+    var { data: bookings } = await db.from('bookings').select('*').eq('student_id', id).eq('status', 'confirmed');
+    if (bookings && bookings.length > 0) {
+      var bk = bookings[0];
+      var newDone = (bk.sessions_done || 0) + 1;
+      if (newDone >= total) {
+        // ครบแล้ว — ย้ายไป history
+        await db.from('booking_history').insert({
+          instrument: bk.instrument, package: bk.package,
+          day_th: bk.day_th, time_slot: bk.time_slot,
+          sessions_done: newDone, total_sessions: total,
+          outcome: 'completed', started_at: bk.created_at,
+          student_name: bk.student_name || null
+        });
+        await db.from('bookings').delete().eq('id', bk.id);
+        showToast('🎉 ครบ ' + total + ' ครั้งแล้ว! ย้ายไปประวัติแล้ว');
+      } else {
+        await db.from('bookings').update({ sessions_done: newDone }).eq('id', bk.id);
+        showToast('✅ ครั้งที่ ' + newDone + '/' + total);
+      }
+      loadAdminBookings();
+      loadDynamicBookings();
+    } else {
+      showToast('✅ บันทึกครั้งที่ ' + newUsed + '/' + total);
+    }
+    loadStudents();
+  }
+
+  async function addSession(id, used) {
+    var { error } = await db.from('students').update({ sessions_used: Math.max(0, used - 1) }).eq('id', id);
+    if (error) { showToast('❌ ' + error.message); return; }
+    showToast('↩️ คืนครั้งแล้ว');
+    loadStudents();
+  }
+
+  var _deleteConfirmId = null;
+  var _deleteConfirmTimer = null;
+
+  async function deleteStudent(id) {
+    if (_deleteConfirmId !== id) {
+      // กดครั้งแรก — รอยืนยัน
+      _deleteConfirmId = id;
+      showToast('⚠️ กดลบอีกครั้งเพื่อยืนยัน');
+      clearTimeout(_deleteConfirmTimer);
+      _deleteConfirmTimer = setTimeout(function(){ _deleteConfirmId = null; }, 3000);
+      return;
+    }
+    // กดครั้งสอง — ยืนยันลบ
+    _deleteConfirmId = null;
+    clearTimeout(_deleteConfirmTimer);
+    // ดึงข้อมูลนักเรียนก่อนลบ เพื่อเก็บประวัติ
+    var { data: s } = await db.from('students').select('*').eq('id', id).single();
+    if (s) {
+      await db.from('booking_history').insert({
+        student_name: s.name, instrument: s.instrument || '-',
+        package: s.package || '-', day_th: s.regular_day || '-',
+        time_slot: s.regular_time || '-', sessions_done: s.sessions_used || 0,
+        total_sessions: s.sessions_total || 0, outcome: 'student_deleted',
+        started_at: s.created_at
+      });
+    }
+    // ถอด student_id ออกจาก bookings ก่อน (foreign key)
+    await db.from('bookings').update({ student_id: null }).eq('student_id', id);
+    var { error } = await db.from('students').delete().eq('id', id);
+    if (error) { showToast('❌ ' + error.message); return; }
+    showToast('🗑️ ลบนักเรียนแล้ว');
+    loadStudents();
+  }
+
+  async function loadStudents() {
+    if (!db) return;
+    var { data, error } = await db.from('students').select('*').order('name');
+    if (error) { showToast('❌ ' + error.message); return; }
+    var el = document.getElementById('admin-students');
+    window._studentsMap = {};
+    (data||[]).forEach(function(s){ window._studentsMap[s.id] = s; });
+    document.getElementById('student-count').textContent = 'นักเรียนทั้งหมด ' + (data||[]).length + ' คน';
+    if (!data || data.length === 0) {
+      el.innerHTML = '<p style="text-align:center;color:#aaa;padding:32px 0;font-size:.9rem;">ยังไม่มีนักเรียน — กด "+ เพิ่มนักเรียน"</p>';
+      return;
+    }
+    el.innerHTML = data.map(function(s) {
+      var remaining = s.sessions_total - s.sessions_used;
+      var pct = s.sessions_total > 0 ? Math.round((s.sessions_used / s.sessions_total) * 100) : 0;
+      var barColor = remaining <= 1 ? '#c0392b' : remaining <= 3 ? '#e8960a' : '#27ae60';
+      var sessionBadge = s.sessions_total > 0
+        ? '<div style="margin:10px 0 6px;">'
+          + '<div style="display:flex;justify-content:space-between;font-size:.78rem;color:#888;margin-bottom:4px;">'
+          + '<span>Session ที่ใช้: ' + s.sessions_used + '/' + s.sessions_total + '</span>'
+          + '<span style="color:' + barColor + ';font-weight:700;">เหลือ ' + remaining + ' ครั้ง</span>'
+          + '</div>'
+          + '<div style="background:#f0ebe0;border-radius:4px;height:6px;overflow:hidden;">'
+          + '<div style="width:' + pct + '%;height:100%;background:' + barColor + ';border-radius:4px;transition:width .3s;"></div>'
+          + '</div></div>'
+        : '';
+      return '<div style="background:#fff;border-radius:14px;padding:16px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.05);">'
+        + '<div style="display:flex;justify-content:space-between;align-items:flex-start;">'
+        + '<div>'
+        + '<div style="font-weight:700;font-size:.95rem;">' + s.name + '</div>'
+        + '<div style="font-size:.8rem;color:#888;margin-top:2px;">'
+        + (s.instrument ? '🎸 ' + s.instrument : '')
+        + (s.regular_day ? ' · 📅 ' + s.regular_day + (s.regular_time ? ' ' + s.regular_time : '') : '')
+        + '</div>'
+        + (s.line_id ? '<div style="font-size:.78rem;color:#06C755;margin-top:2px;">💬 ' + s.line_id + '</div>' : '')
+        + (s.notes ? '<div style="font-size:.78rem;color:#aaa;margin-top:2px;">📝 ' + s.notes + '</div>' : '')
+        + '</div>'
+        + (s.sessions_total > 0 && remaining <= 0 ? '<span style="background:#fde8e8;color:#c0392b;font-size:.72rem;font-weight:700;padding:3px 8px;border-radius:100px;">🔴 หมดแล้ว</span>' : remaining <= 2 && s.sessions_total > 0 ? '<span style="background:#fff3e0;color:#e8960a;font-size:.72rem;font-weight:700;padding:3px 8px;border-radius:100px;">⚠️ ใกล้หมด</span>' : '')
+        + '</div>'
+        + sessionBadge
+        + '<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">'
+        + (s.sessions_total > 0 ? '<button onclick="deductSession(\'' + s.id + '\',' + s.sessions_used + ',' + s.sessions_total + ')" style="padding:7px 16px;background:#e8960a;color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;">✅ สอนแล้ว +1</button>' : '')
+        + (s.sessions_used > 0 ? '<button onclick="addSession(\'' + s.id + '\',' + s.sessions_used + ')" style="padding:7px 12px;background:#f0ebe0;color:#1a1208;border:none;border-radius:8px;font-size:.78rem;cursor:pointer;">↩️ คืนครั้ง</button>' : '')
+        + '<button onclick="openStudentForm(window._studentsMap[\'' + s.id + '\'])" style="padding:7px 12px;background:#f0ebe0;color:#1a1208;border:none;border-radius:8px;font-size:.78rem;cursor:pointer;">✏️ แก้ไข</button>'
+        + '<button onclick="deleteStudent(\'' + s.id + '\')" style="padding:7px 12px;background:#fde8e8;color:#c0392b;border:none;border-radius:8px;font-size:.78rem;cursor:pointer;">🗑️</button>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  async function clearAllBookings() {
+    if (!db) return;
+    if (!confirm('ลบการจองทั้งหมดใช่ไหม? ไม่สามารถกู้คืนได้')) return;
+    var { error } = await db.from('bookings').delete().neq('day_th', '');
+    if (error) { showToast('❌ ' + error.message); return; }
+    showToast('🗑️ ล้างการจองทั้งหมดแล้ว');
+    loadAdminBookings();
+    loadAdminSchedule();
+    loadDynamicBookings();
+  }
+
+  async function blockAllSlots() {
+    if (!db) return;
+    var toInsert = [];
+    var allGroups = [{slots: weekdaySlots, days: weekdays}, {slots: weekendSlots, days: weekends}];
+    for (var g = 0; g < allGroups.length; g++) {
+      var grp = allGroups[g];
+      for (var si = 0; si < grp.slots.length; si++) {
+        for (var di = 0; di < grp.days.length; di++) {
+          var key = grp.days[di].th + '-' + grp.slots[si];
+          if (!adminBlocked.has(key) && !booked.has(key)) {
+            toInsert.push({ day_th: grp.days[di].th, time_slot: grp.slots[si] });
+          }
+        }
+      }
+    }
+    if (toInsert.length === 0) { showToast('ปิดทั้งหมดแล้ว'); return; }
+    var { error } = await db.from('blocked_slots').insert(toInsert);
+    if (error) { showToast('❌ ' + error.message); return; }
+    showToast('🔒 ปิดทั้งหมดแล้ว');
+    await loadDynamicBookings();
+    loadAdminSchedule();
+  }
+
+  async function unblockAllSlots() {
+    if (!db) return;
+    var { error } = await db.from('blocked_slots').delete().neq('day_th', '');
+    if (error) { showToast('❌ ' + error.message); return; }
+    showToast('🔓 เปิดทั้งหมดแล้ว');
+    await loadDynamicBookings();
+    loadAdminSchedule();
+  }
+
+  async function toggleAdminBlock(dayTh, timeSlot) {
+    if (!db) return;
+    var key = dayTh + '-' + timeSlot;
+    if (adminBlocked.has(key)) {
+      await db.from('blocked_slots').delete().eq('day_th', dayTh).eq('time_slot', timeSlot);
+    } else {
+      await db.from('blocked_slots').insert({ day_th: dayTh, time_slot: timeSlot });
+    }
+    await loadDynamicBookings();
+    loadAdminSchedule();
+  }
+
+  function buildAdminGrid(confirmedMap) {
+    var thS = 'padding:8px 5px;background:#1a1208;color:#fff;text-align:center;font-size:.75rem;';
+    var tdS = 'padding:7px 4px;text-align:center;border:1px solid #e8e0d0;font-size:.74rem;';
+    var out = '';
+
+    var groups = [
+      {title:'📅 จันทร์ – ศุกร์', slots: weekdaySlots, days: weekdays},
+      {title:'📅 เสาร์ – อาทิตย์', slots: weekendSlots, days: weekends}
+    ];
+
+    for (var g = 0; g < groups.length; g++) {
+      var grp = groups[g];
+      out += '<p style="font-weight:700;color:#1a1208;margin:14px 0 6px;">' + grp.title + '</p>'
+           + '<div style="overflow-x:auto;border-radius:12px;border:1px solid #e8e0d0;margin-bottom:8px;">'
+           + '<table style="width:100%;border-collapse:collapse;"><thead><tr>'
+           + '<th style="' + thS + '">เวลา</th>';
+      for (var di = 0; di < grp.days.length; di++) {
+        out += '<th style="' + thS + '">' + grp.days[di].th + '</th>';
+      }
+      out += '</tr></thead><tbody>';
+      for (var si = 0; si < grp.slots.length; si++) {
+        var slot = grp.slots[si];
+        out += '<tr style="background:' + (si%2===0?'#fff':'#faf7f2') + '">'
+             + '<td style="' + tdS + 'font-weight:600;color:#555;white-space:nowrap;">' + slot + '</td>';
+        for (var dj = 0; dj < grp.days.length; dj++) {
+          var key = grp.days[dj].th + '-' + slot;
+          var dayTh = grp.days[dj].th;
+          var btnS = 'display:block;width:100%;margin-top:4px;padding:3px 0;border:none;border-radius:6px;font-size:.68rem;font-weight:700;cursor:pointer;';
+          if (booked.has(key)) {
+            out += '<td style="' + tdS + 'background:#fce8e8;color:#c0392b;font-size:.72rem;">ไม่ว่าง<br><span style="font-size:.65rem;color:#aaa;">ถาวร</span></td>';
+          } else if (confirmedMap[key]) {
+            var bk = confirmedMap[key];
+            var m = bk.package.match(/฿[\d,]+/);
+            out += '<td style="' + tdS + 'background:#e8f5e9;color:#1e7e34;font-size:.7rem;">' + bk.instrument + (m ? '<br>' + m[0] : '') + '</td>';
+          } else if (adminBlocked.has(key)) {
+            out += '<td style="' + tdS + 'background:#fff3e0;color:#e65100;font-size:.72rem;">ปิด<button style="' + btnS + 'background:#e65100;color:#fff;" onclick="toggleAdminBlock(\'' + dayTh + '\',\'' + slot + '\')">🔓 เปิด</button></td>';
+          } else {
+            out += '<td style="' + tdS + 'color:#27ae60;font-size:.72rem;">ว่าง<button style="' + btnS + 'background:#e8e0d0;color:#555;" onclick="toggleAdminBlock(\'' + dayTh + '\',\'' + slot + '\')">🔒 ปิด</button></td>';
+          }
+        }
+        out += '</tr>';
+      }
+      out += '</tbody></table></div>';
+    }
+    return out;
+  }
+
+  async function loadAdminSchedule() {
+    var el = document.getElementById('admin-sched');
+    if (!el) return;
+    el.innerHTML = '<p style="color:#999;font-size:.85rem;">กำลังโหลด...</p>';
+    var confirmedMap = {};
+    try {
+      if (db) {
+        var res = await db.from('bookings').select('*').eq('status', 'confirmed');
+        var rows = (res && res.data) ? res.data : [];
+        for (var i = 0; i < rows.length; i++) {
+          confirmedMap[rows[i].day_th + '-' + rows[i].time_slot] = rows[i];
+        }
+      }
+    } catch(e) { console.error('schedule load error', e); }
+    el.innerHTML = buildAdminGrid(confirmedMap);
+  }
+
+  var _histFilter = 'all';
+
+  function setHistFilter(f) {
+    _histFilter = f;
+    ['all','completed','cancelled','student_deleted'].forEach(function(k) {
+      var btn = document.getElementById('hf-' + k);
+      if (!btn) return;
+      var colors = { completed:'#27ae60', cancelled:'#c0392b', student_deleted:'#888', all:'#1a1208' };
+      var active = k === f;
+      btn.style.background = active ? (colors[k] || '#1a1208') : '#fff';
+      btn.style.color = active ? '#fff' : (colors[k] || '#1a1208');
+      btn.style.border = active ? 'none' : '1.5px solid ' + (colors[k] || '#e0d8c8');
+    });
+    loadHistory();
+  }
+
+  async function loadHistory() {
+    if (!db) return;
+    var el = document.getElementById('admin-hist');
+    el.innerHTML = '<p style="color:#999;font-size:.85rem;">กำลังโหลด...</p>';
+    var q = db.from('booking_history').select('*').order('ended_at', { ascending: false });
+    if (_histFilter !== 'all') q = q.eq('outcome', _histFilter);
+    var { data, error } = await q;
+    if (error) { el.innerHTML = '<p style="color:#c0392b;font-size:.85rem;">❌ ' + error.message + '</p>'; return; }
+    if (!data || !data.length) { el.innerHTML = '<p style="color:#999;font-size:.85rem;">ไม่มีประวัติในหมวดนี้</p>'; return; }
+
+    var outcomeMap = {
+      completed:       { color:'#27ae60', label:'✅ จบคอร์ส' },
+      cancelled:       { color:'#c0392b', label:'❌ ยกเลิก' },
+      student_deleted: { color:'#888',    label:'🗑️ ลบนักเรียน' }
+    };
+
+    el.innerHTML = data.map(function(h) {
+      var meta = outcomeMap[h.outcome] || { color:'#aaa', label: h.outcome };
+      var endDate   = new Date(h.ended_at).toLocaleString('th-TH', {dateStyle:'short', timeStyle:'short'});
+      var startDate = h.started_at ? new Date(h.started_at).toLocaleString('th-TH', {dateStyle:'short'}) : '-';
+      var progress  = h.total_sessions ? (h.sessions_done + '/' + h.total_sessions + ' ครั้ง') : (h.sessions_done ? h.sessions_done + ' ครั้ง' : '-');
+      return '<div style="background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:10px;box-shadow:0 2px 10px rgba(0,0,0,.05);border-left:4px solid ' + meta.color + ';">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'
+        + '<span style="font-size:.72rem;color:#999;">' + (h.outcome === 'student_deleted' ? 'ลงทะเบียน ' : 'เริ่ม ') + startDate + ' · ' + endDate + '</span>'
+        + '<span style="font-size:.72rem;font-weight:700;color:' + meta.color + ';background:' + meta.color + '18;padding:2px 8px;border-radius:100px;">' + meta.label + '</span>'
+        + '</div>'
+        + '<div style="font-size:.85rem;color:#1a1208;line-height:1.7;">'
+        + '👤 ' + (h.student_name || '-') + '<br>🎸 ' + (h.instrument || '-') + '<br>📦 ' + (h.package || '-') + '<br>📅 ' + (h.day_th || '-') + ' ' + (h.time_slot || '')
+        + '</div>'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">'
+        + '<span style="font-size:.75rem;color:#888;">' + (h.outcome === 'student_deleted' ? 'เรียนทั้งหมด: ' : 'เรียนไป: ') + progress + '</span>'
+        + '<button data-hid="' + h.id + '" style="padding:4px 12px;border:1px solid #e0d8c8;border-radius:100px;background:transparent;color:#c0392b;font-size:.75rem;cursor:pointer;">🗑️</button>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+    el.querySelectorAll('button[data-hid]').forEach(function(btn) {
+      btn.addEventListener('click', function() { deleteHistory(this.getAttribute('data-hid')); });
+    });
+  }
+
+  async function deleteHistory(id) {
+    if (!db) return;
+    var { error } = await db.from('booking_history').delete().eq('id', id);
+    if (error) { showToast('❌ ' + error.message); return; }
+    showToast('🗑️ ลบประวัติแล้ว');
+    loadHistory();
+  }
+
+  nameInput.addEventListener('blur', function() {
+    setTimeout(function() {
+      var overlay = document.getElementById('modal');
+      overlay.style.alignItems = '';
+      overlay.style.paddingTop = '';
+    }, 100);
+  });
+
+  /* ─── INIT ─── */
+  try { initSupabase(); } catch(e) { console.error('Supabase init failed:', e); }
+  buildSchedule(weekdaySlots, weekdays, 'weekday-body');
+  buildSchedule(weekendSlots, weekends, 'weekend-body');
+  updateStepper();
+
+  if (location.search.includes('admin')) {
+    document.getElementById('admin-overlay').style.display = 'block';
+    db.auth.getSession().then(({ data }) => {
+      if (data.session) showAdminContent();
+    });
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach((e, i) => { if (e.isIntersecting) setTimeout(() => e.target.classList.add('visible'), i*80); });
+  }, {threshold:0.1});
+  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
