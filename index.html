@@ -849,23 +849,27 @@
 
   async function loadDynamicBookings() {
     if (!db) return;
-    const [bookRes, blockRes] = await Promise.all([
-      db.from('bookings').select('day_th, time_slot, status').in('status', ['confirmed', 'trial', 'pending']),
-      db.from('blocked_slots').select('day_th, time_slot')
-    ]);
-    dynamicBooked.clear();
-    adminBlocked.clear();
-    const pendingSlots = new Set();
-    window._pendingSlots = pendingSlots;
-    (bookRes.data || []).forEach(b => {
-      const key = b.day_th + '-' + b.time_slot;
-      dynamicBooked.add(key);
-      if (b.status === 'pending' || b.status === 'trial') pendingSlots.add(key);
-    });
-    (blockRes.data || []).forEach(b => {
-      adminBlocked.add(b.day_th + '-' + b.time_slot);
-      dynamicBooked.add(b.day_th + '-' + b.time_slot);
-    });
+    try {
+      const [bookRes, blockRes] = await Promise.all([
+        db.from('bookings').select('day_th, time_slot, status').in('status', ['confirmed', 'trial', 'pending']),
+        db.from('blocked_slots').select('day_th, time_slot')
+      ]);
+      dynamicBooked.clear();
+      adminBlocked.clear();
+      const pendingSlots = new Set();
+      window._pendingSlots = pendingSlots;
+      (bookRes.data || []).forEach(b => {
+        const key = b.day_th + '-' + b.time_slot;
+        dynamicBooked.add(key);
+        if (b.status === 'pending' || b.status === 'trial') pendingSlots.add(key);
+      });
+      (blockRes.data || []).forEach(b => {
+        adminBlocked.add(b.day_th + '-' + b.time_slot);
+        dynamicBooked.add(b.day_th + '-' + b.time_slot);
+      });
+    } catch(e) {
+      console.error('loadDynamicBookings error:', e);
+    }
     buildSchedule(weekdaySlots, weekdays, 'weekday-body');
     buildSchedule(weekendSlots, weekends, 'weekend-body');
     if (selectedSlot && dynamicBooked.has(selectedSlot)) {
@@ -1020,6 +1024,15 @@
           setTimeout(() => el.classList.add('visible'), i * 80);
         });
       }, 50);
+    }
+    // Guarantee schedule rows exist when schedule section unlocks
+    if (overlayId === 'sched-lock') {
+      setTimeout(() => {
+        if (!document.getElementById('weekday-body').children.length) {
+          buildSchedule(weekdaySlots, weekdays, 'weekday-body');
+          buildSchedule(weekendSlots, weekends, 'weekend-body');
+        }
+      }, 100);
     }
   }
 
