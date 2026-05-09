@@ -240,6 +240,14 @@ serve(async (req) => {
       continue
     }
 
+    // Navigation commands always reset state and run fresh
+    const NAV_COMMANDS = ['ดูตาราง', 'จองคลาส', 'จอง', 'แจ้งลา', 'สนใจ', 'สนใจเรียน', 'อยากเรียน', 'สอบถาม']
+    if (currentState && NAV_COMMANDS.includes(messageText)) {
+      await resetState(db, userId)
+      currentState = null
+      stateData = {}
+    }
+
     // ── No active state ───────────────────────────────────────────────────────
     if (!currentState) {
       if (messageText === 'ดูตาราง' || messageText === 'จองคลาส' || messageText === 'จอง') {
