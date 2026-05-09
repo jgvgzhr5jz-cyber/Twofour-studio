@@ -999,7 +999,7 @@
     setTimeout(() => document.getElementById('schedule').scrollIntoView({behavior:'smooth', block:'start'}), 220);
   }
 
-  /* ─── SCHEDULE DATA ─── */
+  /* ─── SCHEDULE DATA (used by admin block/unblock) ─── */
   const weekdaySlots = ['16:00 – 17:00','17:00 – 18:00','18:00 – 19:00'];
   const weekdays = [
     {th:'จันทร์',en:'MON'},{th:'อังคาร',en:'TUE'},{th:'พุธ',en:'WED'},
@@ -1007,54 +1007,6 @@
   ];
   const weekendSlots = ['10:00 – 11:00','11:00 – 12:00','13:00 – 14:00','14:00 – 15:00','15:00 – 16:00'];
   const weekends = [{th:'เสาร์',en:'SAT'},{th:'อาทิตย์',en:'SUN'}];
-  const booked = new Set([]);
-
-  function buildSchedule(slots, days, bodyId) {
-    const body = document.getElementById(bodyId);
-    body.innerHTML = '';
-    slots.forEach(time => {
-      const tr = document.createElement('tr');
-      const tc = document.createElement('td');
-      tc.className = 'time-col'; tc.textContent = time; tr.appendChild(tc);
-      days.forEach(day => {
-        const td = document.createElement('td');
-        const key = `${day.th}-${time}`;
-        if (adminBlocked.has(key) || (dynamicBooked.has(key) && !(window._pendingSlots && window._pendingSlots.has(key)))) {
-          td.className = 'slot booked';
-          td.textContent = currentLang === 'th' ? 'ไม่ว่าง' : 'Booked';
-        } else if (window._pendingSlots && window._pendingSlots.has(key)) {
-          td.className = 'slot pending';
-          td.textContent = currentLang === 'th' ? 'รอยืนยัน' : 'Pending';
-        } else {
-          td.className = 'slot'; td.dataset.key = key;
-          td.textContent = currentLang === 'th' ? 'ว่าง' : 'Open';
-          if (selectedSlot === key) td.classList.add('selected');
-          td.onclick = () => selectSlot(td, day, time);
-        }
-        tr.appendChild(td);
-      });
-      body.appendChild(tr);
-    });
-  }
-
-  function selectSlot(td, day, time) {
-    document.querySelectorAll('.slot').forEach(s => { if (!s.classList.contains('booked')) s.classList.remove('selected'); });
-    td.classList.add('selected');
-    selectedSlot = `${day.th}-${time}`;
-    selectedSlotDisplay = `${currentLang === 'en' ? day.en : day.th} · ${time}`;
-    refreshDisplays();
-    updateStepper();
-    updateLineBtn();
-  }
-
-  function switchTab(tab, btn) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('weekday-schedule').style.display = tab === 'weekday' ? '' : 'none';
-    document.getElementById('weekend-schedule').style.display = tab === 'weekend' ? '' : 'none';
-    selectedSlot = null; selectedSlotDisplay = null;
-    refreshDisplays(); updateStepper(); updateLineBtn();
-  }
 
   /* ─── DISPLAY REFRESH ─── */
   function refreshDisplays() {
@@ -1126,8 +1078,8 @@
   }
 
   async function confirmBooking() {
-    window.open(`https://line.me/ti/p/@${LINE_ID}`, '_blank');
     await createBooking();
+    window.open(`https://line.me/ti/p/@${LINE_ID}`, '_blank');
     closeModal();
   }
 
@@ -1220,8 +1172,8 @@
         var action = this.getAttribute('data-action');
         if (action === 'confirm' || action === 'confirm-trial') {
           var luid = this.getAttribute('data-luid') || '';
-          // ยืนยันทันที ไม่ว่าจะมี LINE ID หรือไม่
-          updateBooking(id, 'confirmed', luid || null);
+          var name = this.getAttribute('data-name') || '';
+          showSchedulePicker(id, luid, name, this);
         }
         else if (action === 'send-line') {
           var name = this.getAttribute('data-name') || '';
@@ -1327,6 +1279,64 @@
     });
   }
 
+  var _schedWeekdays = ['จันทร์','อังคาร','พุธ','พฤหัส','ศุกร์'];
+  var _schedWeekdaySlots = ['16:00 – 17:00','17:00 – 18:00','18:00 – 19:00'];
+  var _schedWeekendSlots = ['10:00 – 11:00','11:00 – 12:00','13:00 – 14:00','14:00 – 15:00','15:00 – 16:00'];
+  var _schedAllDays = ['จันทร์','อังคาร','พุธ','พฤหัส','ศุกร์','เสาร์','อาทิตย์'];
+
+  function showSchedulePicker(id, luid, name, btn) {
+    var existing = document.getElementById('sched-picker-' + id);
+    if (existing) { existing.remove(); return; }
+
+    var dayOpts = _schedAllDays.map(function(d) {
+      return '<option value="' + d + '">' + d + '</option>';
+    }).join('');
+    var initSlots = _schedWeekdaySlots; // default weekday; updateSchedSlots fixes on change
+    var timeOpts = initSlots.map(function(s) {
+      return '<option value="' + s + '">' + s + '</option>';
+    }).join('');
+
+    var picker = document.createElement('div');
+    picker.id = 'sched-picker-' + id;
+    picker.style.cssText = 'margin-top:10px;padding:14px;background:#f0fdf8;border-radius:10px;border:1.5px solid #0b9488;';
+    picker.innerHTML =
+      '<div style="font-size:.82rem;font-weight:700;margin-bottom:8px;color:#1a1208;">📅 กำหนดวัน-เวลาเรียนจริง</div>' +
+      '<div style="display:flex;gap:8px;margin-bottom:10px;">' +
+        '<select id="sched-day-' + id + '" onchange="updateSchedSlots(\'' + id + '\')" style="flex:1;padding:9px 8px;border:1.5px solid #e0d8c8;border-radius:8px;font-size:.88rem;font-family:Sarabun,sans-serif;">' +
+          dayOpts +
+        '</select>' +
+        '<select id="sched-time-' + id + '" style="flex:2;padding:9px 8px;border:1.5px solid #e0d8c8;border-radius:8px;font-size:.88rem;font-family:Sarabun,sans-serif;">' +
+          timeOpts +
+        '</select>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;">' +
+        '<button onclick="doConfirmWithSchedule(\'' + id + '\',\'' + (luid||'') + '\')" style="flex:1;padding:10px;background:#0b9488;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:.88rem;">✅ ยืนยัน</button>' +
+        '<button onclick="document.getElementById(\'sched-picker-' + id + '\').remove()" style="padding:10px 14px;background:#fff;border:1.5px solid #ccc;border-radius:8px;cursor:pointer;font-size:.88rem;">ยกเลิก</button>' +
+      '</div>';
+
+    btn.closest('div').after(picker);
+  }
+
+  function updateSchedSlots(id) {
+    var dayEl  = document.getElementById('sched-day-' + id);
+    var timeEl = document.getElementById('sched-time-' + id);
+    if (!dayEl || !timeEl) return;
+    var slots = _schedWeekdays.includes(dayEl.value) ? _schedWeekdaySlots : _schedWeekendSlots;
+    timeEl.innerHTML = slots.map(function(s) {
+      return '<option value="' + s + '">' + s + '</option>';
+    }).join('');
+  }
+
+  async function doConfirmWithSchedule(id, luid) {
+    var dayEl  = document.getElementById('sched-day-'  + id);
+    var timeEl = document.getElementById('sched-time-' + id);
+    var dayTh    = dayEl  ? dayEl.value  : '';
+    var timeSlot = timeEl ? timeEl.value : '';
+    var picker = document.getElementById('sched-picker-' + id);
+    if (picker) picker.remove();
+    await updateBooking(id, 'confirmed', luid || null, dayTh, timeSlot);
+  }
+
   async function doConfirm(bookingId) {
     var sel = document.getElementById('line-select-' + bookingId);
     var lineUserId = sel ? sel.value : '';
@@ -1335,7 +1345,7 @@
     await updateBooking(bookingId, 'confirmed', lineUserId || null);
   }
 
-  async function updateBooking(id, status, lineUserId) {
+  async function updateBooking(id, status, lineUserId, dayTh, timeSlot) {
     if (!db) { showToast('❌ db ไม่ได้เชื่อมต่อ'); return; }
     var error;
     if (status === 'cancelled') {
@@ -1356,7 +1366,9 @@
       error = res.error;
     } else {
       var patch = { status: status };
-      if (lineUserId) patch.line_user_id = lineUserId;
+      if (lineUserId)  patch.line_user_id = lineUserId;
+      if (dayTh)       patch.day_th       = dayTh;
+      if (timeSlot)    patch.time_slot    = timeSlot;
       var res = await db.from('bookings').update(patch).eq('id', id);
       error = res.error;
     }
@@ -1596,7 +1608,7 @@
     loadStudents();
   }
 
-  async function addSession(id, used) {
+  async function undoSession(id, used) {
     var { error } = await db.from('students').update({ sessions_used: Math.max(0, used - 1) }).eq('id', id);
     if (error) { showToast('❌ ' + error.message); return; }
     showToast('↩️ คืนครั้งแล้ว');
@@ -1679,7 +1691,7 @@
         + sessionBadge
         + '<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">'
         + (s.sessions_total > 0 ? '<button onclick="deductSession(\'' + s.id + '\',' + s.sessions_used + ',' + s.sessions_total + ')" style="padding:7px 16px;background:#e8960a;color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;">✅ สอนแล้ว +1</button>' : '')
-        + (s.sessions_used > 0 ? '<button onclick="addSession(\'' + s.id + '\',' + s.sessions_used + ')" style="padding:7px 12px;background:#f0ebe0;color:#1a1208;border:none;border-radius:8px;font-size:.78rem;cursor:pointer;">↩️ คืนครั้ง</button>' : '')
+        + (s.sessions_used > 0 ? '<button onclick="undoSession(\'' + s.id + '\',' + s.sessions_used + ')" style="padding:7px 12px;background:#f0ebe0;color:#1a1208;border:none;border-radius:8px;font-size:.78rem;cursor:pointer;">↩️ คืนครั้ง</button>' : '')
         + '<button onclick="openStudentForm(window._studentsMap[\'' + s.id + '\'])" style="padding:7px 12px;background:#f0ebe0;color:#1a1208;border:none;border-radius:8px;font-size:.78rem;cursor:pointer;">✏️ แก้ไข</button>'
         + '<button onclick="deleteStudent(\'' + s.id + '\')" style="padding:7px 12px;background:#fde8e8;color:#c0392b;border:none;border-radius:8px;font-size:.78rem;cursor:pointer;">🗑️</button>'
         + '</div>'
@@ -1690,7 +1702,23 @@
   async function clearAllBookings() {
     if (!db) return;
     if (!confirm('ลบการจองทั้งหมดใช่ไหม? ไม่สามารถกู้คืนได้')) return;
-    var { error } = await db.from('bookings').delete().neq('day_th', '');
+    // Archive all to booking_history first
+    var { data: allBk } = await db.from('bookings').select('*');
+    if (allBk && allBk.length > 0) {
+      var toArchive = allBk.map(function(bk) {
+        var pkgMatch = bk.package && bk.package.match(/(\d+) ครั้ง/);
+        return {
+          instrument: bk.instrument, package: bk.package,
+          day_th: bk.day_th, time_slot: bk.time_slot,
+          sessions_done: bk.sessions_done || 0,
+          total_sessions: pkgMatch ? parseInt(pkgMatch[1]) : null,
+          outcome: 'cancelled', started_at: bk.created_at,
+          student_name: bk.student_name || null
+        };
+      });
+      await db.from('booking_history').insert(toArchive);
+    }
+    var { error } = await db.from('bookings').delete().gt('id', '00000000-0000-0000-0000-000000000000');
     if (error) { showToast('❌ ' + error.message); return; }
     showToast('🗑️ ล้างการจองทั้งหมดแล้ว');
     loadAdminBookings();
@@ -1912,8 +1940,6 @@
 
   /* ─── INIT ─── */
   try { initSupabase(); } catch(e) { console.error('Supabase init failed:', e); }
-  buildSchedule(weekdaySlots, weekdays, 'weekday-body');
-  buildSchedule(weekendSlots, weekends, 'weekend-body');
   updateStepper();
 
   if (location.search.includes('admin')) {

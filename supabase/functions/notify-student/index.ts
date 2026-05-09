@@ -29,7 +29,7 @@ serve(async (req) => {
     })
   }
 
-  const dayTime = `${record.day_th} ${record.time_slot}`
+  const dayTime = record.day_th ? `${record.day_th} ${record.time_slot}` : (record.time_slot || '—')
 
   // ── Admin notification (always on INSERT) ─────────────────────────────────
   if (isInsert && ADMIN_LINE_ID) {

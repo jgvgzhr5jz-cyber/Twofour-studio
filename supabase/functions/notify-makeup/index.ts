@@ -5,6 +5,12 @@ const CHANNEL_TOKEN = Deno.env.get('LINE_CHANNEL_TOKEN') ?? ''
 serve(async (req) => {
   if (req.method !== 'POST') return new Response('ok', { status: 200 })
 
+  // Require Authorization header
+  const auth = req.headers.get('Authorization') ?? ''
+  if (!auth.startsWith('Bearer ')) {
+    return new Response('Unauthorized', { status: 401 })
+  }
+
   const { line_user_id, student_name, makeup_date, makeup_time } = await req.json()
   if (!line_user_id) return new Response('no line_user_id', { status: 400 })
 

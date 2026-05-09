@@ -1,10 +1,27 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const CHANNEL_TOKEN = Deno.env.get('LINE_CHANNEL_TOKEN') ?? ''
-const SUPABASE_URL  = Deno.env.get('SUPABASE_URL') ?? ''
-const SUPABASE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-const ADMIN_LINE_ID = Deno.env.get('ADMIN_LINE_ID') ?? ''
+const CHANNEL_TOKEN  = Deno.env.get('LINE_CHANNEL_TOKEN') ?? ''
+const CHANNEL_SECRET = Deno.env.get('LINE_CHANNEL_SECRET') ?? ''
+const SUPABASE_URL   = Deno.env.get('SUPABASE_URL') ?? ''
+const SUPABASE_KEY   = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+const ADMIN_LINE_ID  = Deno.env.get('ADMIN_LINE_ID') ?? ''
+
+// ─── LINE Signature Verification ────────────────────────────────────────────
+async function verifyLineSignature(rawBody: string, signature: string): Promise<boolean> {
+  if (!CHANNEL_SECRET) return true // skip if not configured
+  try {
+    const key = await crypto.subtle.importKey(
+      'raw', new TextEncoder().encode(CHANNEL_SECRET),
+      { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+    )
+    const mac = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(rawBody))
+    const expected = btoa(String.fromCharCode(...new Uint8Array(mac)))
+    return expected === signature
+  } catch {
+    return false
+  }
+}
 
 // ─── Schedule config ────────────────────────────────────────────────────────
 const WEEKDAY_SLOTS = ['16:00 – 17:00', '17:00 – 18:00', '18:00 – 19:00']
@@ -139,7 +156,14 @@ function buildPackageList(): string {
 serve(async (req) => {
   if (req.method !== 'POST') return new Response('ok', { status: 200 })
 
-  const body = await req.json()
+  const rawBody = await req.text()
+  const signature = req.headers.get('x-line-signature') ?? ''
+  if (!(await verifyLineSignature(rawBody, signature))) {
+    console.error('Invalid LINE signature — request rejected')
+    return new Response('Unauthorized', { status: 401 })
+  }
+
+  const body = JSON.parse(rawBody)
   const db   = createClient(SUPABASE_URL, SUPABASE_KEY)
 
   for (const event of body.events || []) {
@@ -349,7 +373,7 @@ serve(async (req) => {
             '',
             `📋 คำขอจองของคุณ:`,
             `🎸 ${b.instrument} · ${b.package}`,
-            `📅 ${b.day_th} ${b.time_slot}`,
+            `📅 ${b.day_th ? `${b.day_th} ${b.time_slot}` : b.time_slot}`,
             '',
             'รบกวนแจ้งชื่อ-นามสกุล และเบอร์โทรศัพท์ในข้อความเดียวได้เลยครับ',
             'ตัวอย่าง: สมชาย ใจดี 081-234-5678',
@@ -375,6 +399,8 @@ serve(async (req) => {
               '🙏 "แจ้งลา" — แจ้งขาดเรียน',
             ].join('\n'))
             await markMenuSent()
+          } else {
+            await replyMessage(replyToken, 'พิมพ์ "จองคลาส" เพื่อจองคลาส หรือ "แจ้งลา" เพื่อแจ้งขาดเรียนนะครับ 🙏')
           }
         }
       }
@@ -393,7 +419,7 @@ serve(async (req) => {
       await db.from('line_followers')
         .update({
           state: 'selecting_package',
-          state_data: { ts: Date.now(), slot_day: stateData.slot_day, slot_time: stateData.slot_time, instrument },
+          state_data: { ts: Date.now(), instrument },
         })
         .eq('line_user_id', userId)
       continue
@@ -482,7 +508,9 @@ serve(async (req) => {
           `👤 ${name}`,
           `📞 ${phone}`,
           `🎸 ${instrument} · ${pkg}`,
-          `📅 ${slot_day} ${slot_time}`,
+          `📅 ${preferred_time}`,
+          '',
+          '👉 ยืนยันได้ที่: https://twofour-studio.vercel.app/?admin',
         ].join('\n'))
       }
       continue
