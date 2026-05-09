@@ -22,7 +22,7 @@ function numEmoji(i: number) { return NUM_EMOJI[i] ?? `${i + 1}.` }
 
 // ─── Helper: push LINE message ───────────────────────────────────────────────
 async function pushMessage(to: string, text: string) {
-  await fetch('https://api.line.me/v2/bot/message/push', {
+  const res = await fetch('https://api.line.me/v2/bot/message/push', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${CHANNEL_TOKEN}`,
@@ -30,6 +30,10 @@ async function pushMessage(to: string, text: string) {
     },
     body: JSON.stringify({ to, messages: [{ type: 'text', text }] }),
   })
+  if (!res.ok) {
+    const body = await res.text()
+    console.error(`pushMessage failed: HTTP ${res.status} to=${to} body=${body}`)
+  }
 }
 
 // ─── Helper: reset state ────────────────────────────────────────────────────
