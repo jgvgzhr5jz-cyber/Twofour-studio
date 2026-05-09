@@ -83,14 +83,13 @@ serve(async (req) => {
   let text = ''
   if (isInsert) {
     const lines = [
-      '⏳ ได้รับการจองแล้ว!',
+      '📋 ได้รับคำขอจองแล้วครับ',
       `👤 ${record.student_name}`,
       `🎸 ${record.instrument} · ${record.package}`,
       `📅 ${dayTime}`,
+      '',
+      '⚠️ ยังไม่ได้รับการยืนยัน — รบกวนทักทายกลับมาสักคำเพื่อให้ครูทราบนะครับ 🙏',
     ]
-    if (isTrial) {
-      lines.push('', 'รบกวนทักกลับมาที่ข้อความนี้เพื่อยืนยันสิทธิ์นะครับ 🙏')
-    }
     text = lines.join('\n')
   } else if (isConfirmed) {
     text = [

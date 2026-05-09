@@ -198,7 +198,7 @@ serve(async (req) => {
     // Fetch current state
     const { data: follower } = await db
       .from('line_followers')
-      .select('state, state_data, display_name')
+      .select('state, state_data, display_name, last_menu_at')
       .eq('line_user_id', userId)
       .single()
 
@@ -206,6 +206,20 @@ serve(async (req) => {
     // deno-lint-ignore no-explicit-any
     let stateData: Record<string, any> = follower?.state_data ?? {}
     const displayName: string = follower?.display_name ?? ''
+    const lastMenuAt: string | null = follower?.last_menu_at ?? null
+
+    // Helper: check if last_menu_at was already today (Thai time UTC+7)
+    function sentMenuToday(): boolean {
+      if (!lastMenuAt) return false
+      const nowTH  = new Date(Date.now() + 7 * 60 * 60 * 1000)
+      const sentTH = new Date(new Date(lastMenuAt).getTime() + 7 * 60 * 60 * 1000)
+      return nowTH.toISOString().slice(0, 10) === sentTH.toISOString().slice(0, 10)
+    }
+    async function markMenuSent() {
+      await db.from('line_followers')
+        .update({ last_menu_at: new Date().toISOString() })
+        .eq('line_user_id', userId)
+    }
 
     // Auto-expire state after 10 minutes
     if (currentState && stateData?.ts) {
@@ -239,13 +253,15 @@ serve(async (req) => {
             .eq('line_user_id', userId)
         }
 
-      } else if (messageText === 'ลิงก์' || messageText === 'link' || messageText === 'ลิ้งค์' || messageText === 'ลิ้งก์') {
+      } else if (messageText === 'สนใจ' || messageText === 'สนใจเรียน' || messageText === 'อยากเรียน' || messageText === 'สอบถาม') {
         const bookingLink = `https://twofour-studio.vercel.app?luid=${userId}&t=${Date.now()}`
         await pushMessage(userId, [
-          '🔗 ลิงก์จองส่วนตัวของคุณ:',
+          `สวัสดีครับ ${displayName ? displayName + ' ' : ''}ยินดีต้อนรับสู่ TWOFOUR Studio 🎵`,
+          '',
+          '🔗 กดลิงก์นี้เพื่อดูตารางและจองคลาส:',
           bookingLink,
           '',
-          'กดลิงก์นี้เพื่อจองผ่านเว็บ — ระบบจะจำ LINE ของคุณอัตโนมัติ 🎵',
+          'ระบบจะจำ LINE ของคุณอัตโนมัติครับ — จองเสร็จแล้วจะได้รับการยืนยันทาง LINE เลย 🙏',
         ].join('\n'))
 
       } else if (messageText === 'แจ้งลา') {
@@ -283,14 +299,21 @@ serve(async (req) => {
         }
 
       } else {
-        // Unknown message — show menu hint
-        await pushMessage(userId, [
-          'สวัสดีครับ 👋',
-          '',
-          '📅 "ดูตาราง" — ดูช่วงว่างและจองคลาส',
-          '🙏 "แจ้งลา" — แจ้งขาดเรียน',
-          '🔗 "ลิงก์" — รับลิงก์จองส่วนตัว (เพื่อรับการแจ้งเตือน)',
-        ].join('\n'))
+        // Unknown message — send booking link + menu (max once per day)
+        if (!sentMenuToday()) {
+          const bookingLink = `https://twofour-studio.vercel.app?luid=${userId}&t=${Date.now()}`
+          await pushMessage(userId, [
+            `สวัสดีครับ ${displayName ? displayName + ' ' : ''}👋`,
+            '',
+            '🔗 กดลิงก์นี้เพื่อดูตารางและจองคลาส:',
+            bookingLink,
+            '',
+            'หรือพิมพ์คำสั่งด้านล่าง:',
+            '📅 "ดูตาราง" — ดูช่วงว่างและจองผ่านแชท',
+            '🙏 "แจ้งลา" — แจ้งขาดเรียน',
+          ].join('\n'))
+          await markMenuSent()
+        }
       }
       continue
     }

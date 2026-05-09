@@ -671,6 +671,13 @@
 <!-- BOOKING MODAL -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
+    <div class="modal-icon">🎵</div>
+    <h2 id="modal-title">ยืนยันการจอง</h2>
+    <div class="modal-summary">
+      <div><span>เครื่องดนตรี</span><br><strong id="modal-instrument">—</strong></div>
+      <div style="margin-top:6px;"><span>แพ็กเกจ</span><br><strong id="modal-package">—</strong></div>
+      <div style="margin-top:6px;"><span>วัน & เวลา</span><br><strong id="modal-slot">—</strong></div>
+    </div>
     <div class="modal-actions">
       <button id="modal-line-link" class="modal-line-btn" onclick="confirmBooking()" style="width:100%;">
         <svg class="line-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" rx="12" fill="white" fill-opacity="0.2"/><path d="M24 8C15.163 8 8 14.268 8 22c0 5.437 3.455 10.178 8.64 12.883-.378 1.41-1.371 5.117-1.571 5.908-.247.974.355 1.96 1.33 1.96.247 0 .5-.07.726-.213L23.957 38.8c.013 0 .028.002.043.002C32.837 38.802 40 32.534 40 22 40 14.268 32.837 8 24 8z" fill="white"/><path d="M34 20.5h-4v7h4v-2h-2.5v-1H34v-2h-2.5v-1H34v-1zM28 27.5h-5v-7h2v5h3v2zM21 27.5h-2v-7h2v7zM18 20.5h-4v7h2v-2.5h2v-1.5h-2v-1.5h2v-2z" fill="#06C755"/></svg>
@@ -1164,8 +1171,16 @@
     }
 
     const isTrial = selectedPkg === 'ทดลองเรียนฟรี';
+
+    // Fill summary
+    document.getElementById('modal-instrument').textContent = selectedInstrument || '—';
+    document.getElementById('modal-package').textContent = selectedPkgFull || selectedPkg || '—';
+    document.getElementById('modal-slot').textContent = selectedSlotDisplay || selectedSlot || '—';
+    document.getElementById('modal-title').textContent = isTrial
+      ? (currentLang === 'en' ? 'Book a Free Trial' : 'นัดทดลองเรียน')
+      : (currentLang === 'en' ? 'Confirm Booking' : 'ยืนยันการจอง');
     document.getElementById('modal-line-label').textContent = isTrial
-      ? 'เปิด LINE นัดทดลองเรียน'
+      ? (currentLang === 'en' ? 'Open LINE to schedule' : 'เปิด LINE นัดทดลองเรียน')
       : (currentLang === 'en' ? 'Open LINE to book' : 'ส่งข้อความจอง LINE');
 
     document.getElementById('modal').classList.add('open');
@@ -1504,6 +1519,14 @@
         '<button onclick="deleteAbsence(\'' + a.id + '\')" style="padding:4px 10px;background:#fff;color:#c0392b;border:1.5px solid #c0392b;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;">🗑 ลบ</button>' +
         '</div></div>' + makeupForm + '</div>';
     }).join('');
+  }
+
+  function openMakeupForm(id, lineUserId, studentName) {
+    return '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">' +
+      '<input id="mu-date-' + id + '" type="text" placeholder="วันชดเชย (เช่น จันทร์)" style="flex:1;min-width:140px;padding:8px 10px;border:1.5px solid #e0d8c8;border-radius:8px;font-size:.82rem;font-family:\'Sarabun\',sans-serif;"/>' +
+      '<input id="mu-time-' + id + '" type="text" placeholder="เวลา (เช่น 16:00)" style="width:100px;padding:8px 10px;border:1.5px solid #e0d8c8;border-radius:8px;font-size:.82rem;font-family:\'Sarabun\',sans-serif;"/>' +
+      '<button onclick="confirmMakeup(\'' + id + '\',document.getElementById(\'mu-date-' + id + '\').value,document.getElementById(\'mu-time-' + id + '\').value,\'' + lineUserId + '\',\'' + studentName + '\')" style="padding:8px 14px;background:#27ae60;color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;">✅ ยืนยัน</button>' +
+      '</div>';
   }
 
   async function confirmMakeup(id, makeupDate, makeupTime, lineUserId, studentName) {
