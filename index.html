@@ -1779,10 +1779,43 @@
     loadAdminSchedule();
   }
 
-  function buildAdminGrid(confirmedMap) {
+  // ── Admin schedule popup ─────────────────────────────────────────────────────
+  function showBookingPopup(id, name, phone, instrument, pkg, dayTh, timeSlot, status) {
+    var existing = document.getElementById('admin-booking-popup');
+    if (existing) existing.remove();
+    var statusLabel = { confirmed:'🟢 ยืนยันแล้ว', pending:'🟠 รอยืนยัน', trial:'🟦 ทดลองเรียน' };
+    var popup = document.createElement('div');
+    popup.id = 'admin-booking-popup';
+    popup.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(26,18,8,.55);display:flex;align-items:center;justify-content:center;padding:24px;';
+    popup.innerHTML = '<div style="background:#fff;border-radius:20px;padding:24px;max-width:340px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.18);">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+      + '<strong style="font-size:1rem;">รายละเอียดการจอง</strong>'
+      + '<button onclick="document.getElementById(\'admin-booking-popup\').remove()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:#888;">✕</button>'
+      + '</div>'
+      + '<div style="background:#f7f4ef;border-radius:12px;padding:14px;font-size:.88rem;line-height:2;">'
+      + '<div>👤 <strong>' + (name || '—') + '</strong></div>'
+      + '<div>📞 ' + (phone || '—') + '</div>'
+      + '<div>🎸 ' + instrument + '</div>'
+      + '<div>📦 ' + pkg + '</div>'
+      + '<div>📅 ' + dayTh + ' ' + timeSlot + '</div>'
+      + '<div>' + (statusLabel[status] || status) + '</div>'
+      + '</div>'
+      + '</div>';
+    popup.addEventListener('click', function(e){ if(e.target===popup) popup.remove(); });
+    document.body.appendChild(popup);
+  }
+
+  function buildAdminGrid(bookingMap) {
     var thS = 'padding:8px 5px;background:#1a1208;color:#fff;text-align:center;font-size:.75rem;';
-    var tdS = 'padding:7px 4px;text-align:center;border:1px solid #e8e0d0;font-size:.74rem;';
+    var tdS = 'padding:7px 4px;text-align:center;border:1px solid #e8e0d0;font-size:.74rem;vertical-align:top;';
     var out = '';
+
+    // Legend
+    out += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;font-size:.75rem;">'
+         + '<span style="background:#e8f5e9;color:#1e7e34;padding:3px 10px;border-radius:100px;">🟢 ยืนยันแล้ว</span>'
+         + '<span style="background:#fff3e0;color:#e65100;padding:3px 10px;border-radius:100px;">🟠 รอยืนยัน</span>'
+         + '<span style="background:#e0f2f1;color:#00695c;padding:3px 10px;border-radius:100px;">🟦 ทดลองเรียน</span>'
+         + '</div>';
 
     var groups = [
       {title:'📅 จันทร์ – ศุกร์', slots: weekdaySlots, days: weekdays},
@@ -1809,10 +1842,17 @@
           var btnS = 'display:block;width:100%;margin-top:4px;padding:3px 0;border:none;border-radius:6px;font-size:.68rem;font-weight:700;cursor:pointer;';
           if (booked.has(key)) {
             out += '<td style="' + tdS + 'background:#fce8e8;color:#c0392b;font-size:.72rem;">ไม่ว่าง<br><span style="font-size:.65rem;color:#aaa;">ถาวร</span></td>';
-          } else if (confirmedMap[key]) {
-            var bk = confirmedMap[key];
-            var m = bk.package.match(/฿[\d,]+/);
-            out += '<td style="' + tdS + 'background:#e8f5e9;color:#1e7e34;font-size:.7rem;">' + bk.instrument + (m ? '<br>' + m[0] : '') + '</td>';
+          } else if (bookingMap[key]) {
+            var bk = bookingMap[key];
+            var bg = bk.status === 'confirmed' ? '#e8f5e9' : bk.status === 'trial' ? '#e0f2f1' : '#fff3e0';
+            var fg = bk.status === 'confirmed' ? '#1e7e34' : bk.status === 'trial' ? '#00695c' : '#e65100';
+            var escapedBk = JSON.stringify(bk).replace(/'/g, "\\'");
+            out += '<td style="' + tdS + 'background:' + bg + ';color:' + fg + ';cursor:pointer;" '
+                 + 'onclick="showBookingPopup(' + "'" + bk.id + "','" + (bk.student_name||'').replace(/'/g,"\\'") + "','" + (bk.phone||'').replace(/'/g,"\\'") + "','" + bk.instrument.replace(/'/g,"\\'") + "','" + bk.package.replace(/'/g,"\\'") + "','" + dayTh + "','" + slot + "','" + bk.status + "'" + ')">'
+                 + '<div style="font-weight:700;font-size:.72rem;">' + (bk.student_name || '—') + '</div>'
+                 + (bk.phone ? '<div style="font-size:.65rem;opacity:.8;">' + bk.phone + '</div>' : '')
+                 + '<div style="font-size:.65rem;">' + bk.instrument + '</div>'
+                 + '</td>';
           } else if (adminBlocked.has(key)) {
             out += '<td style="' + tdS + 'background:#fff3e0;color:#e65100;font-size:.72rem;">ปิด<button style="' + btnS + 'background:#e65100;color:#fff;" onclick="toggleAdminBlock(\'' + dayTh + '\',\'' + slot + '\')">🔓 เปิด</button></td>';
           } else {
@@ -1830,17 +1870,17 @@
     var el = document.getElementById('admin-sched');
     if (!el) return;
     el.innerHTML = '<p style="color:#999;font-size:.85rem;">กำลังโหลด...</p>';
-    var confirmedMap = {};
+    var bookingMap = {};
     try {
       if (db) {
-        var res = await db.from('bookings').select('*').eq('status', 'confirmed');
+        var res = await db.from('bookings').select('*').in('status', ['confirmed', 'pending', 'trial']);
         var rows = (res && res.data) ? res.data : [];
         for (var i = 0; i < rows.length; i++) {
-          confirmedMap[rows[i].day_th + '-' + rows[i].time_slot] = rows[i];
+          bookingMap[rows[i].day_th + '-' + rows[i].time_slot] = rows[i];
         }
       }
     } catch(e) { console.error('schedule load error', e); }
-    el.innerHTML = buildAdminGrid(confirmedMap);
+    el.innerHTML = buildAdminGrid(bookingMap);
   }
 
   var _histFilter = 'all';
