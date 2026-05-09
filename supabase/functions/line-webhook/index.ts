@@ -242,7 +242,7 @@ serve(async (req) => {
 
     // ── No active state ───────────────────────────────────────────────────────
     if (!currentState) {
-      if (messageText === 'ดูตาราง') {
+      if (messageText === 'ดูตาราง' || messageText === 'จองคลาส' || messageText === 'จอง') {
         const slots = await getAvailableSlots(db)
         if (slots.length === 0) {
           await pushMessage(userId, 'ขณะนี้ไม่มีช่วงว่าง กรุณาติดต่อครูโดยตรงครับ')
@@ -468,78 +468,13 @@ serve(async (req) => {
       const chosen = bookingList[num - 1]
       const availableSlots = await getAvailableSlots(db)
 
-      await pushMessage(userId, [
-        `📅 ลา: ${chosen.instrument} · ${chosen.day_th} ${chosen.time_slot}`,
-        '',
-        'ต้องการนัดวันชดเชยไหมครับ?',
-        '',
-        '1️⃣ เลือกวันชดเชยเอง',
-        '2️⃣ ให้ครูเลือกให้',
-      ].join('\n'))
-
-      await db.from('line_followers')
-        .update({
-          state: 'selecting_makeup_pref',
-          state_data: {
-            ts: Date.now(),
-            booking_id: chosen.id,
-            instrument: chosen.instrument,
-            day_th: chosen.day_th,
-            time_slot: chosen.time_slot,
-            available_slots: availableSlots,
-          },
-        })
-        .eq('line_user_id', userId)
-      continue
-    }
-
-    // ── State: selecting_makeup_pref ──────────────────────────────────────────
-    if (currentState === 'selecting_makeup_pref') {
-      const { day_th, time_slot, available_slots } = stateData
-      const availableSlots: SlotEntry[] = available_slots ?? []
-
-      if (messageText === '1' || messageText === 'เลือกเอง') {
-        if (availableSlots.length === 0) {
-          // No available slots — auto-delegate to admin
-          await db.from('absences').insert({
-            line_user_id: userId,
-            student_name: displayName,
-            absent_date: day_th,
-            absent_time: time_slot,
-            status: 'pending',
-          })
-          await resetState(db, userId)
-          await pushMessage(userId, '✅ บันทึกการลาแล้วครับ\nครูจะแจ้งวันชดเชยให้เร็วๆ นี้ 🙏')
-          if (ADMIN_LINE_ID) {
-            await pushMessage(ADMIN_LINE_ID, [
-              '🔔 มีคำขอลา!',
-              `👤 ${displayName}`,
-              `📅 ${day_th} ${time_slot}`,
-              '',
-              'นักเรียนให้ครูเลือกวันชดเชย (ไม่มีช่วงว่าง)',
-            ].join('\n'))
-          }
-        } else {
-          const lines = ['📅 เลือกวันชดเชย:\n']
-          availableSlots.forEach((s, i) => {
-            lines.push(`${numEmoji(i)} ${s.day} ${s.slot}`)
-          })
-          lines.push('\nพิมพ์หมายเลขที่ต้องการ หรือพิมพ์ "ยกเลิก" เพื่อออก')
-          await pushMessage(userId, lines.join('\n'))
-          await db.from('line_followers')
-            .update({
-              state: 'selecting_makeup_slot',
-              state_data: { ...stateData, ts: Date.now() },
-            })
-            .eq('line_user_id', userId)
-        }
-
-      } else if (messageText === '2' || messageText === 'ให้ครูเลือก') {
+      if (availableSlots.length === 0) {
+        // No available slots — record absence, admin will choose
         await db.from('absences').insert({
           line_user_id: userId,
           student_name: displayName,
-          absent_date: day_th,
-          absent_time: time_slot,
+          absent_date: chosen.day_th,
+          absent_time: chosen.time_slot,
           status: 'pending',
         })
         await resetState(db, userId)
@@ -548,14 +483,31 @@ serve(async (req) => {
           await pushMessage(ADMIN_LINE_ID, [
             '🔔 มีคำขอลา!',
             `👤 ${displayName}`,
-            `📅 ${day_th} ${time_slot}`,
+            `📅 ${chosen.day_th} ${chosen.time_slot}`,
             '',
-            'นักเรียนให้ครูเลือกวันชดเชย',
+            'ไม่มีช่วงว่าง — กรุณาแจ้งวันชดเชยให้นักเรียนเอง',
           ].join('\n'))
         }
-
       } else {
-        await pushMessage(userId, 'กรุณาพิมพ์ 1 หรือ 2 ครับ')
+        const lines = [`📅 ลา: ${chosen.instrument} · ${chosen.day_th} ${chosen.time_slot}\n`, '📅 เลือกวันชดเชย:\n']
+        availableSlots.forEach((s, i) => {
+          lines.push(`${numEmoji(i)} ${s.day} ${s.slot}`)
+        })
+        lines.push('\nพิมพ์หมายเลขที่ต้องการ หรือพิมพ์ "ยกเลิก" เพื่อออก')
+        await pushMessage(userId, lines.join('\n'))
+        await db.from('line_followers')
+          .update({
+            state: 'selecting_makeup_slot',
+            state_data: {
+              ts: Date.now(),
+              booking_id: chosen.id,
+              instrument: chosen.instrument,
+              day_th: chosen.day_th,
+              time_slot: chosen.time_slot,
+              available_slots: availableSlots,
+            },
+          })
+          .eq('line_user_id', userId)
       }
       continue
     }
