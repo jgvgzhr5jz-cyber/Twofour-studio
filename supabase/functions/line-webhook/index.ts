@@ -20,7 +20,7 @@ const PACKAGES    = ['ทดลองเรียนฟรี (20 นาที)'
 const NUM_EMOJI = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟']
 function numEmoji(i: number) { return NUM_EMOJI[i] ?? `${i + 1}.` }
 
-// ─── Helper: push LINE message ───────────────────────────────────────────────
+// ─── Helper: push LINE message (uses quota — admin/proactive only) ───────────
 async function pushMessage(to: string, text: string) {
   const res = await fetch('https://api.line.me/v2/bot/message/push', {
     method: 'POST',
@@ -33,6 +33,26 @@ async function pushMessage(to: string, text: string) {
   if (!res.ok) {
     const body = await res.text()
     console.error(`pushMessage failed: HTTP ${res.status} to=${to} body=${body}`)
+  }
+}
+
+// ─── Helper: reply LINE message (FREE — use for all chat responses) ──────────
+async function replyMessage(replyToken: string, text: string) {
+  if (!replyToken) {
+    console.warn('replyMessage called with empty replyToken')
+    return
+  }
+  const res = await fetch('https://api.line.me/v2/bot/message/reply', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${CHANNEL_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ replyToken, messages: [{ type: 'text', text }] }),
+  })
+  if (!res.ok) {
+    const body = await res.text()
+    console.error(`replyMessage failed: HTTP ${res.status} body=${body}`)
   }
 }
 
@@ -123,7 +143,8 @@ serve(async (req) => {
   const db   = createClient(SUPABASE_URL, SUPABASE_KEY)
 
   for (const event of body.events || []) {
-    const userId = event.source?.userId
+    const userId     = event.source?.userId
+    const replyToken = event.replyToken ?? ''
     if (!userId) continue
 
     // ── FOLLOW event ──────────────────────────────────────────────────────────
@@ -152,15 +173,18 @@ serve(async (req) => {
       }
 
       const bookingLink = `https://twofour-studio.vercel.app?luid=${userId}&t=${Date.now()}`
+      // Follow event has no replyToken → must use push
       await pushMessage(userId, [
-        `สวัสดี ${displayName}! 🎵`,
-        `ยินดีต้อนรับสู่ TWOFOUR Studio`,
+        `สวัสดีครับ ${displayName} 🎵`,
+        `ขอบคุณที่เพิ่ม TWOFOUR Studio นะครับ ยินดีต้อนรับ!`,
         ``,
-        `พิมพ์ "ดูตาราง" เพื่อดูช่วงว่างและจองคลาส`,
-        `พิมพ์ "แจ้งลา" เพื่อแจ้งขาดเรียน`,
+        `ที่นี่สอนกีตาร์ เบส กลอง คีย์บอร์ด เปียโน และร้องเพลง`,
+        `ทุกระดับตั้งแต่มือใหม่จนถึงมืออาชีพครับ 🙌`,
         ``,
-        `หรือกดลิงก์นี้เพื่อจองผ่านเว็บ:`,
+        `กดลิงก์นี้เพื่อดูตารางและจองคลาสได้เลย:`,
         bookingLink,
+        ``,
+        `หรือพิมพ์ "จองคลาส" เพื่อจองผ่านแชทครับ`,
       ].join('\n'))
       continue
     }
@@ -174,7 +198,7 @@ serve(async (req) => {
         .single()
       const name = follower?.display_name || userId
 
-      await pushMessage(userId, 'ได้รับสลิปแล้วครับ ✅\nครูจะตรวจสอบและยืนยันการจองให้เร็วๆ นี้นะครับ 🙏')
+      await replyMessage(replyToken, 'ได้รับสลิปแล้วครับ ✅\nครูจะตรวจสอบและยืนยันการจองให้เร็วๆ นี้นะครับ 🙏')
 
       if (ADMIN_LINE_ID) {
         await pushMessage(ADMIN_LINE_ID, [
@@ -239,7 +263,7 @@ serve(async (req) => {
     if (messageText === 'ยกเลิก') {
       if (currentState) {
         await resetState(db, userId)
-        await pushMessage(userId, '↩️ ยกเลิกแล้วครับ')
+        await replyMessage(replyToken, '↩️ ยกเลิกแล้วครับ')
       }
       continue
     }
@@ -255,20 +279,15 @@ serve(async (req) => {
     // ── No active state ───────────────────────────────────────────────────────
     if (!currentState) {
       if (messageText === 'ดูตาราง' || messageText === 'จองคลาส' || messageText === 'จอง') {
-        const slots = await getAvailableSlots(db)
-        if (slots.length === 0) {
-          await pushMessage(userId, 'ขณะนี้ไม่มีช่วงว่าง กรุณาติดต่อครูโดยตรงครับ')
-        } else {
-          await pushMessage(userId, buildSlotList(slots))
-          await db.from('line_followers')
-            .update({ state: 'selecting_slot', state_data: { ts: Date.now(), slots } })
-            .eq('line_user_id', userId)
-        }
+        await replyMessage(replyToken, buildInstrumentList())
+        await db.from('line_followers')
+          .update({ state: 'selecting_instrument', state_data: { ts: Date.now() } })
+          .eq('line_user_id', userId)
 
       } else if (messageText === 'สนใจ' || messageText === 'สนใจเรียน' || messageText === 'อยากเรียน' || messageText === 'สอบถาม') {
         if (!sentMenuToday()) {
           const bookingLink = `https://twofour-studio.vercel.app?luid=${userId}&t=${Date.now()}`
-          await pushMessage(userId, [
+          await replyMessage(replyToken, [
             `สวัสดีครับ ${displayName ? displayName + ' ' : ''}ยินดีต้อนรับสู่ TWOFOUR Studio 🎵`,
             '',
             '🔗 กดลิงก์นี้เพื่อดูตารางและจองคลาส:',
@@ -289,14 +308,14 @@ serve(async (req) => {
           .limit(5)
 
         if (!bookings || bookings.length === 0) {
-          await pushMessage(userId, 'ไม่พบคลาสที่จองไว้ครับ')
+          await replyMessage(replyToken, 'ไม่พบคลาสที่จองไว้ครับ')
         } else {
           const lines = ['📚 คลาสของคุณ:\n']
           bookings.forEach((b: { id: string; instrument: string; day_th: string; time_slot: string }, i: number) => {
             lines.push(`${numEmoji(i)} ${b.instrument} · ${b.day_th} ${b.time_slot}`)
           })
           lines.push('\nพิมพ์หมายเลขที่ต้องการลา')
-          await pushMessage(userId, lines.join('\n'))
+          await replyMessage(replyToken, lines.join('\n'))
           await db.from('line_followers')
             .update({
               state: 'selecting_class_to_cancel',
@@ -325,7 +344,7 @@ serve(async (req) => {
 
         if (pendingBookings && pendingBookings.length > 0) {
           const b = pendingBookings[0]
-          await pushMessage(userId, [
+          await replyMessage(replyToken, [
             `ขอบคุณที่ทักมานะครับ ${displayName ? displayName + ' ' : ''}🙏`,
             '',
             `📋 คำขอจองของคุณ:`,
@@ -345,14 +364,14 @@ serve(async (req) => {
           // No pending booking — send link + menu (max once per day)
           if (!sentMenuToday()) {
             const bookingLink = `https://twofour-studio.vercel.app?luid=${userId}&t=${Date.now()}`
-            await pushMessage(userId, [
+            await replyMessage(replyToken, [
               `สวัสดีครับ ${displayName ? displayName + ' ' : ''}👋`,
               '',
               '🔗 กดลิงก์นี้เพื่อดูตารางและจองคลาส:',
               bookingLink,
               '',
               'หรือพิมพ์คำสั่งด้านล่าง:',
-              '📅 "ดูตาราง" — ดูช่วงว่างและจองผ่านแชท',
+              '📅 "จองคลาส" — ดูช่วงว่างและจองผ่านแชท',
               '🙏 "แจ้งลา" — แจ้งขาดเรียน',
             ].join('\n'))
             await markMenuSent()
@@ -362,34 +381,15 @@ serve(async (req) => {
       continue
     }
 
-    // ── State: selecting_slot ─────────────────────────────────────────────────
-    if (currentState === 'selecting_slot') {
-      const slots: SlotEntry[] = stateData.slots ?? []
-      const num = parseInt(messageText, 10)
-      if (isNaN(num) || num < 1 || num > slots.length) {
-        await pushMessage(userId, 'กรุณาพิมพ์หมายเลขที่ถูกต้องครับ')
-        continue
-      }
-      const chosen = slots[num - 1]
-      await pushMessage(userId, buildInstrumentList())
-      await db.from('line_followers')
-        .update({
-          state: 'selecting_instrument',
-          state_data: { ts: Date.now(), slot_day: chosen.day, slot_time: chosen.slot },
-        })
-        .eq('line_user_id', userId)
-      continue
-    }
-
     // ── State: selecting_instrument ───────────────────────────────────────────
     if (currentState === 'selecting_instrument') {
       const num = parseInt(messageText, 10)
       if (isNaN(num) || num < 1 || num > INSTRUMENTS.length) {
-        await pushMessage(userId, buildInstrumentList())
+        await replyMessage(replyToken, buildInstrumentList())
         continue
       }
       const instrument = INSTRUMENTS[num - 1]
-      await pushMessage(userId, buildPackageList())
+      await replyMessage(replyToken, buildPackageList())
       await db.from('line_followers')
         .update({
           state: 'selecting_package',
@@ -403,18 +403,16 @@ serve(async (req) => {
     if (currentState === 'selecting_package') {
       const num = parseInt(messageText, 10)
       if (isNaN(num) || num < 1 || num > PACKAGES.length) {
-        await pushMessage(userId, buildPackageList())
+        await replyMessage(replyToken, buildPackageList())
         continue
       }
       const pkg = PACKAGES[num - 1]
-      await pushMessage(userId, '👤 ชื่อที่ใช้ติดต่อของคุณคืออะไรครับ?')
+      await replyMessage(replyToken, '📅 วันและเวลาที่คุณสะดวกเรียนครับ?\nเช่น เสาร์ บ่ายสองโมง หรือ อาทิตย์ 10:00–11:00')
       await db.from('line_followers')
         .update({
-          state: 'entering_name',
+          state: 'entering_preferred_time',
           state_data: {
             ts: Date.now(),
-            slot_day: stateData.slot_day,
-            slot_time: stateData.slot_time,
             instrument: stateData.instrument,
             package: pkg,
           },
@@ -423,10 +421,23 @@ serve(async (req) => {
       continue
     }
 
+    // ── State: entering_preferred_time ────────────────────────────────────────
+    if (currentState === 'entering_preferred_time') {
+      const preferredTime = messageText
+      await replyMessage(replyToken, '👤 ชื่อที่ใช้ติดต่อของคุณคืออะไรครับ?')
+      await db.from('line_followers')
+        .update({
+          state: 'entering_name',
+          state_data: { ...stateData, ts: Date.now(), preferred_time: preferredTime },
+        })
+        .eq('line_user_id', userId)
+      continue
+    }
+
     // ── State: entering_name ──────────────────────────────────────────────────
     if (currentState === 'entering_name') {
       const name = messageText
-      await pushMessage(userId, '📞 เบอร์โทรศัพท์ของคุณครับ?')
+      await replyMessage(replyToken, '📞 เบอร์โทรศัพท์ของคุณครับ?')
       await db.from('line_followers')
         .update({
           state: 'entering_phone',
@@ -438,15 +449,15 @@ serve(async (req) => {
 
     // ── State: entering_phone ─────────────────────────────────────────────────
     if (currentState === 'entering_phone') {
-      const { slot_day, slot_time, instrument, package: pkg, student_name: name } = stateData
+      const { preferred_time, instrument, package: pkg, student_name: name } = stateData
       const phone = messageText
       const status = pkg === 'ทดลองเรียนฟรี (20 นาที)' ? 'trial' : 'pending'
 
       await db.from('bookings').insert({
         instrument,
         package: pkg,
-        day_th: slot_day,
-        time_slot: slot_time,
+        day_th: null,
+        time_slot: preferred_time,
         status,
         student_name: name,
         phone,
@@ -455,12 +466,12 @@ serve(async (req) => {
 
       await resetState(db, userId)
 
-      await pushMessage(userId, [
+      await replyMessage(replyToken, [
         '✅ จองเรียบร้อยแล้ว!',
         `👤 ${name}`,
         `📞 ${phone}`,
         `🎸 ${instrument} · ${pkg}`,
-        `📅 ${slot_day} ${slot_time}`,
+        `📅 ${preferred_time}`,
         '',
         'รอครูยืนยันภายใน 24 ชม. นะครับ 🙏',
       ].join('\n'))
@@ -489,7 +500,7 @@ serve(async (req) => {
           lines.push(`${numEmoji(i)} ${b.instrument} · ${b.day_th} ${b.time_slot}`)
         })
         lines.push('\nพิมพ์หมายเลขที่ต้องการลา')
-        await pushMessage(userId, lines.join('\n'))
+        await replyMessage(replyToken, lines.join('\n'))
         continue
       }
 
@@ -506,7 +517,7 @@ serve(async (req) => {
           status: 'pending',
         })
         await resetState(db, userId)
-        await pushMessage(userId, '✅ บันทึกการลาแล้วครับ\nครูจะแจ้งวันชดเชยให้เร็วๆ นี้ 🙏')
+        await replyMessage(replyToken, '✅ บันทึกการลาแล้วครับ\nครูจะแจ้งวันชดเชยให้เร็วๆ นี้ 🙏')
         if (ADMIN_LINE_ID) {
           await pushMessage(ADMIN_LINE_ID, [
             '🔔 มีคำขอลา!',
@@ -522,7 +533,7 @@ serve(async (req) => {
           lines.push(`${numEmoji(i)} ${s.day} ${s.slot}`)
         })
         lines.push('\nพิมพ์หมายเลขที่ต้องการ หรือพิมพ์ "ยกเลิก" เพื่อออก')
-        await pushMessage(userId, lines.join('\n'))
+        await replyMessage(replyToken, lines.join('\n'))
         await db.from('line_followers')
           .update({
             state: 'selecting_makeup_slot',
@@ -552,7 +563,7 @@ serve(async (req) => {
           lines.push(`${numEmoji(i)} ${s.day} ${s.slot}`)
         })
         lines.push('\nพิมพ์หมายเลขที่ต้องการ หรือพิมพ์ "ยกเลิก" เพื่อออก')
-        await pushMessage(userId, lines.join('\n'))
+        await replyMessage(replyToken, lines.join('\n'))
         continue
       }
 
@@ -570,7 +581,7 @@ serve(async (req) => {
 
       await resetState(db, userId)
 
-      await pushMessage(userId, [
+      await replyMessage(replyToken, [
         '✅ บันทึกการลาแล้วครับ',
         `📅 วันที่ลา: ${day_th} ${time_slot}`,
         `🔁 วันชดเชยที่ขอ: ${makeup.day} ${makeup.slot}`,
@@ -595,11 +606,6 @@ serve(async (req) => {
     if (currentState === 'awaiting_confirm_info') {
       const { booking_id, instrument, package: pkg, day_th, time_slot } = stateData
 
-      // Save name + phone to booking
-      await db.from('bookings')
-        .update({ student_name: messageText, phone: messageText })
-        .eq('id', booking_id)
-
       // Parse: last word as phone if it looks like a number, rest as name
       const parts = messageText.trim().split(/\s+/)
       const lastPart = parts[parts.length - 1]
@@ -613,7 +619,7 @@ serve(async (req) => {
 
       await resetState(db, userId)
 
-      await pushMessage(userId, [
+      await replyMessage(replyToken, [
         '✅ ได้รับข้อมูลแล้วครับ!',
         `👤 ${name || messageText}`,
         phone ? `📞 ${phone}` : '',

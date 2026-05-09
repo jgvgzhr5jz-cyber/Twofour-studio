@@ -515,7 +515,7 @@
   </div>
 </section>
 
-<!-- STEP 3: SCHEDULE -->
+<!-- STEP 3: PREFERRED TIME -->
 <div id="schedule">
   <div class="schedule-inner" style="position:relative;">
     <div class="lock-overlay" id="sched-lock">
@@ -523,37 +523,17 @@
       <div class="lock-msg" data-th="เลือกแพ็กเกจก่อน" data-en="Choose a package first">เลือกแพ็กเกจก่อน</div>
     </div>
     <div class="section-label" data-th="ขั้นตอนที่ 3" data-en="Step 3">ขั้นตอนที่ 3</div>
-    <h2 class="section-title fade-in" data-th="เลือกวันและเวลา" data-en="PICK YOUR TIME SLOT">เลือกวันและเวลา</h2>
-    <div class="schedule-tabs">
-      <button class="tab-btn active" onclick="switchTab('weekday',this)"
-        data-th="จันทร์ – ศุกร์" data-en="Mon – Fri">จันทร์ – ศุกร์</button>
-      <button class="tab-btn" onclick="switchTab('weekend',this)"
-        data-th="เสาร์ – อาทิตย์" data-en="Sat – Sun">เสาร์ – อาทิตย์</button>
-    </div>
-
-    <div class="schedule-grid" id="weekday-schedule">
-      <table>
-        <thead><tr>
-          <th style="background:transparent;border:none;box-shadow:none;"></th>
-          <th data-th="จันทร์"  data-en="MON">จันทร์</th>
-          <th data-th="อังคาร" data-en="TUE">อังคาร</th>
-          <th data-th="พุธ"    data-en="WED">พุธ</th>
-          <th data-th="พฤหัส" data-en="THU">พฤหัส</th>
-          <th data-th="ศุกร์"  data-en="FRI">ศุกร์</th>
-        </tr></thead>
-        <tbody id="weekday-body"></tbody>
-      </table>
-    </div>
-    <div class="schedule-grid" id="weekend-schedule" style="display:none;">
-      <table>
-        <thead><tr>
-          <th style="background:transparent;border:none;box-shadow:none;"></th>
-          <th data-th="เสาร์"   data-en="SAT">เสาร์</th>
-          <th data-th="อาทิตย์" data-en="SUN">อาทิตย์</th>
-        </tr></thead>
-        <tbody id="weekend-body"></tbody>
-      </table>
-    </div>
+    <h2 class="section-title fade-in" data-th="วันและเวลาที่สะดวก" data-en="PREFERRED TIME">วันและเวลาที่สะดวก</h2>
+    <p class="fade-in" style="color:var(--muted);margin-bottom:20px;font-size:.95rem;line-height:1.6;"
+       data-th="พิมพ์วันและเวลาที่คุณสะดวกเรียน ครูจะติดต่อกลับเพื่อยืนยันนัดหมายครับ"
+       data-en="Enter your preferred day and time — the teacher will confirm your schedule.">พิมพ์วันและเวลาที่คุณสะดวกเรียน ครูจะติดต่อกลับเพื่อยืนยันนัดหมายครับ</p>
+    <textarea id="preferred-time-input"
+      placeholder="เช่น เสาร์ บ่ายสองโมง / อาทิตย์ 10:00–11:00 / ยืดหยุ่นได้ทุกวัน"
+      oninput="onPreferredTimeInput(this.value)"
+      rows="3"
+      style="width:100%;padding:16px;border:1.5px solid var(--border);border-radius:14px;font-size:1rem;font-family:'Sarabun',sans-serif;resize:vertical;color:var(--text);background:#fff;outline:none;transition:border-color .2s;box-sizing:border-box;margin-bottom:8px;"
+      onfocus="this.style.borderColor='var(--amber)'"
+      onblur="this.style.borderColor='var(--border)'"></textarea>
 
     <!-- BOOKING SUMMARY + LINE BUTTON -->
     <div class="booking-bar">
@@ -855,35 +835,7 @@
   }
 
   async function loadDynamicBookings() {
-    if (!db) return;
-    try {
-      const [bookRes, blockRes] = await Promise.all([
-        db.from('bookings').select('day_th, time_slot, status').in('status', ['confirmed', 'trial', 'pending']),
-        db.from('blocked_slots').select('day_th, time_slot')
-      ]);
-      dynamicBooked.clear();
-      adminBlocked.clear();
-      const pendingSlots = new Set();
-      window._pendingSlots = pendingSlots;
-      (bookRes.data || []).forEach(b => {
-        const key = b.day_th + '-' + b.time_slot;
-        dynamicBooked.add(key);
-        if (b.status === 'pending' || b.status === 'trial') pendingSlots.add(key);
-      });
-      (blockRes.data || []).forEach(b => {
-        adminBlocked.add(b.day_th + '-' + b.time_slot);
-        dynamicBooked.add(b.day_th + '-' + b.time_slot);
-      });
-    } catch(e) {
-      console.error('loadDynamicBookings error:', e);
-    }
-    buildSchedule(weekdaySlots, weekdays, 'weekday-body');
-    buildSchedule(weekendSlots, weekends, 'weekend-body');
-    if (selectedSlot && dynamicBooked.has(selectedSlot)) {
-      selectedSlot = null; selectedSlotDisplay = null;
-      refreshDisplays(); updateStepper(); updateLineBtn();
-      showToast('⚠️ ช่วงเวลานี้ถูกจองไปแล้ว กรุณาเลือกใหม่');
-    }
+    // No slot grid anymore — nothing to update on the student side
   }
 
   function isAdminOpen() {
@@ -957,9 +909,6 @@
 
   async function createBooking() {
     if (!db) return;
-    const dashIdx = selectedSlot.indexOf('-');
-    const dayTh   = selectedSlot.substring(0, dashIdx);
-    const timeSlot = selectedSlot.substring(dashIdx + 1);
     let studentName = '';
     if (window._lineUserId) {
       const { data: follower } = await db.from('line_followers').select('display_name').eq('line_user_id', window._lineUserId).single();
@@ -968,8 +917,8 @@
     const { error } = await db.from('bookings').insert({
       instrument:    selectedInstrument,
       package:       selectedPkgFull,
-      day_th:        dayTh,
-      time_slot:     timeSlot,
+      day_th:        null,
+      time_slot:     selectedPreferredTime,
       status:        selectedPkg === 'ทดลองเรียนฟรี' ? 'trial' : 'pending',
       student_name:  studentName,
       line_user_id:  window._lineUserId || null
@@ -981,7 +930,7 @@
   let selectedInstrument = null, selectedInstrumentEn = null;
   let selectedPkg = null, selectedPkgPrice = null, selectedPkgFull = null;
   let selectedPkgCard = null;
-  let selectedSlot = null, selectedSlotDisplay = null;
+  let selectedPreferredTime = null;
 
   /* ─── LANGUAGE ─── */
   function setLang(lang) {
@@ -992,13 +941,6 @@
       el.textContent = el.getAttribute('data-' + lang) || el.textContent;
     });
     refreshDisplays();
-    buildSchedule(weekdaySlots, weekdays, 'weekday-body');
-    buildSchedule(weekendSlots, weekends, 'weekend-body');
-    if (selectedSlot) {
-      document.querySelectorAll('.slot').forEach(s => {
-        if (s.dataset.key === selectedSlot) s.classList.add('selected');
-      });
-    }
   }
 
   /* ─── STEPPER ─── */
@@ -1008,13 +950,11 @@
     const s3 = document.getElementById('step3');
     const l1 = document.getElementById('line1');
     const l2 = document.getElementById('line2');
-    const step = selectedInstrument ? (selectedPkg ? (selectedSlot ? 3 : 3) : 2) : 1;
-
     s1.className = 'step ' + (selectedInstrument ? 'done' : 'active');
     l1.className = 'step-line ' + (selectedInstrument ? 'done' : '');
     s2.className = 'step ' + (selectedPkg ? 'done' : (selectedInstrument ? 'active' : ''));
     l2.className = 'step-line ' + (selectedPkg ? 'done' : '');
-    s3.className = 'step ' + (selectedSlot ? 'done' : (selectedPkg ? 'active' : ''));
+    s3.className = 'step ' + (selectedPreferredTime ? 'done' : (selectedPkg ? 'active' : ''));
   }
 
   /* ─── LOCK/UNLOCK ─── */
@@ -1031,15 +971,6 @@
           setTimeout(() => el.classList.add('visible'), i * 80);
         });
       }, 50);
-    }
-    // Guarantee schedule rows exist when schedule section unlocks
-    if (overlayId === 'sched-lock') {
-      setTimeout(() => {
-        if (!document.getElementById('weekday-body').children.length) {
-          buildSchedule(weekdaySlots, weekdays, 'weekday-body');
-          buildSchedule(weekendSlots, weekends, 'weekend-body');
-        }
-      }, 100);
     }
   }
 
@@ -1143,8 +1074,8 @@
     } else {
       pkgEl.textContent = '—'; pkgEl.classList.add('empty');
     }
-    if (selectedSlot) {
-      slotEl.textContent = selectedSlotDisplay;
+    if (selectedPreferredTime) {
+      slotEl.textContent = selectedPreferredTime;
       slotEl.classList.remove('empty');
     } else {
       slotEl.textContent = '—'; slotEl.classList.add('empty');
@@ -1154,15 +1085,22 @@
 
   function updateLineBtn() {
     const btn = document.getElementById('line-confirm-btn');
-    const ready = selectedInstrument && selectedPkg && selectedSlot;
+    const ready = selectedInstrument && selectedPkg && selectedPreferredTime;
     if (ready) btn.classList.remove('disabled');
     else btn.classList.add('disabled');
+  }
+
+  function onPreferredTimeInput(val) {
+    selectedPreferredTime = val.trim() || null;
+    refreshDisplays();
+    updateStepper();
+    updateLineBtn();
   }
 
   /* ─── MODAL ─── */
   function openBookingModal(e) {
     e.preventDefault();
-    if (!selectedInstrument || !selectedPkg || !selectedSlot) return false;
+    if (!selectedInstrument || !selectedPkg || !selectedPreferredTime) return false;
 
     // ต้องมี LINE ID ถึงจะจองได้
     if (!window._lineUserId) {
@@ -1175,7 +1113,7 @@
     // Fill summary
     document.getElementById('modal-instrument').textContent = selectedInstrument || '—';
     document.getElementById('modal-package').textContent = selectedPkgFull || selectedPkg || '—';
-    document.getElementById('modal-slot').textContent = selectedSlotDisplay || selectedSlot || '—';
+    document.getElementById('modal-slot').textContent = selectedPreferredTime || '—';
     document.getElementById('modal-title').textContent = isTrial
       ? (currentLang === 'en' ? 'Book a Free Trial' : 'นัดทดลองเรียน')
       : (currentLang === 'en' ? 'Confirm Booking' : 'ยืนยันการจอง');
