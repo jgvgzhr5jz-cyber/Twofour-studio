@@ -1533,16 +1533,41 @@
     if (!makeupDate) { alert('กรุณากรอกวันชดเชย'); return; }
     var { error } = await db.from('absences').update({ makeup_date: makeupDate, makeup_time: makeupTime, status: 'confirmed' }).eq('id', id);
     if (error) { alert('เกิดข้อผิดพลาด: ' + error.message); return; }
-    if (lineUserId) {
+
+    // ถ้าไม่มี lineUserId → ค้นหาจากชื่อใน line_followers
+    var resolvedLuid = lineUserId;
+    if (!resolvedLuid && studentName) {
+      var { data: followers } = await db.from('line_followers').select('line_user_id, display_name');
+      if (followers) {
+        var match = followers.find(function(f) {
+          return f.display_name && (
+            f.display_name.toLowerCase().includes(studentName.toLowerCase()) ||
+            studentName.toLowerCase().includes(f.display_name.toLowerCase())
+          );
+        });
+        if (match) resolvedLuid = match.line_user_id;
+      }
+    }
+
+    if (resolvedLuid) {
       try {
-        await fetch('https://cwktzexjynavgshdlvhw.supabase.co/functions/v1/notify-makeup', {
+        var res = await fetch('https://cwktzexjynavgshdlvhw.supabase.co/functions/v1/notify-makeup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_ANON },
-          body: JSON.stringify({ line_user_id: lineUserId, makeup_date: makeupDate, makeup_time: makeupTime, student_name: studentName })
+          body: JSON.stringify({ line_user_id: resolvedLuid, makeup_date: makeupDate, makeup_time: makeupTime, student_name: studentName })
         });
-      } catch(e) { console.warn('notify-makeup failed', e); }
+        if (res.ok) {
+          showToast('✅ ยืนยันแล้ว — ส่ง LINE แจ้งนักเรียนแล้ว');
+        } else {
+          showToast('✅ ยืนยันแล้ว ⚠️ ส่ง LINE ไม่สำเร็จ (HTTP ' + res.status + ')');
+        }
+      } catch(e) {
+        showToast('✅ ยืนยันแล้ว ⚠️ ส่ง LINE ไม่สำเร็จ');
+        console.warn('notify-makeup failed', e);
+      }
+    } else {
+      showToast('✅ ยืนยันแล้ว (ไม่พบ LINE ID ของนักเรียน)');
     }
-    showToast('✅ ยืนยันวันชดเชยแล้ว');
     loadAbsences();
   }
 
