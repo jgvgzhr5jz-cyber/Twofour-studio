@@ -20,20 +20,32 @@ async function pushMessage(to: string, text: string) {
 }
 
 serve(async (req) => {
-  // Allow GET (for cron ping) or POST
   const db = createClient(SUPABASE_URL, SUPABASE_KEY)
 
-  // Get tomorrow's Thai day name (Bangkok time = UTC+7)
+  // Detect mode from query string or body
+  const url = new URL(req.url)
+  let mode = url.searchParams.get('mode') ?? 'tomorrow'
+  if (req.method === 'POST') {
+    try {
+      const body = await req.json()
+      if (body?.mode) mode = body.mode
+    } catch { /* ignore */ }
+  }
+
+  // Bangkok time (UTC+7)
   const now = new Date()
   const bangkokNow = new Date(now.getTime() + 7 * 60 * 60 * 1000)
-  const tomorrowDow = (bangkokNow.getUTCDay() + 1) % 7   // 0=Sun…6=Sat
-  const tomorrowTh  = DAY_TH[tomorrowDow]
+  const todayDow    = bangkokNow.getUTCDay()
+  const tomorrowDow = (todayDow + 1) % 7
 
-  // Fetch all confirmed bookings for tomorrow that have a LINE user id
+  const targetDow = mode === 'today' ? todayDow : tomorrowDow
+  const targetDay = DAY_TH[targetDow]
+
+  // Fetch confirmed bookings for target day
   const { data: bookings, error } = await db
     .from('bookings')
     .select('id, student_name, instrument, package, day_th, time_slot, line_user_id')
-    .eq('day_th', tomorrowTh)
+    .eq('day_th', targetDay)
     .eq('status', 'confirmed')
     .not('line_user_id', 'is', null)
 
@@ -44,28 +56,37 @@ serve(async (req) => {
 
   if (!bookings || bookings.length === 0) {
     return new Response(
-      JSON.stringify({ message: `ไม่มีคลาสวัน${tomorrowTh}`, sent: 0 }),
+      JSON.stringify({ message: `ไม่มีคลาสวัน${targetDay}`, sent: 0 }),
       { headers: { 'Content-Type': 'application/json' } }
     )
   }
 
   let sent = 0
   for (const b of bookings) {
-    const text = [
-      '⏰ เตือนความจำ — พรุ่งนี้มีเรียน!',
-      `👤 ${b.student_name}`,
-      `🎸 ${b.instrument} · ${b.package}`,
-      `📅 ${b.day_th} ${b.time_slot}`,
-      '',
-      'พบกันพรุ่งนี้นะครับ 🎵',
-    ].join('\n')
+    const text = mode === 'today'
+      ? [
+          '🌅 วันนี้มีเรียนนะครับ!',
+          `👤 ${b.student_name}`,
+          `🎸 ${b.instrument} · ${b.package}`,
+          `📅 ${b.day_th} ${b.time_slot}`,
+          '',
+          'พบกันวันนี้ครับ 🎵',
+        ].join('\n')
+      : [
+          '⏰ เตือนความจำ — พรุ่งนี้มีเรียน!',
+          `👤 ${b.student_name}`,
+          `🎸 ${b.instrument} · ${b.package}`,
+          `📅 ${b.day_th} ${b.time_slot}`,
+          '',
+          'พบกันพรุ่งนี้นะครับ 🎵',
+        ].join('\n')
 
     const ok = await pushMessage(b.line_user_id, text)
     if (ok) sent++
   }
 
   return new Response(
-    JSON.stringify({ message: `ส่งการแจ้งเตือนวัน${tomorrowTh}`, total: bookings.length, sent }),
+    JSON.stringify({ message: `ส่งการแจ้งเตือนวัน${targetDay}`, mode, total: bookings.length, sent }),
     { headers: { 'Content-Type': 'application/json' } }
   )
 })
