@@ -302,20 +302,49 @@ serve(async (req) => {
         }
 
       } else {
-        // Unknown message — send booking link + menu (max once per day)
-        if (!sentMenuToday()) {
-          const bookingLink = `https://twofour-studio.vercel.app?luid=${userId}&t=${Date.now()}`
+        // Check if user has a pending/trial booking waiting for confirmation
+        const { data: pendingBookings } = await db
+          .from('bookings')
+          .select('id, instrument, package, day_th, time_slot')
+          .eq('line_user_id', userId)
+          .in('status', ['pending', 'trial'])
+          .order('created_at', { ascending: false })
+          .limit(1)
+
+        if (pendingBookings && pendingBookings.length > 0) {
+          const b = pendingBookings[0]
           await pushMessage(userId, [
-            `สวัสดีครับ ${displayName ? displayName + ' ' : ''}👋`,
+            `ขอบคุณที่ทักมานะครับ ${displayName ? displayName + ' ' : ''}🙏`,
             '',
-            '🔗 กดลิงก์นี้เพื่อดูตารางและจองคลาส:',
-            bookingLink,
+            `📋 คำขอจองของคุณ:`,
+            `🎸 ${b.instrument} · ${b.package}`,
+            `📅 ${b.day_th} ${b.time_slot}`,
             '',
-            'หรือพิมพ์คำสั่งด้านล่าง:',
-            '📅 "ดูตาราง" — ดูช่วงว่างและจองผ่านแชท',
-            '🙏 "แจ้งลา" — แจ้งขาดเรียน',
+            'รบกวนแจ้งชื่อ-นามสกุล และเบอร์โทรศัพท์ในข้อความเดียวได้เลยครับ',
+            'ตัวอย่าง: สมชาย ใจดี 081-234-5678',
           ].join('\n'))
-          await markMenuSent()
+          await db.from('line_followers')
+            .update({
+              state: 'awaiting_confirm_info',
+              state_data: { ts: Date.now(), booking_id: b.id, instrument: b.instrument, package: b.package, day_th: b.day_th, time_slot: b.time_slot },
+            })
+            .eq('line_user_id', userId)
+        } else {
+          // No pending booking — send link + menu (max once per day)
+          if (!sentMenuToday()) {
+            const bookingLink = `https://twofour-studio.vercel.app?luid=${userId}&t=${Date.now()}`
+            await pushMessage(userId, [
+              `สวัสดีครับ ${displayName ? displayName + ' ' : ''}👋`,
+              '',
+              '🔗 กดลิงก์นี้เพื่อดูตารางและจองคลาส:',
+              bookingLink,
+              '',
+              'หรือพิมพ์คำสั่งด้านล่าง:',
+              '📅 "ดูตาราง" — ดูช่วงว่างและจองผ่านแชท',
+              '🙏 "แจ้งลา" — แจ้งขาดเรียน',
+            ].join('\n'))
+            await markMenuSent()
+          }
         }
       }
       continue
@@ -578,6 +607,52 @@ serve(async (req) => {
           '',
           'ไปยืนยันที่ Admin Panel',
         ].join('\n'))
+      }
+      continue
+    }
+
+    // ── State: awaiting_confirm_info ──────────────────────────────────────────
+    if (currentState === 'awaiting_confirm_info') {
+      const { booking_id, instrument, package: pkg, day_th, time_slot } = stateData
+
+      // Save name + phone to booking
+      await db.from('bookings')
+        .update({ student_name: messageText, phone: messageText })
+        .eq('id', booking_id)
+
+      // Parse: last word as phone if it looks like a number, rest as name
+      const parts = messageText.trim().split(/\s+/)
+      const lastPart = parts[parts.length - 1]
+      const isPhone = /^[0-9\-+]{8,}$/.test(lastPart.replace(/-/g, ''))
+      const phone = isPhone ? lastPart : ''
+      const name = isPhone ? parts.slice(0, -1).join(' ') : messageText
+
+      await db.from('bookings')
+        .update({ student_name: name || messageText, phone: phone || null })
+        .eq('id', booking_id)
+
+      await resetState(db, userId)
+
+      await pushMessage(userId, [
+        '✅ ได้รับข้อมูลแล้วครับ!',
+        `👤 ${name || messageText}`,
+        phone ? `📞 ${phone}` : '',
+        `🎸 ${instrument} · ${pkg}`,
+        `📅 ${day_th} ${time_slot}`,
+        '',
+        'รอครูยืนยันและติดต่อกลับนะครับ 🙏',
+      ].filter(Boolean).join('\n'))
+
+      if (ADMIN_LINE_ID) {
+        await pushMessage(ADMIN_LINE_ID, [
+          '🔔 นักเรียนยืนยันการจองแล้ว!',
+          `👤 ${name || messageText}`,
+          phone ? `📞 ${phone}` : '',
+          `🎸 ${instrument} · ${pkg}`,
+          `📅 ${day_th} ${time_slot}`,
+          '',
+          '👉 ยืนยันได้ที่: https://twofour-studio.vercel.app/?admin',
+        ].filter(Boolean).join('\n'))
       }
       continue
     }
