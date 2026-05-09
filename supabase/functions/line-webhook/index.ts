@@ -414,7 +414,20 @@ serve(async (req) => {
     // ── State: entering_name ──────────────────────────────────────────────────
     if (currentState === 'entering_name') {
       const name = messageText
-      const { slot_day, slot_time, instrument, package: pkg } = stateData
+      await pushMessage(userId, '📞 เบอร์โทรศัพท์ของคุณครับ?')
+      await db.from('line_followers')
+        .update({
+          state: 'entering_phone',
+          state_data: { ...stateData, ts: Date.now(), student_name: name },
+        })
+        .eq('line_user_id', userId)
+      continue
+    }
+
+    // ── State: entering_phone ─────────────────────────────────────────────────
+    if (currentState === 'entering_phone') {
+      const { slot_day, slot_time, instrument, package: pkg, student_name: name } = stateData
+      const phone = messageText
       const status = pkg === 'ทดลองเรียนฟรี (20 นาที)' ? 'trial' : 'pending'
 
       await db.from('bookings').insert({
@@ -424,6 +437,7 @@ serve(async (req) => {
         time_slot: slot_time,
         status,
         student_name: name,
+        phone,
         line_user_id: userId,
       })
 
@@ -432,6 +446,7 @@ serve(async (req) => {
       await pushMessage(userId, [
         '✅ จองเรียบร้อยแล้ว!',
         `👤 ${name}`,
+        `📞 ${phone}`,
         `🎸 ${instrument} · ${pkg}`,
         `📅 ${slot_day} ${slot_time}`,
         '',
@@ -442,6 +457,7 @@ serve(async (req) => {
         await pushMessage(ADMIN_LINE_ID, [
           '🔔 มีการจองใหม่! (จากไลน์)',
           `👤 ${name}`,
+          `📞 ${phone}`,
           `🎸 ${instrument} · ${pkg}`,
           `📅 ${slot_day} ${slot_time}`,
         ].join('\n'))
