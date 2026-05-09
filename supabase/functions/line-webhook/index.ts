@@ -395,7 +395,7 @@ serve(async (req) => {
         continue
       }
       const pkg = PACKAGES[num - 1]
-      await pushMessage(userId, '👤 ชื่อที่ต้องการให้ครูเรียก?')
+      await pushMessage(userId, '👤 ชื่อที่ใช้ติดต่อของคุณคืออะไรครับ?')
       await db.from('line_followers')
         .update({
           state: 'entering_name',
