@@ -254,15 +254,18 @@ serve(async (req) => {
         }
 
       } else if (messageText === 'สนใจ' || messageText === 'สนใจเรียน' || messageText === 'อยากเรียน' || messageText === 'สอบถาม') {
-        const bookingLink = `https://twofour-studio.vercel.app?luid=${userId}&t=${Date.now()}`
-        await pushMessage(userId, [
-          `สวัสดีครับ ${displayName ? displayName + ' ' : ''}ยินดีต้อนรับสู่ TWOFOUR Studio 🎵`,
-          '',
-          '🔗 กดลิงก์นี้เพื่อดูตารางและจองคลาส:',
-          bookingLink,
-          '',
-          'ระบบจะจำ LINE ของคุณอัตโนมัติครับ — จองเสร็จแล้วจะได้รับการยืนยันทาง LINE เลย 🙏',
-        ].join('\n'))
+        if (!sentMenuToday()) {
+          const bookingLink = `https://twofour-studio.vercel.app?luid=${userId}&t=${Date.now()}`
+          await pushMessage(userId, [
+            `สวัสดีครับ ${displayName ? displayName + ' ' : ''}ยินดีต้อนรับสู่ TWOFOUR Studio 🎵`,
+            '',
+            '🔗 กดลิงก์นี้เพื่อดูตารางและจองคลาส:',
+            bookingLink,
+            '',
+            'ระบบจะจำ LINE ของคุณอัตโนมัติครับ — จองเสร็จแล้วจะได้รับการยืนยันทาง LINE เลย 🙏',
+          ].join('\n'))
+          await markMenuSent()
+        }
 
       } else if (messageText === 'แจ้งลา') {
         const { data: bookings } = await db
