@@ -1735,7 +1735,7 @@
       for (var si = 0; si < grp.slots.length; si++) {
         for (var di = 0; di < grp.days.length; di++) {
           var key = grp.days[di].th + '-' + grp.slots[si];
-          if (!adminBlocked.has(key) && !booked.has(key)) {
+          if (!adminBlocked.has(key)) {
             toInsert.push({ day_th: grp.days[di].th, time_slot: grp.slots[si] });
           }
         }
@@ -1831,9 +1831,7 @@
           var key = grp.days[dj].th + '-' + slot;
           var dayTh = grp.days[dj].th;
           var btnS = 'display:block;width:100%;margin-top:4px;padding:3px 0;border:none;border-radius:6px;font-size:.68rem;font-weight:700;cursor:pointer;';
-          if (booked.has(key)) {
-            out += '<td style="' + tdS + 'background:#fce8e8;color:#c0392b;font-size:.72rem;">ไม่ว่าง<br><span style="font-size:.65rem;color:#aaa;">ถาวร</span></td>';
-          } else if (bookingMap[key]) {
+          if (bookingMap[key]) {
             var bk = bookingMap[key];
             var bg = bk.status === 'confirmed' ? '#e8f5e9' : bk.status === 'trial' ? '#e0f2f1' : '#fff3e0';
             var fg = bk.status === 'confirmed' ? '#1e7e34' : bk.status === 'trial' ? '#00695c' : '#e65100';
