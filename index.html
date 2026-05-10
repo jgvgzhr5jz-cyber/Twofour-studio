@@ -916,12 +916,9 @@
       days.forEach(day => {
         const td = document.createElement('td');
         const key = `${day.th}-${time}`;
-        if (adminBlocked.has(key) || (dynamicBooked.has(key) && !(window._pendingSlots && window._pendingSlots.has(key)))) {
+        if (adminBlocked.has(key) || dynamicBooked.has(key)) {
           td.className = 'slot booked';
           td.textContent = currentLang === 'th' ? 'ไม่ว่าง' : 'Booked';
-        } else if (window._pendingSlots && window._pendingSlots.has(key)) {
-          td.className = 'slot pending';
-          td.textContent = currentLang === 'th' ? 'รอยืนยัน' : 'Pending';
         } else {
           td.className = 'slot'; td.dataset.key = key;
           td.textContent = currentLang === 'th' ? 'ว่าง' : 'Open';
