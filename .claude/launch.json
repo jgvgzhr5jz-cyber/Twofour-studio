@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "twofour",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/taah/Twofour-studio && python3 -m http.server 3333"],
+      "port": 3333
+    }
+  ]
+}
