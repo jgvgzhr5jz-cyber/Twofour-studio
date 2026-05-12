@@ -422,7 +422,7 @@
         <div class="pkg-benefit" data-th="สรุปบทเรียนทุกครั้ง" data-en="Notes every session">สรุปบทเรียนทุกครั้ง</div>
         <div class="pkg-benefit" data-th="สอนตัวต่อตัว 100%" data-en="100% one-on-one">สอนตัวต่อตัว 100%</div>
         <button class="pkg-select-btn">
-          <span data-th="ดูตารางเรียน →" data-en="See Schedule →">ดูตารางเรียน →</span>
+          <span data-th="ดูแพ็กเกจ →" data-en="See Packages →">ดูแพ็กเกจ →</span>
         </button>
       </div>
 
@@ -442,7 +442,7 @@
         <div class="pkg-benefit" data-th="สอนตัวต่อตัว 100%" data-en="100% one-on-one">สอนตัวต่อตัว 100%</div>
         <div class="pkg-benefit" data-th="วางแผนหลักสูตรเฉพาะบุคคล" data-en="Personalised curriculum">วางแผนหลักสูตรเฉพาะบุคคล</div>
         <button class="pkg-select-btn">
-          <span data-th="ดูตารางเรียน →" data-en="See Schedule →">ดูตารางเรียน →</span>
+          <span data-th="ดูแพ็กเกจ →" data-en="See Packages →">ดูแพ็กเกจ →</span>
         </button>
       </div>
 
@@ -501,7 +501,7 @@
           </div>
         </div>
         <button class="pkg-select-btn" style="border-color:rgba(11,148,136,.4);color:var(--teal);margin-top:12px;">
-          <span data-th="ดูตารางเรียน →" data-en="See Schedule →">ดูตารางเรียน →</span>
+          <span data-th="ดูแพ็กเกจ →" data-en="See Packages →">ดูแพ็กเกจ →</span>
         </button>
       </div>
 
@@ -713,6 +713,27 @@
       <button class="modal-close-btn" onclick="closeModal()">
         <span data-th="ยกเลิก" data-en="Cancel">ยกเลิก</span>
       </button>
+    </div>
+
+    <!-- ─── Payment QR step (shown after booking saved) ─── -->
+    <div id="modal-payment" style="display:none;">
+      <div style="font-size:2.4rem;margin-bottom:6px;">💳</div>
+      <h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:2px;margin-bottom:4px;">ชำระเงิน</h2>
+      <p style="color:var(--muted);font-size:.88rem;margin-bottom:12px;">สแกน QR PromptPay ด้านล่างเพื่อชำระค่าเรียน</p>
+      <img id="qr-img" src="" alt="PromptPay QR" style="width:210px;height:210px;display:block;margin:0 auto 14px;border-radius:12px;border:3px solid var(--amber);">
+      <div class="modal-summary" style="text-align:left;">
+        <div><span>ยอดชำระ</span><br><strong id="qr-amount" style="color:var(--amber2);font-size:1.1rem;">—</strong></div>
+        <div style="margin-top:6px;"><span>ชื่อบัญชี</span><br><strong>TWOFOUR Studio</strong></div>
+        <div style="margin-top:6px;"><span>พร้อมเพย์</span><br><strong>091-821-0201</strong></div>
+      </div>
+      <p style="color:var(--muted);font-size:.82rem;margin:12px 0 16px;line-height:1.6;">หลังโอนแล้ว กรุณาส่งสลิปมาที่ LINE<br>ครูจะยืนยันการจองให้ครับ 🙏</p>
+      <div class="modal-actions">
+        <a href="https://line.me/ti/p/@948fqjac" target="_blank" class="modal-line-btn" style="width:100%;justify-content:center;">
+          <svg viewBox="0 0 48 48" fill="none" width="22" height="22"><rect width="48" height="48" rx="12" fill="white" fill-opacity="0.2"/><path d="M24 8C15.163 8 8 14.268 8 22c0 5.437 3.455 10.178 8.64 12.883-.378 1.41-1.371 5.117-1.571 5.908-.247.974.355 1.96 1.33 1.96.247 0 .5-.07.726-.213L23.957 38.8c.013 0 .028.002.043.002C32.837 38.802 40 32.534 40 22 40 14.268 32.837 8 24 8z" fill="white"/></svg>
+          ส่งสลิปใน LINE
+        </a>
+        <button class="modal-close-btn" onclick="closeModal()">ปิด</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1254,12 +1275,46 @@
     else       { btn.style.opacity = '.5'; btn.style.pointerEvents = 'none'; }
   }
 
+  const PKG_PRICES = { 'Short Course': 2000, 'Full Course': 5500, 'Special Skill': 6000 };
+
+  function promptPayPayload(phone, amount) {
+    const normalized = '0066' + phone.replace(/^0/, '').replace(/\D/g, '');
+    const acctInfo = '0016A000000677010111' + '0113' + normalized;
+    let payload = '000201010212' + '29' + String(acctInfo.length).padStart(2,'0') + acctInfo + '5303764';
+    if (amount > 0) {
+      const a = amount.toFixed(2);
+      payload += '54' + String(a.length).padStart(2,'0') + a;
+    }
+    payload += '5802TH6304';
+    let crc = 0xFFFF;
+    for (let i = 0; i < payload.length; i++) {
+      crc ^= payload.charCodeAt(i) << 8;
+      for (let j = 0; j < 8; j++) crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) & 0xFFFF : (crc << 1) & 0xFFFF;
+    }
+    return payload + crc.toString(16).toUpperCase().padStart(4,'0');
+  }
+
   async function confirmBooking() {
     const name = (document.getElementById('modal-name')?.value || '').trim();
     if (!name) { document.getElementById('modal-name').focus(); return; }
     await createBooking();
-    window.open(`https://line.me/ti/p/@${LINE_ID}`, '_blank');
-    closeModal();
+    const isTrial = selectedPkg === 'ทดลองเรียนฟรี';
+    if (isTrial) {
+      window.open(`https://line.me/ti/p/@${LINE_ID}`, '_blank');
+      closeModal();
+      return;
+    }
+    const amount = PKG_PRICES[selectedPkg] || 0;
+    const payload = promptPayPayload('0918210201', amount);
+    const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' + encodeURIComponent(payload);
+    document.getElementById('qr-img').src = qrUrl;
+    document.getElementById('qr-amount').textContent = '฿' + amount.toLocaleString();
+    document.getElementById('modal-payment').style.display = 'block';
+    document.querySelector('#modal .modal-icon').style.display = 'none';
+    document.querySelector('#modal h2#modal-title').style.display = 'none';
+    document.querySelector('#modal .modal-summary').style.display = 'none';
+    document.querySelector('#modal div[style*="margin:14px"]').style.display = 'none';
+    document.querySelector('#modal .modal-actions').style.display = 'none';
   }
 
   function closeModal() {
@@ -1267,6 +1322,12 @@
     overlay.classList.remove('open');
     overlay.style.height = '';
     overlay.style.top = '';
+    document.getElementById('modal-payment').style.display = 'none';
+    document.querySelector('#modal .modal-icon').style.display = '';
+    document.querySelector('#modal h2#modal-title').style.display = '';
+    document.querySelector('#modal .modal-summary').style.display = '';
+    document.querySelector('#modal div[style*="margin:14px"]').style.display = '';
+    document.querySelector('#modal .modal-actions').style.display = '';
   }
   document.getElementById('modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
 
