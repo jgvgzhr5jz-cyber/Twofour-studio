@@ -836,7 +836,11 @@
             <input id="sf-day" placeholder="วันประจำ (เช่น จันทร์)" style="flex:1;padding:10px 12px;border:1.5px solid #e0d8c8;border-radius:10px;font-size:.88rem;font-family:'Sarabun',sans-serif;box-sizing:border-box;"/>
             <input id="sf-time" placeholder="เวลา (เช่น 15:00)" style="flex:1;padding:10px 12px;border:1.5px solid #e0d8c8;border-radius:10px;font-size:.88rem;font-family:'Sarabun',sans-serif;box-sizing:border-box;"/>
           </div>
-          <input id="sf-line" placeholder="LINE ID หรือชื่อ LINE" style="width:100%;padding:10px 12px;border:1.5px solid #e0d8c8;border-radius:10px;font-size:.88rem;font-family:'Sarabun',sans-serif;box-sizing:border-box;margin-bottom:8px;"/>
+          <div style="display:flex;gap:8px;margin-bottom:8px;">
+            <input id="sf-phone" type="tel" placeholder="เบอร์มือถือ" style="flex:1;padding:10px 12px;border:1.5px solid #e0d8c8;border-radius:10px;font-size:.88rem;font-family:'Sarabun',sans-serif;box-sizing:border-box;"/>
+            <input id="sf-line-name" placeholder="ชื่อ LINE" style="flex:1;padding:10px 12px;border:1.5px solid #e0d8c8;border-radius:10px;font-size:.88rem;font-family:'Sarabun',sans-serif;box-sizing:border-box;"/>
+          </div>
+          <input id="sf-line" placeholder="LINE User ID (ระบบ)" style="width:100%;padding:10px 12px;border:1.5px solid #e0d8c8;border-radius:10px;font-size:.88rem;font-family:'Sarabun',sans-serif;box-sizing:border-box;margin-bottom:8px;"/>
           <textarea id="sf-notes" placeholder="หมายเหตุ" rows="2" style="width:100%;padding:10px 12px;border:1.5px solid #e0d8c8;border-radius:10px;font-size:.88rem;font-family:'Sarabun',sans-serif;box-sizing:border-box;resize:none;margin-bottom:10px;"></textarea>
           <div style="display:flex;gap:8px;">
             <button onclick="saveStudent()" style="flex:1;padding:11px;background:#e8960a;color:#fff;border:none;border-radius:10px;font-size:.88rem;font-weight:700;cursor:pointer;">💾 บันทึก</button>
@@ -1782,6 +1786,8 @@
     document.getElementById('sf-sessions-used').value  = s ? s.sessions_used : 0;
     document.getElementById('sf-day').value         = s ? s.regular_day : '';
     document.getElementById('sf-time').value        = s ? s.regular_time : '';
+    document.getElementById('sf-phone').value        = s ? (s.phone || '') : '';
+    document.getElementById('sf-line-name').value   = s ? (s.line_display_name || '') : '';
     document.getElementById('sf-line').value        = s ? s.line_id : '';
     document.getElementById('sf-notes').value       = s ? s.notes : '';
     document.getElementById('student-form-wrap').style.display = 'block';
@@ -1798,8 +1804,10 @@
       sessions_used:  parseInt(document.getElementById('sf-sessions-used').value)  || 0,
       regular_day:  document.getElementById('sf-day').value.trim(),
       regular_time: document.getElementById('sf-time').value.trim(),
-      line_id: document.getElementById('sf-line').value.trim(),
-      notes:   document.getElementById('sf-notes').value.trim()
+      phone:             document.getElementById('sf-phone').value.trim(),
+      line_display_name: document.getElementById('sf-line-name').value.trim(),
+      line_id:           document.getElementById('sf-line').value.trim(),
+      notes:             document.getElementById('sf-notes').value.trim()
     };
     var err;
     if (window._editStudentId) {
@@ -1923,7 +1931,8 @@
         + (s.instrument ? '🎸 ' + s.instrument : '')
         + (s.regular_day ? ' · 📅 ' + s.regular_day + (s.regular_time ? ' ' + s.regular_time : '') : '')
         + '</div>'
-        + (s.line_id ? '<div style="font-size:.78rem;color:#06C755;margin-top:2px;">💬 ' + s.line_id + '</div>' : '')
+        + (s.phone ? '<div style="font-size:.78rem;color:#555;margin-top:2px;">📞 ' + s.phone + '</div>' : '')
+        + (s.line_display_name ? '<div style="font-size:.78rem;color:#06C755;margin-top:2px;">💬 ' + s.line_display_name + '</div>' : (s.line_id ? '<div style="font-size:.78rem;color:#06C755;margin-top:2px;">💬 ' + s.line_id + '</div>' : ''))
         + (s.notes ? '<div style="font-size:.78rem;color:#aaa;margin-top:2px;">📝 ' + s.notes + '</div>' : '')
         + '</div>'
         + (s.sessions_total > 0 && remaining <= 0 ? '<span style="background:#fde8e8;color:#c0392b;font-size:.72rem;font-weight:700;padding:3px 8px;border-radius:100px;">🔴 หมดแล้ว</span>' : remaining <= 2 && s.sessions_total > 0 ? '<span style="background:#fff3e0;color:#e8960a;font-size:.72rem;font-weight:700;padding:3px 8px;border-radius:100px;">⚠️ ใกล้หมด</span>' : '')
