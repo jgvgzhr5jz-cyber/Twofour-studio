@@ -1076,7 +1076,7 @@
       phone:        phone || null,
       line_user_id: window._lineUserId || null
     });
-    if (error) { console.error('Booking insert error:', error); return; }
+    if (error) { console.error('Booking insert error:', error); throw error; }
 
     // แจ้ง admin ผ่าน LINE push โดยตรง
     const EDGE = 'https://cwktzexjynavgshdlvhw.supabase.co/functions/v1/notify-new-booking';
@@ -1298,10 +1298,24 @@
     return payload + crc.toString(16).toUpperCase().padStart(4,'0');
   }
 
+  let _bookingInProgress = false;
   async function confirmBooking() {
+    if (_bookingInProgress) return;
     const name = (document.getElementById('modal-name')?.value || '').trim();
     if (!name) { document.getElementById('modal-name').focus(); return; }
-    await createBooking();
+    _bookingInProgress = true;
+    const btn = document.getElementById('modal-line-link');
+    const origHTML = btn.innerHTML;
+    btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none';
+    btn.innerHTML = '<span>กำลังบันทึก…</span>';
+    try {
+      await createBooking();
+    } catch(e) {
+      btn.innerHTML = origHTML; btn.style.opacity = ''; btn.style.pointerEvents = '';
+      _bookingInProgress = false;
+      showToast('❌ เกิดข้อผิดพลาด กรุณาลองใหม่');
+      return;
+    }
     const isTrial = selectedPkg === 'ทดลองเรียนฟรี';
     if (isTrial) {
       window.open(`https://line.me/ti/p/@${LINE_ID}`, '_blank');
@@ -1322,6 +1336,7 @@
   }
 
   function closeModal() {
+    _bookingInProgress = false;
     var overlay = document.getElementById('modal');
     overlay.classList.remove('open');
     overlay.style.height = '';
