@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scale Explorer – TWOFOUR Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Prompt:wght@700;900&family=DM+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+/* Bravura — SMuFL standard music notation font (via jsDelivr CDN) */
+@font-face {
+  font-family: 'Bravura';
+  src: url('https://cdn.jsdelivr.net/gh/steinbergmedia/bravura/redist/woff/Bravura.woff2') format('woff2'),
+       url('https://cdn.jsdelivr.net/gh/steinbergmedia/bravura/redist/woff/Bravura.woff') format('woff');
+  font-display: swap;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:     #FDFCF8;
+  --surf:   #F5EDE0;
+  --brd:    #E4D4BC;
+  --acc:    #E8960A;
+  --teal:   #0B9488;
+  --text:   #1A1208;
+  --muted:  #8B7A60;
+  --gold:   #C97D08;
+}
+body { background:var(--bg); color:var(--text); font-family:'DM Sans',-apple-system,'Segoe UI',sans-serif; min-height:100vh; }
+
+/* ── Header ─────────────────────────────────────────── */
+.hdr {
+  background: var(--bg);
+  padding: 14px 20px 12px;
+  border-bottom: 2.5px solid var(--acc);
+  display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap;
+}
+.hdr-left { flex-shrink: 0; }
+.hdr-logo { display:block; height:40px; width:auto; }
+.hdr-name { font-size:24px; font-weight:900; color:var(--text); letter-spacing:-0.5px; line-height:1; font-family:'Prompt',sans-serif; margin-top:4px; }
+.hdr-name .key-accent { color:var(--acc); }
+.hdr-sub  { font-size:11px; color:var(--muted); margin-top:3px; }
+.chips    { display:flex; gap:6px; flex-wrap:wrap; align-items:center; padding-top:2px; }
+.chip {
+  display:flex; flex-direction:column; align-items:center;
+  background:#fff; border:1.5px solid var(--brd);
+  border-radius:9px; padding:4px 11px; min-width:38px; transition:transform .1s;
+  color:var(--text);
+}
+.chip:hover { transform:translateY(-1px); border-color:var(--acc); }
+.chip.root { background:var(--acc); border-color:var(--gold); color:#fff; }
+.chip .cn  { font-size:15px; font-weight:800; line-height:1.2; }
+.chip .ci  { font-size:10px; opacity:.7; }
+
+/* Header right controls */
+.hdr-right { margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
+.btn-row   { display:flex; gap:5px; }
+.icon-btn  {
+  padding:5px 12px; border-radius:7px;
+  border:1.5px solid var(--brd); background:#fff; color:var(--muted);
+  cursor:pointer; font-size:11px; font-weight:700; letter-spacing:.5px; transition:all .15s;
+  font-family:'DM Sans',sans-serif;
+}
+.icon-btn:hover { color:var(--text); border-color:var(--gold); }
+.icon-btn.on { background:var(--acc); border-color:var(--acc); color:#fff; }
+.icon-btn.lang-on { background:var(--text); border-color:var(--text); color:var(--bg); }
+
+/* ── Tabs ────────────────────────────────────────────── */
+.tabs {
+  display:flex; background:#fff;
+  border-bottom:1.5px solid var(--brd);
+  padding:0 20px; overflow-x:auto; scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar { display:none; }
+.tab-btn {
+  padding:12px 16px; background:none; border:none;
+  border-bottom:3px solid transparent; color:var(--muted);
+  cursor:pointer; font-size:13px; font-weight:700;
+  white-space:nowrap; margin-bottom:-1px; transition:all .15s;
+  font-family:'DM Sans',sans-serif;
+}
+.tab-btn:hover { color:var(--text); }
+.tab-btn.on { color:var(--acc); border-bottom-color:var(--acc); }
+
+/* ── Sections ────────────────────────────────────────── */
+.sec { display:none; }
+.sec.on { display:block; }
+
+/* ── Controls bar ────────────────────────────────────── */
+.ctrl {
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  padding:10px 20px; background:#FAF4EB;
+  border-bottom:1px solid var(--brd);
+}
+.ctrl-lbl {
+  font-size:11px; font-weight:700; letter-spacing:.8px;
+  text-transform:uppercase; color:var(--muted);
+}
+.pill {
+  padding:6px 14px; border-radius:20px;
+  border:1.5px solid var(--brd); background:#fff; color:var(--muted);
+  cursor:pointer; font-size:12px; font-weight:800;
+  letter-spacing:.3px; transition:all .15s;
+  font-family:'DM Sans',sans-serif;
+}
+.pill:hover { color:var(--text); border-color:var(--acc); }
+.pill.on { color:#fff; border-color:var(--acc); background:var(--acc); }
+.pill-open, .pill-fret12 {
+  position:relative;
+}
+.pill-open .open-badge {
+  position:absolute; top:-7px; right:-6px;
+  background:var(--teal); color:#fff;
+  font-size:7px; font-weight:900; letter-spacing:.5px;
+  padding:1px 4px; border-radius:4px; white-space:nowrap;
+}
+.pill-fret12 .fret12-badge {
+  position:absolute; top:-7px; right:-6px;
+  background:var(--acc); color:#fff;
+  font-size:7px; font-weight:900; letter-spacing:.3px;
+  padding:1px 4px; border-radius:4px; white-space:nowrap;
+}
+
+/* Open shape notice */
+.open-notice {
+  display:flex; align-items:center; gap:6px;
+  padding:7px 12px; border-radius:8px;
+  background:rgba(11,148,136,.08); border:1px solid rgba(11,148,136,.25);
+  font-size:11px; color:var(--teal); font-weight:600;
+}
+
+/* ── Fretboard ───────────────────────────────────────── */
+.fb-wrap {
+  padding:20px 20px 8px; overflow-x:auto;
+  scrollbar-width:thin; scrollbar-color:#d0c4b4 transparent;
+}
+.fb-wrap::-webkit-scrollbar { height:5px; }
+.fb-wrap::-webkit-scrollbar-thumb { background:#d0c4b4; border-radius:3px; }
+.fb-wrap svg { display:block; }
+
+/* ── Info panel ──────────────────────────────────────── */
+.info {
+  margin:6px 20px 20px; padding:12px 16px;
+  background:#fff; border:1.5px solid var(--brd);
+  border-radius:10px; font-size:13px;
+}
+.info-row { display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+.info-lbl {
+  color:var(--muted); font-size:11px; font-weight:700;
+  text-transform:uppercase; letter-spacing:.8px; margin-right:2px;
+}
+.badge {
+  display:flex; align-items:center; gap:5px;
+  background:var(--surf); border:1px solid var(--brd);
+  border-radius:7px; padding:3px 9px 3px 7px; font-size:12px;
+  color:var(--text);
+}
+.bdot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+
+/* ── Circle of Fifths ───────────────────────────────── */
+.cof-section {
+  display:flex; justify-content:center; align-items:center;
+  padding:10px 20px 6px;
+  background:#FAF4EB;
+  border-bottom:1px solid var(--brd);
+}
+.cof-lbl {
+  font-size:10px; letter-spacing:2px; text-transform:uppercase;
+  color:var(--muted); text-align:center; margin-bottom:4px;
+}
+
+/* ── Legend ──────────────────────────────────────────── */
+.legend {
+  display:flex; gap:16px; padding:0 20px 16px;
+  font-size:12px; color:var(--muted); align-items:center; flex-wrap:wrap;
+}
+.leg-item { display:flex; align-items:center; gap:5px; }
+.leg-dot  { width:13px; height:13px; border-radius:50%; }
+
+/* ── Piano & Staff ───────────────────────────────────── */
+.piano-wrap, .staff-wrap {
+  padding:16px 20px 8px; overflow-x:auto;
+  scrollbar-width:thin; scrollbar-color:#d0c4b4 transparent;
+}
+.staff-wrap { padding-top:4px; padding-bottom:20px; }
+.piano-wrap::-webkit-scrollbar, .staff-wrap::-webkit-scrollbar { height:5px; }
+.piano-wrap::-webkit-scrollbar-thumb, .staff-wrap::-webkit-scrollbar-thumb { background:#d0c4b4; border-radius:3px; }
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══════════════════════════════════════ -->
+<div class="hdr">
+  <div class="hdr-left">
+    <!-- TWOFOUR STUDIO logo (inline from logo.svg) -->
+    <svg class="hdr-logo" viewBox="0 200 600 250" xmlns="http://www.w3.org/2000/svg" aria-label="TWOFOUR STUDIO">
+      <text x="300" y="298" text-anchor="middle"
+        font-family="'Bebas Neue', Impact, 'Arial Black', sans-serif"
+        font-size="114" textLength="520" lengthAdjust="spacingAndGlyphs"
+        fill="#1a1208">TWOFOUR</text>
+      <text x="300" y="418" text-anchor="middle"
+        font-family="'Bebas Neue', Impact, 'Arial Black', sans-serif"
+        font-size="114" textLength="520" lengthAdjust="spacingAndGlyphs"
+        fill="#c8870a">STUDIO</text>
+    </svg>
+    <div class="hdr-name" id="hdr-name">C Major</div>
+    <div class="hdr-sub"  id="hdr-sub" >C · D · E · F · G · A · B</div>
+  </div>
+  <div class="chips" id="chips"></div>
+  <div class="hdr-right">
+    <div class="btn-row">
+      <button class="icon-btn on"  id="dInt"  data-i18n="dispInterval">Interval</button>
+      <button class="icon-btn"     id="dNote" data-i18n="dispNote">Note</button>
+    </div>
+    <div class="btn-row">
+      <button class="icon-btn lang-on" id="langEN" data-lang="en">EN</button>
+      <button class="icon-btn"         id="langTH" data-lang="th">TH</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CIRCLE OF FIFTHS KEY SELECTOR ════════════════ -->
+<div class="cof-section">
+  <div>
+    <div class="cof-lbl" data-i18n="ctrlKey">Key</div>
+    <div id="cof-wrap"></div>
+  </div>
+</div>
+
+<!-- ═══ TABS ══════════════════════════════════════════ -->
+<div class="tabs">
+  <button class="tab-btn on"  data-tab="caged" data-i18n="tabCaged">CAGED System</button>
+  <button class="tab-btn"     data-tab="form7" data-i18n="tabForm7">7-Form (3NPS)</button>
+  <button class="tab-btn"     data-tab="full"  data-i18n="tabFull">Full Board</button>
+  <button class="tab-btn"     data-tab="str"   data-i18n="tabStr">Single String</button>
+  <button class="tab-btn"     data-tab="piano" data-i18n="tabPiano">Piano &amp; Staff</button>
+</div>
+
+<!-- ═══ CAGED ═════════════════════════════════════════ -->
+<div id="s-caged" class="sec on">
+  <div class="ctrl">
+    <span class="ctrl-lbl" data-i18n="ctrlShape">Shape</span>
+    <div id="caged-btns" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    <div id="open-notice" style="display:none" class="open-notice">
+      🔓 <span data-i18n="openNotice">Open String Shape — uses open strings (fret 0)</span>
+    </div>
+  </div>
+  <div class="fb-wrap"><svg id="sv-caged"></svg></div>
+  <div class="info" id="inf-caged"></div>
+</div>
+
+<!-- ═══ 7-FORM ════════════════════════════════════════ -->
+<div id="s-form7" class="sec">
+  <div class="ctrl">
+    <span class="ctrl-lbl" data-i18n="ctrlPos">Position</span>
+    <div id="f7-btns" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    <div id="f7-open-notice" style="display:none" class="open-notice">
+      🔓 <span data-i18n="openNotice">Open String Shape — uses open strings (fret 0)</span>
+    </div>
+  </div>
+  <div class="fb-wrap"><svg id="sv-form7"></svg></div>
+  <div class="info" id="inf-form7"></div>
+</div>
+
+<!-- ═══ FULL BOARD ════════════════════════════════════ -->
+<div id="s-full" class="sec">
+  <div class="ctrl">
+    <span class="ctrl-lbl" id="full-subtitle">All C Major notes · Fret 0–22</span>
+  </div>
+  <div class="fb-wrap"><svg id="sv-full"></svg></div>
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:#E8960A"></div><span id="leg-root">Root (C · 1)</span></div>
+    <div class="leg-item"><div class="leg-dot" style="background:#0B9488"></div><span data-i18n="legendScale">Scale notes</span></div>
+    <div class="leg-item" style="font-size:11px;margin-left:4px"><span id="leg-open-info">Fret 0 = Open string</span></div>
+  </div>
+</div>
+
+<!-- ═══ SINGLE STRING ════════════════════════════════ -->
+<div id="s-str" class="sec">
+  <div class="ctrl">
+    <span class="ctrl-lbl" data-i18n="ctrlStr">String</span>
+    <div id="str-btns" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+  </div>
+  <div class="fb-wrap"><svg id="sv-str"></svg></div>
+  <div class="info" id="inf-str"></div>
+</div>
+
+<!-- ═══ PIANO & STAFF ════════════════════════════════ -->
+<div id="s-piano" class="sec">
+  <div class="piano-wrap" id="piano-kb-wrap"></div>
+  <div class="staff-wrap" id="piano-staff-wrap"></div>
+</div>
+
+<script>
+// ══ TRANSLATIONS ════════════════════════════════════════
+const LANGS = {
+  en: {
+    scaleType:        'Major Scale',
+    tabCaged:         'CAGED System',
+    tabForm7:         '7-Form (3NPS)',
+    tabFull:          'Full Board',
+    tabStr:           'Single String',
+    ctrlShape:        'Shape',
+    ctrlPos:          'Position',
+    ctrlStr:          'String',
+    ctrlKey:          'Key',
+    dispInterval:     'Interval',
+    dispNote:         'Note',
+    fullSubtitle:     k => `All ${k} Major notes · Fret 0–22`,
+    legendRoot:       r => `Root (${r} · 1)`,
+    legendScale:      'Scale notes',
+    legendOpenInfo:   n => `Fret 0 = Open string  ·  In scale: ${n}`,
+    openBadge:        'OPEN',
+    fret12Badge:      '12',
+    openNotice:       'Open String Shape — uses open strings (fret 0)',
+    infoNotes:        'Notes',
+    f7Nps:            '3 notes per string',
+    strOpenNote:      (nn,dg,ok) => ok ? `🔓 Open string: ${nn} (${dg})` : `🔒 Open string: ${nn||'?'} — not in scale`,
+    strLabel:         s => `String ${s}`,
+    shapeLabel:       s => `${s} Shape`,
+    openShapeLabel:   s => `${s} Shape  (Open String Position)`,
+    fret12ShapeLabel: s => `${s} Shape  (Fret 12 · Octave Higher)`,
+    tabPiano:         'Piano & Staff',
+  },
+  th: {
+    scaleType:        'สเกล Major',
+    tabCaged:         'CAGED System',
+    tabForm7:         '7-Form (3NPS)',
+    tabFull:          'ทั้งคอ',
+    tabStr:           'ทีละสาย',
+    ctrlShape:        'รูปแบบ',
+    ctrlPos:          'ตำแหน่ง',
+    ctrlStr:          'สาย',
+    ctrlKey:          'คีย์',
+    dispInterval:     'Interval',
+    dispNote:         'Note',
+    fullSubtitle:     k => `โน้ตทั้งหมดใน ${k} Major · เฟรต 0–22`,
+    legendRoot:       r => `Root (${r} · 1)`,
+    legendScale:      'โน้ตในสเกล',
+    legendOpenInfo:   n => `เฟรต 0 = สายเปล่า  ·  ในสเกล: ${n}`,
+    openBadge:        'OPEN',
+    fret12Badge:      '12',
+    openNotice:       'Open String Shape — ใช้สายเปล่า (เฟรต 0)',
+    infoNotes:        'โน้ต',
+    f7Nps:            '3 โน้ตต่อสาย',
+    strOpenNote:      (nn,dg,ok) => ok ? `🔓 สายเปล่า: ${nn} (${dg})` : `🔒 สายเปล่า: ${nn||'?'} — ไม่อยู่ในสเกล`,
+    strLabel:         s => `สาย ${s}`,
+    shapeLabel:       s => `รูป ${s}`,
+    openShapeLabel:   s => `รูป ${s}  (Open String Position)`,
+    fret12ShapeLabel: s => `รูป ${s}  (เฟรต 12 · สูงขึ้น 1 Octave)`,
+    tabPiano:         'เปียโน & โน้ต',
+  }
+};
+
+// ══ KEYS ════════════════════════════════════════════════
+// Circle-of-fifths order (C at top, clockwise)
+const ALL_KEYS = [
+  { id:'C',  root:0,  notes:['C','D','E','F','G','A','B']          },
+  { id:'G',  root:7,  notes:['G','A','B','C','D','E','F#']         },
+  { id:'D',  root:2,  notes:['D','E','F#','G','A','B','C#']        },
+  { id:'A',  root:9,  notes:['A','B','C#','D','E','F#','G#']       },
+  { id:'E',  root:4,  notes:['E','F#','G#','A','B','C#','D#']      },
+  { id:'B',  root:11, notes:['B','C#','D#','E','F#','G#','A#']     },
+  { id:'F#', root:6,  notes:['F#','G#','A#','B','C#','D#','E#']    },
+  { id:'Db', root:1,  notes:['Db','Eb','F','Gb','Ab','Bb','C']     },
+  { id:'Ab', root:8,  notes:['Ab','Bb','C','Db','Eb','F','G']      },
+  { id:'Eb', root:3,  notes:['Eb','F','G','Ab','Bb','C','D']       },
+  { id:'Bb', root:10, notes:['Bb','C','D','Eb','F','G','A']        },
+  { id:'F',  root:5,  notes:['F','G','A','Bb','C','D','E']         },
+];
+const MAJ_ITV    = [0,2,4,5,7,9,11];
+const MODE_NAMES = ['Ionian','Dorian','Phrygian','Lydian','Mixolydian','Aeolian','Locrian'];
+
+// ══ STATIC DATA ══════════════════════════════════════════
+const DEG  = ['1','2','3','4','5','6','7'];
+const OPEN = [4,9,2,7,11,4];
+const SLAB = ['E','A','D','G','B','e'];
+
+const noteAt = (s,f) => (OPEN[s]+f)%12;
+const keyDef = () => ALL_KEYS.find(k=>k.id===S.key);
+const kScale = () => { const r=keyDef().root; return MAJ_ITV.map(i=>(r+i)%12); };
+const inSc   = n => kScale().includes(n);
+const getDeg = n => { const i=kScale().indexOf(n); return i>=0?DEG[i]:null; };
+const getNN  = n => { const i=kScale().indexOf(n); return i>=0?keyDef().notes[i]:null; };
+const isRoot = n => n===keyDef().root;
+
+// ══ CAGED BASE (C Major, fret offset 0) ═════════════════
+const CAGED_BASE = {
+  C:  { lbl:'C', color:'#E8960A', openBase:true,
+        pos:[ [0,[0,1,3]], [1,[0,2,3]], [2,[0,2,3]], [3,[0,2]], [4,[0,1,3]], [5,[0,1,3]] ] },
+  A:  { lbl:'A', color:'#0B9488',
+        pos:[ [0,[3,5]], [1,[3,5]], [2,[2,3,5]], [3,[2,4,5]], [4,[3,5]], [5,[3,5]] ] },
+  G:  { lbl:'G', color:'#a8e063',
+        pos:[ [0,[5,7,8]], [1,[5,7,8]], [2,[5,7]], [3,[4,5,7]], [4,[5,6,8]], [5,[5,7,8]] ] },
+  E:  { lbl:'E', color:'#c77dff',
+        pos:[ [0,[7,8,10]], [1,[7,8,10]], [2,[7,9,10]], [3,[7,9,10]], [4,[8,10]], [5,[7,8,10]] ] },
+  D:  { lbl:'D', color:'#ffd166',
+        pos:[ [0,[10,12]], [1,[10,12]], [2,[10,12]], [3,[9,10,12]], [4,[10,12,13]], [5,[10,12,13]] ] },
+  C12:{ lbl:'C', color:'#E8960A', fret12Base:true,
+        pos:[ [0,[12,13,15]], [1,[12,14,15]], [2,[12,14,15]], [3,[12,14]], [4,[12,13,15]], [5,[12,13,15]] ] },
+};
+
+function getCaged() {
+  const r = keyDef().root;
+  const entries = [];
+
+  for (const [k,sh] of Object.entries(CAGED_BASE)) {
+    // C12 shape only shown for C key (intentional fret-12 octave shape)
+    if (sh.fret12Base && r !== 0) continue;
+
+    let pos = sh.pos.map(([s,frets]) => [s, frets.map(f => f+r)]);
+    let mf  = minFret(pos);
+
+    // Wrap: shapes landing at fret 12+ fold back to 0–11
+    // (fret 12 = same pitch class as open string, one octave higher)
+    // Exception: intentional fret-12 shapes (C12 in C key) stay put
+    if (mf >= 12 && !sh.fret12Base) {
+      // Keep a fret-12 copy BEFORE wrapping — only if it fits within fret 15
+      if (maxFret(pos) <= 16) {
+        entries.push([k+'_12', { ...sh, pos, open: false, fret12: true }]);
+      }
+      // Wrap to open-string position
+      pos = pos.map(([s,frets]) => [s, frets.map(f => f-12)]);
+      mf  = minFret(pos);
+    }
+
+    const isOpen  = mf === 0 && !sh.fret12Base;
+    const isFret12 = !!(sh.fret12Base && r === 0);
+
+    entries.push([k, { ...sh, pos, open: isOpen, fret12: isFret12 }]);
+  }
+
+  // Sort by starting fret so buttons follow neck position left→right
+  entries.sort((a,b) => minFret(a[1].pos) - minFret(b[1].pos));
+  return Object.fromEntries(entries);
+}
+
+// ══ 7-FORM BASE (C Major, fret offset 0) ════════════════
+const F7_BASE = [
+  { color:'#ff7849',
+    pos:[ [0,[8,10,12]], [1,[8,10,12]], [2,[9,10,12]], [3,[9,10,12]], [4,[10,12,13]], [5,[10,12,13]] ] },
+  { color:'#ffd166',
+    pos:[ [0,[10,12,13]], [1,[10,12,14]], [2,[10,12,14]], [3,[10,12,14]], [4,[12,13,15]], [5,[12,13,15]] ] },
+  { color:'#a8e063',
+    pos:[ [0,[0,1,3]], [1,[0,2,3]], [2,[0,2,3]], [3,[0,2,4]], [4,[0,1,3]], [5,[0,1,3]] ] },
+  { color:'#0B9488',
+    pos:[ [0,[1,3,5]], [1,[2,3,5]], [2,[2,3,5]], [3,[2,4,5]], [4,[1,3,5]], [5,[1,3,5]] ] },
+  { color:'#c77dff',
+    pos:[ [0,[3,5,7]], [1,[3,5,7]], [2,[3,5,7]], [3,[4,5,7]], [4,[3,5,6]], [5,[3,5,7]] ] },
+  { color:'#f78c6c',
+    pos:[ [0,[5,7,8]], [1,[5,7,8]], [2,[5,7,9]], [3,[5,7,9]], [4,[5,6,8]], [5,[5,7,8]] ] },
+  { color:'#89b4fa',
+    pos:[ [0,[7,8,10]], [1,[7,8,10]], [2,[7,9,10]], [3,[7,9,10]], [4,[8,10,12]], [5,[7,8,10]] ] },
+];
+
+function getF7() {
+  const r  = keyDef().root;
+  const kn = keyDef().notes;
+  const result = [];
+
+  F7_BASE.forEach((f, i) => {
+    let pos = f.pos.map(([s,frets]) => [s, frets.map(fr => fr+r)]);
+    let mf  = minFret(pos);
+    const lbl = `${i+1} · ${kn[i]} ${MODE_NAMES[i]}`;
+    const sh  = `${i+1}·${kn[i]}`;
+
+    if (mf >= 12) {
+      // Keep fret-12 copy if it fits within fret 16
+      if (maxFret(pos) <= 16) {
+        result.push({ ...f, lbl, sh, pos, open: false, fret12: true });
+      }
+      // Wrap to lower position (fret 12 = open string)
+      pos = pos.map(([s,frets]) => [s, frets.map(fr => fr-12)]);
+      mf  = minFret(pos);
+    }
+
+    result.push({ ...f, lbl, sh, pos, open: mf === 0, fret12: false });
+  });
+
+  // Sort left→right by starting fret
+  result.sort((a, b) => minFret(a.pos) - minFret(b.pos));
+  return result;
+}
+
+// ══ STATE ═══════════════════════════════════════════════
+const S = { tab:'caged', caged:'C', form7:0, str:0, showNote:false, lang:'en', key:'C' };
+const t = k => LANGS[S.lang][k] ?? k;
+
+// ══ FRETBOARD RENDERER ══════════════════════════════════
+const FB = { PL:62, PT:32, PR:22, PB:18, FW:52, SH:32, NR:13 };
+
+const xOf = f => f===0 ? FB.PL-24 : FB.PL+(f-0.5)*FB.FW;
+const yOf = s => FB.PT+(5-s)*FB.SH;
+
+function minFret(pos) {
+  let mn=99;
+  for (const [,frets] of pos) for (const f of frets) if(f<mn) mn=f;
+  return mn;
+}
+function maxFret(pos) {
+  let mx=0;
+  for (const [,frets] of pos) for (const f of frets) if(f>mx) mx=f;
+  return mx;
+}
+
+function scrollToHl(svgEl, hl, instant) {
+  const wrap = svgEl.closest('.fb-wrap');
+  if (!wrap) return;
+  let mn = 99;
+  for (const [,frets] of (hl||[])) for (const f of frets) if (f < mn) mn = f;
+  const scrollX = mn <= 0 ? 0 : Math.max(0, xOf(mn) - FB.PL - 30);
+  wrap.scrollTo({ left: scrollX, behavior: instant ? 'instant' : 'smooth' });
+}
+
+function draw(svgEl, nFrets, hl, accent) {
+  const W = FB.PL + nFrets*FB.FW + FB.PR;
+  const H = FB.PT + 5*FB.SH + FB.PB;
+  svgEl.setAttribute('width',  W);
+  svgEl.setAttribute('height', H);
+  svgEl.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  let g = '';
+
+  g += `<defs><linearGradient id="fbg" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%"   stop-color="#f2e4ce"/>
+    <stop offset="100%" stop-color="#e8d4b4"/>
+  </linearGradient></defs>`;
+  g += `<rect width="${W}" height="${H}" fill="url(#fbg)" rx="8"/>`;
+
+  // position range highlight
+  if (hl) {
+    let mn=99, mx=0;
+    for (const [,frets] of hl) for (const f of frets) { if(f<mn)mn=f; if(f>mx)mx=f; }
+    if (mn<=mx) {
+      const x1 = mn===0 ? FB.PL-36 : FB.PL+(mn-1)*FB.FW;
+      const x2 = FB.PL+mx*FB.FW;
+      g += `<rect x="${x1}" y="${yOf(5)-10}" width="${x2-x1}" height="${5*FB.SH+20}" fill="${accent||'#0B9488'}" opacity="0.10" rx="4"/>`;
+    }
+  }
+
+  // inlay markers
+  for (const [f,dbl] of [[3,0],[5,0],[7,0],[9,0],[12,1],[15,0],[17,0],[19,0],[21,0]]) {
+    if (f>nFrets) continue;
+    const x = FB.PL+(f-0.5)*FB.FW;
+    if (dbl) {
+      g += `<circle cx="${x}" cy="${yOf(1.5)}" r="4" fill="#c8b090" opacity="0.6"/>`;
+      g += `<circle cx="${x}" cy="${yOf(3.5)}" r="4" fill="#c8b090" opacity="0.6"/>`;
+    } else {
+      g += `<circle cx="${x}" cy="${yOf(2.5)}" r="4" fill="#c8b090" opacity="0.6"/>`;
+    }
+  }
+
+  // nut + fret lines
+  const ty=yOf(5)-7, by=yOf(0)+7;
+  g += `<line x1="${FB.PL}" y1="${ty}" x2="${FB.PL}" y2="${by}" stroke="#8B6340" stroke-width="4.5" stroke-linecap="round"/>`;
+  for (let f=1; f<=nFrets; f++) {
+    const x=FB.PL+f*FB.FW;
+    g += `<line x1="${x}" y1="${ty}" x2="${x}" y2="${by}" stroke="#c4a878" stroke-width="1.5"/>`;
+  }
+
+  // strings
+  for (let s=0; s<6; s++) {
+    const y=yOf(s), sw=0.6+(5-s)*0.28;
+    g += `<line x1="${FB.PL-38}" y1="${y}" x2="${FB.PL+nFrets*FB.FW+2}" y2="${y}" stroke="#7a5c3a" stroke-width="${sw}" opacity="0.55"/>`;
+  }
+
+  // fret numbers
+  const markerFrets = new Set([3,5,7,9,12,15,17,19,21]);
+  g += `<text x="${xOf(0)}" y="20" text-anchor="middle" font-size="10" fill="#6a5040" font-family="monospace">0</text>`;
+  for (let f=1; f<=nFrets; f++)
+    g += `<text x="${xOf(f)}" y="20" text-anchor="middle" font-size="10" fill="${markerFrets.has(f)?'#5a3e28':'#8a6a4a'}" font-family="monospace">${f}</text>`;
+
+  // string labels
+  for (let s=0; s<6; s++)
+    g += `<text x="19" y="${yOf(s)+5}" text-anchor="middle" font-size="13" fill="#5a3e28" font-family="monospace" font-weight="700">${SLAB[s]}</text>`;
+
+  // note dots
+  if (hl) {
+    for (const [s,frets] of hl) {
+      for (const f of frets) {
+        const x=xOf(f), y=yOf(s);
+        const note=noteAt(s,f), root=isRoot(note);
+        const lbl = S.showNote ? (getNN(note)||'?') : (getDeg(note)||'?');
+        const fill = root ? '#E8960A' : (accent||'#0B9488');
+        const tc   = '#fff';
+        if (root) g += `<circle cx="${x}" cy="${y}" r="${FB.NR+4}" fill="#E8960A" opacity="0.25"/>`;
+        g += `<circle cx="${x}" cy="${y}" r="${FB.NR}" fill="${fill}" stroke="${root?'#C97D08':'rgba(0,0,0,0.08)'}" stroke-width="1.5"/>`;
+        g += `<text x="${x}" y="${y+4.5}" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="800" fill="${tc}" font-family="monospace,sans-serif">${lbl}</text>`;
+      }
+    }
+  }
+
+  svgEl.innerHTML = g;
+}
+
+// ══ RENDERS ══════════════════════════════════════════════
+function rCaged() {
+  const caged = getCaged();
+  if (!caged[S.caged]) S.caged = Object.keys(caged)[0];
+  const f = caged[S.caged];
+  const svgC = document.getElementById('sv-caged');
+
+  const nf = Math.max(15, maxFret(f.pos) + 3);
+  draw(svgC, nf, f.pos, f.color);
+  scrollToHl(svgC, f.pos, true);
+
+  const notice = document.getElementById('open-notice');
+  notice.style.display = f.open ? 'flex' : 'none';
+  if (f.open) notice.querySelector('[data-i18n="openNotice"]').textContent = t('openNotice');
+
+  const seen=new Set(), notes=[];
+  for (const [s,frets] of f.pos) for (const fr of frets) {
+    const n=noteAt(s,fr);
+    if (!seen.has(n)) { seen.add(n); notes.push({n,root:isRoot(n)}); }
+  }
+  notes.sort((a,b) => kScale().indexOf(a.n)-kScale().indexOf(b.n));
+  const titleKey = f.open ? 'openShapeLabel' : f.fret12 ? 'fret12ShapeLabel' : 'shapeLabel';
+  const title = LANGS[S.lang][titleKey](f.lbl);
+
+  document.getElementById('inf-caged').innerHTML = `
+    <div class="info-row">
+      <span class="info-lbl">${title}</span>
+      ${notes.map(x=>`<div class="badge">
+        <span class="bdot" style="background:${x.root?'#E8960A':f.color}"></span>
+        <strong>${getNN(x.n)}</strong>
+        <span style="color:var(--muted)">(${getDeg(x.n)})</span>
+      </div>`).join('')}
+    </div>`;
+}
+
+function rForm7() {
+  const f7 = getF7();
+  if (S.form7 >= f7.length) S.form7 = 0;
+  const f = f7[S.form7];
+  const svgF = document.getElementById('sv-form7');
+  const nf = Math.max(15, maxFret(f.pos) + 3);
+  draw(svgF, nf, f.pos, f.color);
+  scrollToHl(svgF, f.pos);
+
+  const notice = document.getElementById('f7-open-notice');
+  notice.style.display = f.open ? 'flex' : 'none';
+  if (f.open) notice.querySelector('[data-i18n="openNotice"]').textContent = t('openNotice');
+
+  const rows=f.pos.map(([s,frets])=>
+    `<span style="color:var(--muted);font-size:11px">${SLAB[s]}:</span> `+
+    frets.map(fr=>{
+      const n=noteAt(s,fr),root=isRoot(n);
+      const lbl=S.showNote?getNN(n):getDeg(n);
+      return `<span style="color:${root?'#E8960A':f.color};font-weight:700">${lbl}</span>`;
+    }).join('–')
+  );
+  const suffix = f.open ? '  ·  Open String' : f.fret12 ? '  ·  Fret 12' : '';
+  document.getElementById('inf-form7').innerHTML = `
+    <div style="margin-bottom:8px;font-size:14px;font-weight:700;color:${f.color}">
+      ${f.lbl}<span style="font-size:11px;font-weight:600;color:var(--muted);margin-left:6px">${suffix}</span>
+      <span style="font-size:11px;font-weight:400;color:var(--muted);margin-left:6px">${t('f7Nps')}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px 20px;font-size:13px">
+      ${rows.map(r=>`<div>${r}</div>`).join('')}
+    </div>`;
+}
+
+function rFull() {
+  const all=SLAB.map((_,s)=>{
+    const frets=[];
+    for (let f=0;f<=22;f++) if(inSc(noteAt(s,f))) frets.push(f);
+    return [s,frets];
+  });
+  const svgFull=document.getElementById('sv-full');
+  draw(svgFull, 22, all, '#0B9488');
+  svgFull.closest('.fb-wrap')?.scrollTo({ left:0, behavior:'smooth' });
+  // update dynamic legend + subtitle
+  const el = document.getElementById('full-subtitle');
+  if (el) el.textContent = LANGS[S.lang].fullSubtitle(S.key);
+  const lr = document.getElementById('leg-root');
+  if (lr) lr.textContent = LANGS[S.lang].legendRoot(keyDef().notes[0]);
+  const openNames = SLAB.map((_,s)=>{ const n=noteAt(s,0); return inSc(n)?getNN(n):null; }).filter(Boolean);
+  const li = document.getElementById('leg-open-info');
+  if (li) li.textContent = LANGS[S.lang].legendOpenInfo(openNames.join(', '));
+}
+
+function rStr() {
+  const s=S.str, frets=[], details=[];
+  for (let f=0;f<=22;f++) {
+    const n=noteAt(s,f);
+    if (inSc(n)) { frets.push(f); details.push({f,n}); }
+  }
+  const svgStr=document.getElementById('sv-str');
+  draw(svgStr, 22, [[s,frets]], '#0B9488');
+  svgStr.closest('.fb-wrap')?.scrollTo({ left:0, behavior:'smooth' });
+
+  const openNote=noteAt(s,0);
+  const openOk=inSc(openNote);
+  document.getElementById('inf-str').innerHTML = `
+    <div class="info-row">
+      <span class="info-lbl">${t('strLabel')(SLAB[s])}</span>
+      ${details.map(d=>`<div class="badge">
+        <span class="bdot" style="background:${isRoot(d.n)?'#E8960A':'#0B9488'}"></span>
+        <strong>${getNN(d.n)}</strong>
+        <span style="color:var(--muted)">(${getDeg(d.n)}) fr.${d.f}${d.f===0?' 🔓':''}</span>
+      </div>`).join('')}
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:var(--muted)">
+      ${t('strOpenNote')(getNN(openNote), getDeg(openNote), openOk)}
+    </div>`;
+}
+
+// ══ PIANO & STAFF ════════════════════════════════════════
+const KEY_SIG = {
+  'C': {sh:0,fl:0}, 'G': {sh:1,fl:0}, 'D': {sh:2,fl:0},
+  'A': {sh:3,fl:0}, 'E': {sh:4,fl:0}, 'B': {sh:5,fl:0},
+  'F#':{sh:6,fl:0}, 'F': {sh:0,fl:1}, 'Bb':{sh:0,fl:2},
+  'Eb':{sh:0,fl:3}, 'Ab':{sh:0,fl:4}, 'Db':{sh:0,fl:5},
+};
+// Treble-clef staff steps for key-sig glyphs (E4=0 = bottom line, each step = ½ line-gap)
+const SHARP_STEPS = [8,5,9,6,3,7,4]; // F# C# G# D# A# E# B#
+const FLAT_STEPS  = [4,7,3,6,2,5,1]; // Bb Eb Ab Db Gb Cb Fb
+const LETTER_STEP = {C:-2,D:-1,E:0,F:1,G:2,A:3,B:4};
+
+function rPiano() {
+  if (!document.fonts.check('56px Bravura')) {
+    document.fonts.load('56px Bravura').then(() => { if (S.tab==='piano') rPiano(); });
+  }
+  const kd   = keyDef();
+  const sc   = kScale();          // pitch-class array [0..11] × 7
+  const rPc  = kd.root;
+  const sig  = KEY_SIG[kd.id] || {sh:0,fl:0};
+  const notes= kd.notes;          // e.g. ['G','A','B','C','D','E','F#']
+
+  /* ── Piano keyboard (2 octaves, C–B × 2) ──────────── */
+  const WW=34, WH=108, BW=22, BH=66;
+  const WHITE_PC = [0,2,4,5,7,9,11, 0,2,4,5,7,9,11];
+  const WHITE_LB = ['C','D','E','F','G','A','B','C','D','E','F','G','A','B'];
+  const BLACK_KEYS = [
+    {i:1,pc:1},{i:2,pc:3},{i:4,pc:6},{i:5,pc:8},{i:6,pc:10},
+    {i:8,pc:1},{i:9,pc:3},{i:11,pc:6},{i:12,pc:8},{i:13,pc:10},
+  ];
+  const PW = 14*WW+2, PH = WH+28;
+  let pk = `<svg width="${PW}" height="${PH}" viewBox="0 0 ${PW} ${PH}">`;
+  pk += `<rect width="${PW}" height="${PH}" fill="#F5EDE0" rx="8"/>`;
+  pk += `<text x="${WW*3.5}" y="11" text-anchor="middle" font-size="9" fill="#8B7A60" font-family="'DM Sans',sans-serif" font-weight="700">Octave 1</text>`;
+  pk += `<text x="${WW*10.5}" y="11" text-anchor="middle" font-size="9" fill="#8B7A60" font-family="'DM Sans',sans-serif" font-weight="700">Octave 2</text>`;
+  // white keys
+  for (let i=0;i<14;i++) {
+    const pc=WHITE_PC[i], inS=sc.includes(pc), isR=pc===rPc;
+    const fill=isR?'#E8960A':inS?'rgba(11,148,136,.88)':'#FAF4EB';
+    const stroke=isR?'#C97D08':inS?'#0B9488':'#E4D4BC';
+    const lbl=inS?(S.showNote?(getNN(pc)||WHITE_LB[i]):(getDeg(pc)||'')):'';
+    pk += `<rect x="${i*WW+1}" y="14" width="${WW-2}" height="${WH-4}" fill="${fill}" stroke="${stroke}" stroke-width="1.2" rx="3"/>`;
+    if (lbl) pk+=`<text x="${i*WW+WW/2}" y="${14+WH-12}" text-anchor="middle" font-size="10" font-weight="900" fill="#fff" font-family="monospace">${lbl}</text>`;
+    if (!inS && WHITE_LB[i]==='C') pk+=`<text x="${i*WW+WW/2}" y="${14+WH-4}" text-anchor="middle" font-size="8" fill="#B0957A" font-family="monospace">${WHITE_LB[i]}</text>`;
+  }
+  // black keys
+  for (const bk of BLACK_KEYS) {
+    const pc=bk.pc, inS=sc.includes(pc), isR=pc===rPc;
+    const fill=isR?'#E8960A':inS?'#0B9488':'#1A1208';
+    const lbl=inS?(S.showNote?(getNN(pc)||''):(getDeg(pc)||'')):'';
+    const x=bk.i*WW-BW/2+1;
+    pk += `<rect x="${x}" y="14" width="${BW}" height="${BH}" fill="${fill}" stroke="rgba(0,0,0,.4)" stroke-width="1" rx="3"/>`;
+    if (lbl) pk+=`<text x="${x+BW/2}" y="${14+BH-7}" text-anchor="middle" font-size="9" font-weight="900" fill="#fff" font-family="monospace">${lbl}</text>`;
+  }
+  pk += '</svg>';
+
+  /* ── Staff + notes ─────────────────────────────────── */
+  // SMuFL/Bravura standard: 1 em = 4 staff spaces (bottom–top line)
+  // Baseline of all Bravura staff glyphs = E4 (bottom staff line)
+  const LG = 14, HS = LG/2;           // line-gap 14px, half-step 7px
+  const CLEF_FS = 4 * LG;             // font-size so 1em = 4 staff spaces = 56px
+  const ST  = 60;                      // staff top y (room for G# above + clef header)
+  const BLY = ST + 4*LG;              // y of bottom line E4 = 116
+  const sy  = s => BLY - s*HS;        // step → y
+
+  // Ascending scale note steps
+  const noteSteps = [];
+  { let prev=-999;
+    for (const n of notes) {
+      let step=LETTER_STEP[n[0]];
+      while (step<=prev) step+=7;
+      noteSteps.push(step); prev=step;
+    }
+  }
+
+  const sigN  = sig.sh || sig.fl;
+  const CLEF_W = CLEF_FS + 4;         // clef glyph advance width ≈ 1em + margin
+  const SIG_W  = sigN * LG + (sigN>0 ? 6 : 0); // each sig glyph ≈ 1 staff space wide
+  const NS     = 34;
+  const NX0    = CLEF_W + SIG_W + 10;
+  const SW     = NX0 + notes.length*NS + 28;
+  const SH     = ST + 4*LG + HS*5 + 20;
+  const MFONT  = "Bravura,'Times New Roman',serif";
+
+  let ss = `<svg width="${SW}" height="${SH}" viewBox="0 0 ${SW} ${SH}">`;
+  ss += `<rect width="${SW}" height="${SH}" fill="var(--bg)" rx="6"/>`;
+
+  // 5 staff lines
+  for (let l=0;l<5;l++) {
+    const y=ST+l*LG;
+    ss += `<line x1="16" y1="${y}" x2="${SW-6}" y2="${y}" stroke="#1A1208" stroke-width="1.2"/>`;
+  }
+
+  // ── Treble clef (Bravura U+E050) ─────────────────────
+  // SMuFL: glyph origin is at the G line (2nd staff line from bottom = step 2)
+  ss += `<text x="18" y="${sy(2)}" font-size="${CLEF_FS}" fill="#1A1208"
+    font-family="${MFONT}">&#xE050;</text>`;
+
+  // ── Key signature (Bravura U+E262 sharp / U+E260 flat) ──
+  // SMuFL: glyph origin (baseline) = center of sharp crossbars / belly of flat
+  // → place text y at sy(step) so the symbol sits ON the correct line/space
+  const sigSteps = sig.sh>0 ? SHARP_STEPS.slice(0,sig.sh)
+                 : sig.fl>0 ? FLAT_STEPS.slice(0,sig.fl) : [];
+  sigSteps.forEach((step,i) => {
+    const y = sy(step), x = CLEF_W + i*LG + 4;
+    const ch = sig.sh>0 ? '&#xE262;' : '&#xE260;';
+    ss += `<text x="${x}" y="${y}" font-size="${CLEF_FS}" fill="#1A1208"
+      font-family="${MFONT}">${ch}</text>`;
+  });
+
+  // Note heads
+  // Determine which note letters are covered by key signature
+  const sigLetters = sig.sh>0 ? ['F','C','G','D','A','E','B'].slice(0,sig.sh)
+                   : sig.fl>0 ? ['B','E','A','D','G','C','F'].slice(0,sig.fl) : [];
+
+  notes.forEach((note,i)=>{
+    const step=noteSteps[i], y=sy(step), x=NX0+i*NS;
+    const pc=sc[i], isR=pc===rPc;
+    const fill=isR?'#E8960A':'#0B9488';
+    const lbl=S.showNote?note:DEG[i];
+
+    // Ledger lines below staff
+    if (step<0) {
+      const low = step%2===0 ? step : step+1;
+      for (let ls=-2; ls>=low; ls-=2)
+        ss+=`<line x1="${x-12}" y1="${sy(ls)}" x2="${x+12}" y2="${sy(ls)}" stroke="#1A1208" stroke-width="1.2"/>`;
+    }
+    // Ledger lines above staff
+    if (step>8) {
+      const hi = step%2===0 ? step : step-1;
+      for (let ls=10; ls<=hi; ls+=2)
+        ss+=`<line x1="${x-12}" y1="${sy(ls)}" x2="${x+12}" y2="${sy(ls)}" stroke="#1A1208" stroke-width="1.2"/>`;
+    }
+
+    // Accidental beside note head (only if NOT already in key signature)
+    const acc=note.length>1?note[1]:null;
+    if (acc && !sigLetters.includes(note[0])) {
+      const ch=acc==='#'?'&#9839;':'&#9837;';
+      ss+=`<text x="${x-13}" y="${y+5}" text-anchor="middle" font-size="13" fill="#1A1208" font-family="'Times New Roman',Georgia,serif">${ch}</text>`;
+    }
+
+    // Note head (filled oval) — rx ≈ LG*0.8, ry ≈ LG*0.5
+    const NRX = LG*0.82, NRY = LG*0.5;
+    ss+=`<ellipse cx="${x}" cy="${y}" rx="${NRX}" ry="${NRY}" fill="${fill}"/>`;
+
+    // Stem — length = 3 staff spaces
+    const up=step<4;
+    const stemLen = 3*LG;
+    if (up) ss+=`<line x1="${x+NRX-1}" y1="${y-1}" x2="${x+NRX-1}" y2="${y-stemLen}" stroke="${fill}" stroke-width="2"/>`;
+    else    ss+=`<line x1="${x-NRX+1}" y1="${y+1}" x2="${x-NRX+1}" y2="${y+stemLen}" stroke="${fill}" stroke-width="2"/>`;
+
+    // Label
+    ss+=`<text x="${x}" y="${y+1}" text-anchor="middle" dominant-baseline="middle" font-size="${LG*0.65}" font-weight="900" fill="#fff" font-family="monospace">${lbl}</text>`;
+  });
+
+  ss += '</svg>';
+
+  document.getElementById('piano-kb-wrap').innerHTML  = pk;
+  document.getElementById('piano-staff-wrap').innerHTML = ss;
+}
+
+function renderActive() {
+  ({ caged:rCaged, form7:rForm7, full:rFull, str:rStr, piano:rPiano })[S.tab]?.();
+}
+
+// ══ I18N ════════════════════════════════════════════════
+function applyLang() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.dataset.i18n;
+    const v = LANGS[S.lang][k];
+    if (typeof v === 'string') el.textContent = v;
+  });
+  document.getElementById('langEN').classList.toggle('lang-on', S.lang==='en');
+  document.getElementById('langTH').classList.toggle('lang-on', S.lang==='th');
+}
+
+function switchLang(lang) {
+  S.lang = lang;
+  applyLang();
+  updateHeader();
+  mkKey(); mkCaged(); mkF7(); mkStr();
+  renderActive();
+}
+document.getElementById('langEN').addEventListener('click', ()=>switchLang('en'));
+document.getElementById('langTH').addEventListener('click', ()=>switchLang('th'));
+
+// ══ HEADER / KEY SELECTOR ════════════════════════════════
+function updateHeader() {
+  const kd = keyDef();
+  document.getElementById('hdr-name').textContent = `${kd.id} Major`;
+  document.getElementById('hdr-sub').textContent  = kd.notes.join(' · ');
+  mkChips();
+}
+
+function mkKey() {
+  const wrap = document.getElementById('cof-wrap');
+  // Circle-of-fifths layout: C at top, clockwise
+  const COF_ORDER = ['C','G','D','A','E','B','F#','Db','Ab','Eb','Bb','F'];
+  const W=200, H=200, CX=100, CY=100, CR=76, BR=16;
+
+  let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="overflow:visible">`;
+  // Guide ring (warm, light theme)
+  s += `<circle cx="${CX}" cy="${CY}" r="${CR}" fill="#FAF4EB" stroke="#E4D4BC" stroke-width="${BR*2+8}"/>`;
+
+  COF_ORDER.forEach((id, i) => {
+    const ang = (i*30 - 90) * Math.PI/180;
+    const x = CX + CR*Math.cos(ang), y = CY + CR*Math.sin(ang);
+    const on = id === S.key;
+    const fill   = on ? '#E8960A' : '#fff';
+    const stroke = on ? '#C97D08' : '#E4D4BC';
+    const tc     = on ? '#fff'    : '#8B7A60';
+    const fw     = on ? '900'     : '700';
+    const fs = id.length > 1 ? '9' : '11';
+    s += `<g data-key="${id}" style="cursor:pointer">
+      <circle cx="${x}" cy="${y}" r="${BR}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>
+      <text x="${x}" y="${y+3.5}" text-anchor="middle" dominant-baseline="middle"
+        font-size="${fs}" font-weight="${fw}" fill="${tc}"
+        font-family="'DM Sans',-apple-system,sans-serif">${id}</text>
+    </g>`;
+  });
+
+  // Center: selected key label
+  s += `<text x="${CX}" y="${CY-5}" text-anchor="middle" font-size="22" font-weight="900"
+      fill="#E8960A" font-family="'Prompt',-apple-system,sans-serif">${S.key}</text>`;
+  s += `<text x="${CX}" y="${CY+13}" text-anchor="middle" font-size="10" font-weight="700"
+      fill="#8B7A60" font-family="'DM Sans',-apple-system,sans-serif" letter-spacing="1.5">MAJOR</text>`;
+  s += '</svg>';
+
+  wrap.innerHTML = s;
+  wrap.querySelectorAll('[data-key]').forEach(g => g.addEventListener('click', () => {
+    S.key = g.dataset.key;
+    const c = getCaged();
+    if (!c[S.caged]) S.caged = Object.keys(c)[0];
+    mkKey(); updateHeader(); mkCaged(); mkF7();
+    renderActive();
+  }));
+}
+
+// ══ CONTROLS ════════════════════════════════════════════
+function mkChips() {
+  document.getElementById('chips').innerHTML = keyDef().notes.map((n,i)=>`
+    <div class="chip ${i===0?'root':''}">
+      <span class="cn">${n}</span><span class="ci">${DEG[i]}</span>
+    </div>`).join('');
+}
+
+function mkCaged() {
+  const caged = getCaged();
+  const el = document.getElementById('caged-btns');
+  el.innerHTML = Object.entries(caged).map(([k,v])=>`
+    <button class="pill ${v.open?'pill-open':v.fret12?'pill-fret12':''} ${k===S.caged?'on':''}"
+      style="${k===S.caged?`background:${v.color};border-color:${v.color}`:''}"
+      data-caged="${k}">
+      ${v.lbl}
+      ${v.open  ? `<span class="open-badge">${t('openBadge')}</span>` : ''}
+      ${v.fret12? `<span class="fret12-badge">${t('fret12Badge')}</span>` : ''}
+    </button>`).join('');
+  el.querySelectorAll('[data-caged]').forEach(b=>b.addEventListener('click',()=>{
+    S.caged=b.dataset.caged; mkCaged(); rCaged();
+  }));
+}
+
+function mkF7() {
+  const f7 = getF7();
+  if (S.form7 >= f7.length) S.form7 = 0;
+  const el = document.getElementById('f7-btns');
+  el.innerHTML = f7.map((f,i)=>`
+    <button class="pill ${f.open?'pill-open':f.fret12?'pill-fret12':''} ${i===S.form7?'on':''}"
+      style="${i===S.form7?`background:${f.color};border-color:${f.color}`:''}"
+      data-f7="${i}">
+      ${f.sh}
+      ${f.open  ? `<span class="open-badge">${t('openBadge')}</span>` : ''}
+      ${f.fret12? `<span class="fret12-badge">${t('fret12Badge')}</span>` : ''}
+    </button>`).join('');
+  el.querySelectorAll('[data-f7]').forEach(b=>b.addEventListener('click',()=>{
+    S.form7=+b.dataset.f7; mkF7(); rForm7();
+  }));
+}
+
+function mkStr() {
+  const el = document.getElementById('str-btns');
+  el.innerHTML = SLAB.map((n,i)=>`
+    <button class="pill ${i===S.str?'on':''}" data-str="${i}">
+      ${t('strLabel')(n)}
+    </button>`).join('');
+  el.querySelectorAll('[data-str]').forEach(b=>b.addEventListener('click',()=>{
+    S.str=+b.dataset.str; mkStr(); rStr();
+  }));
+}
+
+// display toggle
+document.getElementById('dInt').addEventListener('click',()=>{
+  S.showNote=false;
+  document.getElementById('dInt').classList.add('on');
+  document.getElementById('dNote').classList.remove('on');
+  renderActive();
+});
+document.getElementById('dNote').addEventListener('click',()=>{
+  S.showNote=true;
+  document.getElementById('dNote').classList.add('on');
+  document.getElementById('dInt').classList.remove('on');
+  renderActive();
+});
+
+// tabs
+document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  btn.classList.add('on');
+  S.tab=btn.dataset.tab;
+  document.getElementById('s-'+S.tab).classList.add('on');
+  renderActive();
+}));
+
+// ══ BOOT ════════════════════════════════════════════════
+applyLang();
+updateHeader();
+mkKey(); mkCaged(); mkF7(); mkStr();
+rCaged();
+
+// Preload Bravura so it's ready when Piano tab opens
+document.fonts.load('56px Bravura').then(() => {
+  if (S.tab === 'piano') rPiano();
+});
+</script>
+</body>
+</html>
