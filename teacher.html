@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>Twofour Studio — ครู</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Anuphan:wght@300;400;500;600;700&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<!--
+  ══════════════════════════════════════════════════════
+  SUPABASE: รัน SQL นี้ใน SQL Editor ก่อนใช้งาน
+  ══════════════════════════════════════════════════════
+  CREATE TABLE lesson_notes (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    booking_id uuid,
+    student_name text,
+    student_line_id text,
+    teacher_name text,
+    lesson_date date DEFAULT CURRENT_DATE,
+    tags text[],
+    note_text text,
+    photo_url text,
+    status text DEFAULT 'draft',
+    created_at timestamptz DEFAULT now(),
+    sent_at timestamptz
+  );
+  ALTER TABLE lesson_notes ENABLE ROW LEVEL SECURITY;
+  CREATE POLICY "allow_all" ON lesson_notes FOR ALL USING (true) WITH CHECK (true);
+
+  STORAGE: สร้าง bucket ชื่อ "lesson-photos" (public) ใน Supabase Storage
+  ══════════════════════════════════════════════════════
+-->
+
+<style>
+:root {
+  --bg:     #fdfcf8;
+  --bg2:    #f5f0e6;
+  --card:   #ffffff;
+  --amber:  #e8960a;
+  --amber2: #c97d08;
+  --teal:   #0b9488;
+  --red:    #e53935;
+  --text:   #1a1208;
+  --muted:  #8b7a60;
+  --border: #e8e0cc;
+  --sh:     0 2px 12px rgba(0,0,0,0.07);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Anuphan','DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* ── HEADER ── */
+.header{
+  background:var(--card);border-bottom:1px solid var(--border);
+  padding:14px 20px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:50;box-shadow:var(--sh);
+}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;}
+.logo span{color:var(--amber);}
+.teacher-badge{
+  display:flex;align-items:center;gap:8px;font-size:.85rem;font-weight:600;color:var(--muted);
+}
+.teacher-badge button{
+  background:none;border:1px solid var(--border);border-radius:8px;
+  padding:4px 10px;font-size:.75rem;color:var(--muted);cursor:pointer;
+}
+
+/* ── LOGIN ── */
+#login-screen{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;padding:32px 24px;
+}
+.login-card{
+  background:var(--card);border-radius:20px;box-shadow:var(--sh);
+  padding:36px 28px;width:100%;max-width:360px;
+}
+.login-title{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px;margin-bottom:4px;}
+.login-title span{color:var(--amber);}
+.login-sub{color:var(--muted);font-size:.88rem;margin-bottom:28px;}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+.field label{font-size:.8rem;font-weight:700;letter-spacing:.5px;color:var(--muted);}
+.field input,.field select{
+  padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;
+  font-family:'Anuphan',sans-serif;font-size:.95rem;background:var(--bg);
+  outline:none;transition:border-color .2s;
+}
+.field input:focus,.field select:focus{border-color:var(--amber);}
+.btn-primary{
+  width:100%;padding:14px;border:none;border-radius:12px;
+  background:var(--amber);color:#fff;font-family:'Anuphan',sans-serif;
+  font-size:1rem;font-weight:700;cursor:pointer;transition:opacity .2s;margin-top:4px;
+}
+.btn-primary:active{opacity:.8;}
+.login-err{color:var(--red);font-size:.83rem;margin-top:8px;display:none;}
+
+/* ── MAIN ── */
+#main-screen{display:none;padding-bottom:80px;}
+.date-bar{
+  background:var(--amber);color:#fff;
+  padding:10px 20px;font-weight:700;font-size:.9rem;
+  display:flex;align-items:center;gap:8px;
+}
+
+/* ── LESSON CARDS ── */
+.section-head{padding:20px 20px 10px;font-weight:700;font-size:.78rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+.lesson-list{display:flex;flex-direction:column;gap:0;padding:0 16px;}
+.lesson-card{
+  background:var(--card);border-radius:16px;border:1.5px solid var(--border);
+  margin-bottom:12px;overflow:hidden;box-shadow:var(--sh);
+}
+.lesson-head{
+  display:flex;align-items:center;gap:14px;padding:16px;cursor:pointer;
+}
+.lesson-time{
+  background:var(--bg2);border-radius:10px;padding:8px 10px;
+  font-size:.8rem;font-weight:700;color:var(--amber2);text-align:center;min-width:56px;
+}
+.lesson-info{flex:1;}
+.lesson-name{font-weight:700;font-size:1rem;}
+.lesson-inst{font-size:.8rem;color:var(--muted);margin-top:2px;}
+.lesson-status-badge{
+  font-size:.7rem;font-weight:700;padding:3px 9px;border-radius:100px;
+}
+.badge-draft{background:#fff3cd;color:#856404;}
+.badge-sent{background:#d1fae5;color:#065f46;}
+.btn-note{
+  margin-left:auto;background:var(--amber);color:#fff;
+  border:none;border-radius:10px;padding:8px 14px;font-family:'Anuphan',sans-serif;
+  font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap;
+}
+.btn-note.done{background:var(--teal);}
+
+/* ── NOTE FORM ── */
+.note-form{
+  border-top:1.5px solid var(--border);padding:18px 16px;
+  display:none;flex-direction:column;gap:16px;background:var(--bg);
+}
+.note-form.open{display:flex;}
+.tag-group-label{font-size:.75rem;font-weight:700;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;}
+.tags-wrap{display:flex;flex-wrap:wrap;gap:7px;}
+.tag-btn{
+  padding:7px 13px;border-radius:100px;border:1.5px solid var(--border);
+  background:var(--card);font-family:'Anuphan',sans-serif;font-size:.83rem;
+  cursor:pointer;transition:all .15s;color:var(--text);font-weight:500;
+}
+.tag-btn.selected{border-color:var(--amber);background:var(--amber);color:#fff;}
+
+.note-textarea{
+  width:100%;padding:12px;border:1.5px solid var(--border);border-radius:12px;
+  font-family:'Anuphan',sans-serif;font-size:.9rem;resize:none;min-height:80px;
+  background:var(--card);outline:none;transition:border-color .2s;
+}
+.note-textarea:focus{border-color:var(--amber);}
+.note-textarea::placeholder{color:var(--muted);}
+
+/* Photo upload */
+.photo-wrap{display:flex;flex-direction:column;gap:8px;}
+.photo-label{font-size:.75rem;font-weight:700;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;}
+.photo-upload-btn{
+  display:flex;align-items:center;gap:10px;padding:12px 16px;
+  border:1.5px dashed var(--border);border-radius:12px;cursor:pointer;
+  background:var(--card);transition:border-color .2s;
+}
+.photo-upload-btn:hover{border-color:var(--amber);}
+.photo-upload-btn svg{color:var(--muted);}
+.photo-upload-btn span{font-size:.85rem;color:var(--muted);}
+.photo-preview{width:100%;border-radius:10px;max-height:180px;object-fit:cover;display:none;}
+.photo-remove{font-size:.78rem;color:var(--red);cursor:pointer;text-align:right;display:none;}
+
+/* Action buttons */
+.form-actions{display:flex;gap:10px;}
+.btn-draft{
+  flex:1;padding:13px;border-radius:12px;border:1.5px solid var(--border);
+  background:var(--card);font-family:'Anuphan',sans-serif;font-size:.9rem;
+  font-weight:700;cursor:pointer;color:var(--text);
+}
+.btn-send{
+  flex:2;padding:13px;border-radius:12px;border:none;
+  background:var(--teal);color:#fff;font-family:'Anuphan',sans-serif;
+  font-size:.9rem;font-weight:700;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:6px;
+}
+.btn-send:disabled,.btn-draft:disabled{opacity:.5;cursor:not-allowed;}
+.saving-msg{font-size:.8rem;color:var(--teal);font-weight:600;text-align:center;display:none;}
+
+/* ── EMPTY STATE ── */
+.empty-state{
+  text-align:center;padding:60px 24px;color:var(--muted);
+}
+.empty-state .icon{font-size:3rem;margin-bottom:12px;}
+.empty-state p{font-size:.9rem;line-height:1.7;}
+
+/* ── DRAFTS SECTION ── */
+.draft-card{
+  background:var(--card);border-radius:14px;border:1.5px solid #fff3cd;
+  padding:14px 16px;margin-bottom:10px;display:flex;flex-direction:column;gap:8px;
+}
+.draft-top{display:flex;align-items:center;justify-content:space-between;}
+.draft-name{font-weight:700;font-size:.95rem;}
+.draft-date{font-size:.75rem;color:var(--muted);}
+.draft-tags{display:flex;flex-wrap:wrap;gap:5px;}
+.draft-tag{font-size:.72rem;padding:3px 9px;background:var(--bg2);border-radius:100px;color:var(--text);}
+.draft-note{font-size:.83rem;color:var(--muted);}
+.btn-send-draft{
+  padding:9px 16px;border-radius:10px;border:none;background:var(--teal);
+  color:#fff;font-family:'Anuphan',sans-serif;font-size:.82rem;font-weight:700;
+  cursor:pointer;align-self:flex-end;
+}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:#1a1208;color:#fff;padding:12px 24px;border-radius:100px;
+  font-size:.88rem;font-weight:600;transition:transform .3s;z-index:999;white-space:nowrap;
+}
+.toast.show{transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">TWO<span>FOUR</span> STUDIO</div>
+  <div class="teacher-badge" id="teacher-badge" style="display:none;">
+    <span id="teacher-name-display"></span>
+    <button onclick="logout()">ออก</button>
+  </div>
+</div>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-title">หน้า<span>ครู</span></div>
+    <div class="login-sub">บันทึกบทเรียนหลังสอน</div>
+    <div class="field">
+      <label>ชื่อครู</label>
+      <input id="inp-name" type="text" placeholder="เช่น ครูต้น, ครูมาย..." autocomplete="off">
+    </div>
+    <div class="field">
+      <label>รหัสผ่าน</label>
+      <input id="inp-pin" type="password" placeholder="PIN" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn-primary" onclick="doLogin()">เข้าสู่ระบบ</button>
+    <div class="login-err" id="login-err">ชื่อหรือรหัสผ่านไม่ถูกต้อง</div>
+  </div>
+</div>
+
+<!-- MAIN SCREEN -->
+<div id="main-screen">
+  <div class="date-bar" id="date-bar">📅 —</div>
+
+  <div class="section-head">บทเรียนวันนี้</div>
+  <div class="lesson-list" id="lesson-list">
+    <div class="empty-state"><div class="icon">🎵</div><p>กำลังโหลด...</p></div>
+  </div>
+
+  <div class="section-head" id="drafts-label" style="display:none;">รอส่งรายงาน</div>
+  <div class="lesson-list" id="draft-list"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none;">
+
+<script>
+const SUPABASE_URL  = 'https://cwktzexjynavgshdlvhw.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_4lqHvl0baVHhPKbloiGWQw_fbaYWHpq';
+const TEACHER_PIN   = '2424';  // เปลี่ยนได้
+
+const EDGE_LESSON_REPORT = SUPABASE_URL + '/functions/v1/send-lesson-report';
+
+const QUICK_TAGS = [
+  { group: 'ความตั้งใจ', tags: ['ตั้งใจมาก ⭐', 'สนุกดี 😊', 'เหนื่อยหน่อย 😓', 'ไม่ค่อยมีสมาธิ 😶'] },
+  { group: 'ผลการเรียน', tags: ['เล่นได้ดีขึ้น 📈', 'ผ่านแบบฝึกหัด ✅', 'ผ่านเพลงใหม่ 🎵', 'ต้องซ้อมเพิ่ม 🔁'] },
+  { group: 'สิ่งที่ต้องทำต่อ', tags: ['มีการบ้าน 📝', 'ต้องโฟกัสท่อนนี้ 🎯', 'เตรียมสอบ/แสดง 📋', 'ทบทวนทฤษฎี 📖'] },
+];
+
+const THAI_DAYS = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+
+let db, teacherName, currentPhotoFile = {};
+
+// ── AUTH ────────────────────────────────────────────────────
+function doLogin() {
+  const name = document.getElementById('inp-name').value.trim();
+  const pin  = document.getElementById('inp-pin').value.trim();
+  const err  = document.getElementById('login-err');
+  if (!name) { err.textContent = 'กรุณาใส่ชื่อ'; err.style.display = 'block'; return; }
+  if (pin !== TEACHER_PIN) { err.style.display = 'block'; return; }
+  err.style.display = 'none';
+  teacherName = name;
+  sessionStorage.setItem('teacher', name);
+  showMain();
+}
+
+function logout() {
+  sessionStorage.removeItem('teacher');
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('main-screen').style.display  = 'none';
+  document.getElementById('teacher-badge').style.display = 'none';
+}
+
+// ── BOOT ────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  const saved = sessionStorage.getItem('teacher');
+  if (saved) { teacherName = saved; showMain(); }
+});
+
+function showMain() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('main-screen').style.display  = 'block';
+  document.getElementById('teacher-badge').style.display = 'flex';
+  document.getElementById('teacher-name-display').textContent = '👨‍🏫 ' + teacherName;
+
+  const now = new Date();
+  const dayTH = THAI_DAYS[now.getDay()];
+  const dateStr = now.toLocaleDateString('th-TH', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  document.getElementById('date-bar').textContent = '📅 ' + dateStr;
+
+  loadTodayLessons(dayTH);
+  loadDrafts();
+}
+
+// ── LOAD TODAY's LESSONS ─────────────────────────────────────
+async function loadTodayLessons(dayTH) {
+  const list = document.getElementById('lesson-list');
+  const { data, error } = await db
+    .from('bookings')
+    .select('id, student_name, instrument, time_slot, package, student_id, line_id')
+    .eq('day_th', dayTH)
+    .in('status', ['confirmed', 'trial'])
+    .order('time_slot', { ascending: true });
+
+  if (error || !data?.length) {
+    list.innerHTML = `<div class="empty-state">
+      <div class="icon">🌴</div>
+      <p>ไม่มีบทเรียนวันนี้ (${dayTH})<br>หรือยังไม่มีข้อมูล</p>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = '';
+  for (const b of data) {
+    // Get student line_id if not in booking directly
+    let lineId = b.line_id || '';
+    if (!lineId && b.student_id) {
+      const { data: stu } = await db.from('students').select('line_id').eq('id', b.student_id).single();
+      if (stu?.line_id) lineId = stu.line_id;
+    }
+    list.appendChild(makeLessonCard(b, lineId));
+  }
+}
+
+// ── LESSON CARD ──────────────────────────────────────────────
+function makeLessonCard(booking, lineId) {
+  const card = document.createElement('div');
+  card.className = 'lesson-card';
+  card.dataset.id = booking.id;
+
+  card.innerHTML = `
+    <div class="lesson-head" onclick="toggleForm('${booking.id}')">
+      <div class="lesson-time">${booking.time_slot || '—'}</div>
+      <div class="lesson-info">
+        <div class="lesson-name">${booking.student_name || 'ไม่ระบุ'}</div>
+        <div class="lesson-inst">${booking.instrument || ''} · ${booking.package || ''}</div>
+      </div>
+      <button class="btn-note" id="btn-${booking.id}" onclick="event.stopPropagation();toggleForm('${booking.id}')">
+        + บันทึก
+      </button>
+    </div>
+    ${makeNoteForm(booking.id, booking.student_name, lineId)}
+  `;
+
+  // wire photo input for this card
+  card.querySelector('.photo-upload-btn').addEventListener('click', () => openPhotoFor(booking.id));
+  card.querySelector('.photo-remove-btn').addEventListener('click', () => removePhoto(booking.id));
+
+  return card;
+}
+
+function makeNoteForm(bookingId, studentName, lineId) {
+  const tagGroups = QUICK_TAGS.map(g => `
+    <div>
+      <div class="tag-group-label">${g.group}</div>
+      <div class="tags-wrap">
+        ${g.tags.map(t => `<button class="tag-btn" data-tag="${t}" onclick="toggleTag(this,'${bookingId}')">${t}</button>`).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  return `
+    <div class="note-form" id="form-${bookingId}"
+         data-booking-id="${bookingId}"
+         data-student-name="${studentName}"
+         data-line-id="${lineId}">
+      ${tagGroups}
+      <textarea class="note-textarea" id="note-${bookingId}"
+        placeholder="บันทึกเพิ่มเติม (ไม่บังคับ) เช่น บทที่ฝึก, จุดที่ดีขึ้น, คำแนะนำพิเศษ..."></textarea>
+      <div class="photo-wrap">
+        <div class="photo-label">รูปภาพประกอบ (ถ้ามี)</div>
+        <div class="photo-upload-btn" data-for="${bookingId}">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+          <span>แตะเพื่อเพิ่มรูป</span>
+        </div>
+        <img class="photo-preview" id="preview-${bookingId}" src="" alt="preview">
+        <span class="photo-remove photo-remove-btn" id="remove-${bookingId}">✕ ลบรูป</span>
+      </div>
+      <div class="form-actions">
+        <button class="btn-draft" onclick="saveDraft('${bookingId}')">💾 บันทึก Draft</button>
+        <button class="btn-send" onclick="sendReport('${bookingId}')">
+          ส่งรายงาน <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg>
+        </button>
+      </div>
+      <div class="saving-msg" id="saving-${bookingId}">กำลังบันทึก...</div>
+    </div>
+  `;
+}
+
+function toggleForm(id) {
+  const form = document.getElementById('form-' + id);
+  form.classList.toggle('open');
+}
+
+function toggleTag(btn, bookingId) {
+  btn.classList.toggle('selected');
+}
+
+// ── PHOTO ────────────────────────────────────────────────────
+let _photoTarget = null;
+
+function openPhotoFor(bookingId) {
+  _photoTarget = bookingId;
+  document.getElementById('photo-input').click();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('photo-input').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file || !_photoTarget) return;
+    currentPhotoFile[_photoTarget] = file;
+    const url = URL.createObjectURL(file);
+    const preview = document.getElementById('preview-' + _photoTarget);
+    preview.src = url;
+    preview.style.display = 'block';
+    document.getElementById('remove-' + _photoTarget).style.display = 'block';
+    e.target.value = '';
+  });
+});
+
+function removePhoto(bookingId) {
+  delete currentPhotoFile[bookingId];
+  const preview = document.getElementById('preview-' + bookingId);
+  preview.src = '';
+  preview.style.display = 'none';
+  document.getElementById('remove-' + bookingId).style.display = 'none';
+}
+
+// ── COLLECT FORM DATA ─────────────────────────────────────────
+function collectNote(bookingId) {
+  const form = document.getElementById('form-' + bookingId);
+  const tags = [...form.querySelectorAll('.tag-btn.selected')].map(b => b.dataset.tag);
+  const note = document.getElementById('note-' + bookingId).value.trim();
+  const studentName = form.dataset.studentName;
+  const lineId      = form.dataset.lineId;
+  return { tags, note, studentName, lineId };
+}
+
+// ── UPLOAD PHOTO ─────────────────────────────────────────────
+async function uploadPhoto(bookingId) {
+  const file = currentPhotoFile[bookingId];
+  if (!file) return null;
+  const ext  = file.name.split('.').pop();
+  const path = `notes/${bookingId}-${Date.now()}.${ext}`;
+  const { error } = await db.storage.from('lesson-photos').upload(path, file, { upsert: true });
+  if (error) { console.error('upload error', error); return null; }
+  const { data } = db.storage.from('lesson-photos').getPublicUrl(path);
+  return data.publicUrl;
+}
+
+// ── SAVE DRAFT ───────────────────────────────────────────────
+async function saveDraft(bookingId) {
+  const { tags, note, studentName, lineId } = collectNote(bookingId);
+  const saving = document.getElementById('saving-' + bookingId);
+  saving.style.display = 'block';
+  saving.textContent = 'กำลังบันทึก...';
+
+  const photoUrl = await uploadPhoto(bookingId);
+
+  const { error } = await db.from('lesson_notes').insert({
+    booking_id:       bookingId,
+    student_name:     studentName,
+    student_line_id:  lineId,
+    teacher_name:     teacherName,
+    tags,
+    note_text:        note || null,
+    photo_url:        photoUrl,
+    status:           'draft',
+    lesson_date:      new Date().toISOString().split('T')[0],
+  });
+
+  if (error) { saving.textContent = '⚠️ บันทึกไม่สำเร็จ'; return; }
+
+  saving.style.display = 'none';
+  showToast('💾 บันทึก Draft แล้ว');
+  document.getElementById('form-' + bookingId).classList.remove('open');
+  loadDrafts();
+}
+
+// ── SEND REPORT ──────────────────────────────────────────────
+async function sendReport(bookingId) {
+  const { tags, note, studentName, lineId } = collectNote(bookingId);
+  if (!tags.length && !note) {
+    showToast('⚠️ เลือก Tag หรือใส่บันทึกก่อนนะครับ');
+    return;
+  }
+
+  const btn = document.querySelector(`#form-${bookingId} .btn-send`);
+  btn.disabled = true;
+  btn.textContent = 'กำลังส่ง...';
+
+  const photoUrl = await uploadPhoto(bookingId);
+
+  // Save to DB first
+  const { data: noteRow, error: dbErr } = await db.from('lesson_notes').insert({
+    booking_id:      bookingId,
+    student_name:    studentName,
+    student_line_id: lineId,
+    teacher_name:    teacherName,
+    tags,
+    note_text:       note || null,
+    photo_url:       photoUrl,
+    status:          'sending',
+    lesson_date:     new Date().toISOString().split('T')[0],
+  }).select().single();
+
+  if (dbErr) { btn.disabled = false; btn.textContent = 'ส่งรายงาน →'; showToast('⚠️ เกิดข้อผิดพลาด'); return; }
+
+  // Call edge function to send LINE message
+  const res = await fetch(EDGE_LESSON_REPORT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON}` },
+    body: JSON.stringify({
+      note_id:          noteRow.id,
+      student_line_id:  lineId,
+      student_name:     studentName,
+      teacher_name:     teacherName,
+      tags,
+      note_text:        note,
+      photo_url:        photoUrl,
+      lesson_date:      new Date().toLocaleDateString('th-TH', { year:'numeric', month:'long', day:'numeric' }),
+    }),
+  });
+
+  if (res.ok) {
+    showToast('✅ ส่งรายงานให้ผู้ปกครองแล้ว!');
+    document.getElementById('btn-' + bookingId).textContent = '✓ ส่งแล้ว';
+    document.getElementById('btn-' + bookingId).classList.add('done');
+    document.getElementById('form-' + bookingId).classList.remove('open');
+    loadDrafts();
+  } else {
+    showToast('⚠️ LINE ส่งไม่สำเร็จ แต่บันทึกไว้ใน Draft แล้ว');
+    await db.from('lesson_notes').update({ status: 'draft' }).eq('id', noteRow.id);
+    btn.disabled = false;
+    btn.innerHTML = 'ส่งรายงาน <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg>';
+  }
+}
+
+// ── LOAD DRAFTS ──────────────────────────────────────────────
+async function loadDrafts() {
+  const today = new Date().toISOString().split('T')[0];
+  const { data } = await db.from('lesson_notes')
+    .select('*').eq('status', 'draft').eq('lesson_date', today)
+    .order('created_at', { ascending: false });
+
+  const list  = document.getElementById('draft-list');
+  const label = document.getElementById('drafts-label');
+
+  if (!data?.length) { list.innerHTML = ''; label.style.display = 'none'; return; }
+
+  label.style.display = 'block';
+  list.innerHTML = data.map(n => `
+    <div class="draft-card">
+      <div class="draft-top">
+        <div class="draft-name">${n.student_name || '—'}</div>
+        <div class="draft-date">Draft · ${new Date(n.created_at).toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'})}</div>
+      </div>
+      ${n.tags?.length ? `<div class="draft-tags">${n.tags.map(t=>`<span class="draft-tag">${t}</span>`).join('')}</div>` : ''}
+      ${n.note_text ? `<div class="draft-note">${n.note_text}</div>` : ''}
+      ${n.photo_url ? `<img src="${n.photo_url}" style="width:100%;border-radius:8px;max-height:120px;object-fit:cover;">` : ''}
+      <button class="btn-send-draft" onclick="sendDraft('${n.id}','${n.student_line_id||''}','${n.student_name||''}')">
+        ส่งรายงาน →
+      </button>
+    </div>
+  `).join('');
+}
+
+async function sendDraft(noteId, lineId, studentName) {
+  const { data: n } = await db.from('lesson_notes').select('*').eq('id', noteId).single();
+  if (!n) return;
+
+  const res = await fetch(EDGE_LESSON_REPORT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON}` },
+    body: JSON.stringify({
+      note_id: noteId,
+      student_line_id: lineId,
+      student_name:    studentName,
+      teacher_name:    n.teacher_name,
+      tags:            n.tags,
+      note_text:       n.note_text,
+      photo_url:       n.photo_url,
+      lesson_date:     new Date(n.lesson_date).toLocaleDateString('th-TH', {year:'numeric',month:'long',day:'numeric'}),
+    }),
+  });
+
+  if (res.ok) { showToast('✅ ส่งแล้ว!'); loadDrafts(); }
+  else showToast('⚠️ LINE ส่งไม่สำเร็จ');
+}
+
+// ── TOAST ────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
