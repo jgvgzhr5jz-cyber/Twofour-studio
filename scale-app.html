@@ -32,11 +32,11 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',-apple-sys
 .hdr {
   background: var(--bg);
   padding: 14px 20px 12px;
+  margin-top: 46px;
   border-bottom: 2.5px solid var(--acc);
   display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap;
 }
 .hdr-left { flex-shrink: 0; }
-.hdr-logo { display:block; height:40px; width:auto; }
 .hdr-name { font-size:24px; font-weight:900; color:var(--text); letter-spacing:-0.5px; line-height:1; font-family:'Prompt',sans-serif; margin-top:4px; }
 .hdr-name .key-accent { color:var(--acc); }
 .hdr-sub  { font-size:11px; color:var(--muted); margin-top:3px; }
@@ -195,36 +195,32 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',-apple-sys
 .leg-item { display:flex; align-items:center; gap:5px; }
 .leg-dot  { width:13px; height:13px; border-radius:50%; }
 
-/* ── Tool Nav ────────────────────────────────────────── */
-.tool-nav {
+/* ── Site Nav (matches index.html style) ─────────────── */
+.site-nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
   display: flex; align-items: center; justify-content: space-between;
-  padding: 7px 20px; gap: 12px;
-  background: var(--text);
+  padding: 10px 20px; gap: 12px;
+  background: rgba(253,252,248,0.94); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--brd); box-shadow: 0 1px 10px rgba(0,0,0,0.06);
 }
-.home-btn {
-  display: flex; align-items: center; gap: 6px;
-  color: rgba(255,255,255,0.6); text-decoration: none;
-  font-size: 12px; font-weight: 700; letter-spacing: .3px;
-  transition: color .15s; flex-shrink: 0;
+.site-logo {
+  font-family: 'Bebas Neue', Impact, 'Arial Black', sans-serif;
+  font-size: 1.25rem; letter-spacing: 2px; text-decoration: none; color: var(--text);
+  flex-shrink: 0;
+}
+.site-logo span { color: var(--acc); }
+.site-tools { display: flex; gap: 6px; align-items: center; overflow-x: auto; scrollbar-width: none; }
+.site-tools::-webkit-scrollbar { display: none; }
+.site-tool {
+  padding: 4px 12px; border-radius: 100px;
+  font-size: 11px; font-weight: 700; white-space: nowrap; letter-spacing: .2px;
   font-family: 'DM Sans', sans-serif;
-}
-.home-btn:hover { color: #fff; }
-.home-btn svg { flex-shrink: 0; }
-.tool-menu { display: flex; gap: 6px; align-items: center; overflow-x: auto; scrollbar-width: none; }
-.tool-menu::-webkit-scrollbar { display: none; }
-.tool-item {
-  display: flex; align-items: center; gap: 5px;
-  padding: 4px 11px; border-radius: 100px;
-  font-size: 11px; font-weight: 700; white-space: nowrap;
-  font-family: 'DM Sans', sans-serif; letter-spacing: .2px;
-  border: 1.5px solid rgba(255,255,255,0.15);
-  color: rgba(255,255,255,0.45); text-decoration: none; cursor: default;
+  border: 1.5px solid var(--brd); background: transparent;
+  color: var(--muted); text-decoration: none; cursor: default;
   transition: all .15s;
 }
-.tool-item.active {
-  background: var(--acc); border-color: var(--acc); color: #fff;
-}
-.tool-item.soon { font-style: italic; }
+.site-tool.on  { background: var(--acc); border-color: var(--acc); color: #fff; cursor: pointer; }
+.site-tool.soon { font-style: italic; opacity: .55; }
 
 /* ── Piano & Staff ───────────────────────────────────── */
 .piano-wrap, .staff-wrap {
@@ -239,11 +235,8 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',-apple-sys
 
 /* --- Mobile (≤ 599px) --------------------------------- */
 @media (max-width: 599px) {
-  .tool-nav   { padding: 6px 12px; }
-  .home-lbl   { display: none; }          /* icon-only home on small screens */
-  /* Header: first row = logo+title | controls; second row = chips (scrollable) */
+  /* Header: first row = title | controls; second row = chips (scrollable) */
   .hdr         { padding: 10px 12px 8px; gap: 6px 8px; }
-  .hdr-logo    { height: 28px; }
   .hdr-name    { font-size: 18px; }
   .hdr-sub     { font-size: 10px; margin-top: 2px; }
 
@@ -312,9 +305,8 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',-apple-sys
 /* --- Desktop (≥ 1024px) ------------------------------- */
 @media (min-width: 1024px) {
   body             { max-width: 1280px; margin: 0 auto; }
-  .tool-nav        { padding: 7px 48px; }
+  .site-nav        { padding: 10px 48px; }
   .hdr             { padding: 16px 48px 14px; }
-  .hdr-logo        { height: 44px; }
   .hdr-name        { font-size: 27px; }
   .cof-section     { padding: 16px 48px 12px; }
   .scale-sel-wrap  { padding: 8px 48px 12px; }
@@ -331,36 +323,18 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',-apple-sys
 </head>
 <body>
 
-<!-- ═══ TOOL NAV ══════════════════════════════════════ -->
-<div class="tool-nav">
-  <a href="/" class="home-btn" aria-label="กลับหน้าหลัก">
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M8 1 L1 7.5 L2.8 7.5 L2.8 15 L6.5 15 L6.5 10 L9.5 10 L9.5 15 L13.2 15 L13.2 7.5 L15 7.5 Z" fill="currentColor"/>
-    </svg>
-    <span class="home-lbl">หน้าหลัก</span>
-  </a>
-  <div class="tool-menu">
-    <a href="/scale-app.html" class="tool-item active">🎸 Scale Explorer</a>
-    <span class="tool-item soon">📚 สื่อเพิ่มเติม เร็วๆ นี้</span>
+<!-- ═══ SITE NAV ═══════════════════════════════════════ -->
+<nav class="site-nav">
+  <a href="/" class="site-logo">TWOFOUR <span>STUDIO</span></a>
+  <div class="site-tools">
+    <a href="/scale-app.html" class="site-tool on">🎸 Scale Explorer</a>
+    <span class="site-tool soon">📚 สื่อเพิ่มเติม เร็วๆ นี้</span>
   </div>
-</div>
+</nav>
 
 <!-- ═══ HEADER ═══════════════════════════════════════ -->
 <div class="hdr">
   <div class="hdr-left">
-    <!-- TWOFOUR STUDIO logo (inline from logo.svg) -->
-    <a href="/" style="text-decoration:none;display:block;">
-    <svg class="hdr-logo" viewBox="0 200 600 250" xmlns="http://www.w3.org/2000/svg" aria-label="TWOFOUR STUDIO">
-      <text x="300" y="298" text-anchor="middle"
-        font-family="'Bebas Neue', Impact, 'Arial Black', sans-serif"
-        font-size="114" textLength="520" lengthAdjust="spacingAndGlyphs"
-        fill="#1a1208">TWOFOUR</text>
-      <text x="300" y="418" text-anchor="middle"
-        font-family="'Bebas Neue', Impact, 'Arial Black', sans-serif"
-        font-size="114" textLength="520" lengthAdjust="spacingAndGlyphs"
-        fill="#c8870a">STUDIO</text>
-    </svg>
-    </a>
     <div class="hdr-name" id="hdr-name">C Major</div>
     <div class="hdr-sub"  id="hdr-sub" >C · D · E · F · G · A · B</div>
   </div>
