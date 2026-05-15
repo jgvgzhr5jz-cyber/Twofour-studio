@@ -299,6 +299,7 @@
       <a href="#paths"    data-th="เครื่องดนตรี" data-en="Instrument">เครื่องดนตรี</a>
       <a href="#packages" data-th="แพ็กเกจ"      data-en="Packages">แพ็กเกจ</a>
       <a href="#schedule" data-th="ตารางเรียน"   data-en="Schedule">ตารางเรียน</a>
+      <a href="#learn"    data-th="สื่อฟรี"       data-en="Free Tools">สื่อฟรี</a>
       <a href="#contact"  data-th="ติดต่อ"        data-en="Contact">ติดต่อ</a>
     </div>
     <div class="lang-toggle">
@@ -634,6 +635,52 @@
         <p data-th="สภาพแวดล้อมส่วนตัว กล้าผิด กล้าทดลอง และค้นพบเสียงดนตรีของตัวเอง"
            data-en="Private space to make mistakes, experiment, and find your musical voice.">สภาพแวดล้อมส่วนตัว กล้าผิด กล้าทดลอง และค้นพบเสียงดนตรีของตัวเอง</p>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- FREE TOOLS -->
+<section id="learn" style="background:var(--bg2);max-width:100%;padding:72px 24px;">
+  <div style="max-width:1200px;margin:0 auto;">
+    <div class="section-label" data-th="สื่อฟรี" data-en="FREE TOOLS">สื่อฟรี</div>
+    <h2 class="section-title" data-th="สื่อการเรียนรู้ฟรี" data-en="FREE LEARNING TOOLS">สื่อการเรียนรู้ฟรี</h2>
+    <p style="color:var(--muted);margin-bottom:36px;max-width:520px;line-height:1.7;"
+       data-th="เครื่องมือช่วยฝึกดนตรีให้ใช้ฟรี ไม่ต้องสมัครสมาชิก"
+       data-en="Practice tools available for free, no account required.">เครื่องมือช่วยฝึกดนตรีให้ใช้ฟรี ไม่ต้องสมัครสมาชิก</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px;">
+
+      <!-- Scale Explorer card -->
+      <a href="/scale-app.html" style="text-decoration:none;display:flex;flex-direction:column;gap:14px;
+         background:var(--card);border:1.5px solid var(--amber);border-radius:18px;padding:24px;
+         transition:transform .18s,box-shadow .18s;cursor:pointer;color:inherit;"
+         onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 28px rgba(232,150,10,.18)'"
+         onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div style="font-size:2.2rem;line-height:1;">🎸</div>
+        <div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1.5px;color:var(--amber);">Scale Explorer</div>
+          <p style="font-size:.85rem;color:var(--muted);line-height:1.6;margin-top:6px;"
+             data-th="ดู scale บนกีตาร์แบบ interactive พร้อม CAGED system, Piano และ Staff notation"
+             data-en="Interactive scale visualizer with CAGED system, Piano & Staff notation.">ดู scale บนกีตาร์แบบ interactive พร้อม CAGED system, Piano และ Staff notation</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:auto;">
+          <span style="background:var(--teal);color:#fff;font-size:.65rem;font-weight:700;padding:3px 10px;border-radius:100px;">ฟรี</span>
+          <span style="font-size:.82rem;color:var(--amber);font-weight:700;">เปิดใช้งาน →</span>
+        </div>
+      </a>
+
+      <!-- Coming soon placeholder -->
+      <div style="display:flex;flex-direction:column;gap:14px;
+           background:var(--card);border:1.5px dashed rgba(255,255,255,0.1);border-radius:18px;padding:24px;
+           opacity:.5;cursor:default;">
+        <div style="font-size:2.2rem;line-height:1;">📚</div>
+        <div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1.5px;color:var(--muted);"
+               data-th="เร็วๆ นี้…" data-en="COMING SOON…">เร็วๆ นี้…</div>
+          <p style="font-size:.85rem;color:var(--muted);line-height:1.6;margin-top:6px;"
+             data-th="สื่อการสอนเพิ่มเติมกำลังมา" data-en="More learning materials are on the way.">สื่อการสอนเพิ่มเติมกำลังมา</p>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
