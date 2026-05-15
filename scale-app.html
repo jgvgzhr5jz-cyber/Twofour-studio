@@ -121,6 +121,24 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',-apple-sys
   padding:1px 4px; border-radius:4px; white-space:nowrap;
 }
 
+/* Scale type selector */
+.scale-sel-wrap {
+  display:flex; align-items:center; gap:10px;
+  padding:6px 16px 10px; overflow-x:auto;
+  scrollbar-width:none;
+}
+.scale-sel-wrap::-webkit-scrollbar { display:none; }
+.scale-pills { display:flex; gap:6px; flex-wrap:nowrap; }
+.scale-pill {
+  padding:5px 13px; border-radius:100px;
+  border:1.5px solid var(--brd); background:var(--surf);
+  font-size:11px; font-weight:700; letter-spacing:.3px;
+  cursor:pointer; white-space:nowrap; transition:all .15s;
+  color:var(--text);
+}
+.scale-pill.on { background:var(--teal); border-color:var(--teal); color:#fff; }
+.scale-pill:hover:not(.on) { border-color:var(--teal); color:var(--teal); }
+
 /* Open shape notice */
 .open-notice {
   display:flex; align-items:center; gap:6px;
@@ -185,6 +203,96 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',-apple-sys
 .staff-wrap { padding-top:4px; padding-bottom:20px; }
 .piano-wrap::-webkit-scrollbar, .staff-wrap::-webkit-scrollbar { height:5px; }
 .piano-wrap::-webkit-scrollbar-thumb, .staff-wrap::-webkit-scrollbar-thumb { background:#d0c4b4; border-radius:3px; }
+
+/* ═══ RESPONSIVE ════════════════════════════════════════ */
+
+/* --- Mobile (≤ 599px) --------------------------------- */
+@media (max-width: 599px) {
+  /* Header: first row = logo+title | controls; second row = chips (scrollable) */
+  .hdr         { padding: 10px 12px 8px; gap: 6px 8px; }
+  .hdr-logo    { height: 28px; }
+  .hdr-name    { font-size: 18px; }
+  .hdr-sub     { font-size: 10px; margin-top: 2px; }
+
+  /* Chips pushed to their own row, scroll horizontally */
+  .chips {
+    order: 3; width: 100%;
+    flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip        { padding: 3px 7px; min-width: 28px; flex-shrink: 0; }
+  .chip .cn    { font-size: 13px; }
+  .chip .ci    { font-size: 9px; }
+
+  /* Controls */
+  .hdr-right   { gap: 4px; }
+  .icon-btn    { padding: 4px 8px; font-size: 10px; }
+
+  /* CoF */
+  .cof-section { padding: 6px 12px 2px; }
+
+  /* Scale pills */
+  .scale-sel-wrap { padding: 4px 12px 6px; }
+
+  /* Tabs */
+  .tabs        { padding: 0 12px; }
+  .tab-btn     { padding: 9px 10px; font-size: 11px; }
+
+  /* Controls bar */
+  .ctrl        { padding: 7px 12px; gap: 6px; }
+  .ctrl-lbl    { font-size: 10px; }
+  .pill        { padding: 5px 10px; font-size: 11px; }
+  .open-notice { font-size: 10px; padding: 5px 9px; }
+
+  /* Fretboard */
+  .fb-wrap     { padding: 12px 12px 4px; }
+
+  /* Info */
+  .info        { margin: 4px 12px 14px; padding: 10px 12px; font-size: 12px; }
+  .badge       { font-size: 11px; padding: 2px 7px 2px 5px; }
+
+  /* Legend */
+  .legend      { padding: 0 12px 12px; font-size: 11px; gap: 10px; }
+
+  /* Piano & Staff */
+  .piano-wrap  { padding: 10px 12px 4px; }
+  .staff-wrap  { padding: 2px 12px 14px; }
+}
+
+/* --- Tablet (600 – 1023px) ---------------------------- */
+@media (min-width: 600px) and (max-width: 1023px) {
+  .hdr             { padding: 12px 24px 10px; }
+  .hdr-name        { font-size: 22px; }
+  .cof-section     { padding: 12px 24px 8px; }
+  .scale-sel-wrap  { padding: 6px 24px 10px; }
+  .tabs            { padding: 0 24px; }
+  .ctrl            { padding: 10px 24px; }
+  .fb-wrap         { padding: 18px 24px 8px; }
+  .info            { margin: 6px 24px 18px; }
+  .legend          { padding: 0 24px 16px; }
+  .piano-wrap      { padding: 14px 24px 6px; }
+  .staff-wrap      { padding: 4px 24px 18px; }
+}
+
+/* --- Desktop (≥ 1024px) ------------------------------- */
+@media (min-width: 1024px) {
+  body             { max-width: 1280px; margin: 0 auto; }
+  .hdr             { padding: 16px 48px 14px; }
+  .hdr-logo        { height: 44px; }
+  .hdr-name        { font-size: 27px; }
+  .cof-section     { padding: 16px 48px 12px; }
+  .scale-sel-wrap  { padding: 8px 48px 12px; }
+  .tabs            { padding: 0 48px; }
+  .tab-btn         { padding: 14px 20px; font-size: 14px; }
+  .ctrl            { padding: 12px 48px; }
+  .fb-wrap         { padding: 24px 48px 10px; }
+  .info            { margin: 8px 48px 24px; }
+  .legend          { padding: 0 48px 20px; }
+  .piano-wrap      { padding: 20px 48px 8px; }
+  .staff-wrap      { padding: 4px 48px 24px; }
+}
 </style>
 </head>
 <body>
@@ -225,6 +333,11 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',-apple-sys
     <div class="cof-lbl" data-i18n="ctrlKey">Key</div>
     <div id="cof-wrap"></div>
   </div>
+</div>
+
+<!-- ═══ SCALE TYPE SELECTOR ══════════════════════════ -->
+<div class="scale-sel-wrap">
+  <div class="scale-pills" id="scale-pills"></div>
 </div>
 
 <!-- ═══ TABS ══════════════════════════════════════════ -->
@@ -306,7 +419,7 @@ const LANGS = {
     ctrlKey:          'Key',
     dispInterval:     'Interval',
     dispNote:         'Note',
-    fullSubtitle:     k => `All ${k} Major notes · Fret 0–22`,
+    fullSubtitle:     k => `All ${k} ${S.scale==='major'?'Major':'Major Pentatonic'} notes · Fret 0–22`,
     legendRoot:       r => `Root (${r} · 1)`,
     legendScale:      'Scale notes',
     legendOpenInfo:   n => `Fret 0 = Open string  ·  In scale: ${n}`,
@@ -334,7 +447,7 @@ const LANGS = {
     ctrlKey:          'คีย์',
     dispInterval:     'Interval',
     dispNote:         'Note',
-    fullSubtitle:     k => `โน้ตทั้งหมดใน ${k} Major · เฟรต 0–22`,
+    fullSubtitle:     k => `โน้ตทั้งหมดใน ${k} ${S.scale==='major'?'Major':'Major Pentatonic'} · เฟรต 0–22`,
     legendRoot:       r => `Root (${r} · 1)`,
     legendScale:      'โน้ตในสเกล',
     legendOpenInfo:   n => `เฟรต 0 = สายเปล่า  ·  ในสเกล: ${n}`,
@@ -371,16 +484,42 @@ const ALL_KEYS = [
 const MAJ_ITV    = [0,2,4,5,7,9,11];
 const MODE_NAMES = ['Ionian','Dorian','Phrygian','Lydian','Mixolydian','Aeolian','Locrian'];
 
+// ══ SCALE TYPES ══════════════════════════════════════════
+const SCALES = {
+  major:     { itv:[0,2,4,5,7,9,11], deg:['1','2','3','4','5','6','7'],   en:'Major',           th:'เมเจอร์' },
+  penta_maj: { itv:[0,2,4,7,9],      deg:['1','2','3','5','6'],           en:'Major Pentatonic', th:'เพนทาโทนิก Major' },
+};
+
+// Derive note names for any scale from a root (uses major scale as reference)
+function computeNoteNames(rootPc, intervals) {
+  const majNotes = ALL_KEYS.find(k => k.root === rootPc).notes;
+  const pcMap = {};
+  MAJ_ITV.forEach((itv, i) => { pcMap[(rootPc + itv) % 12] = majNotes[i]; });
+  return intervals.map(itv => {
+    const pc = (rootPc + itv) % 12;
+    if (pcMap[pc]) return pcMap[pc];
+    const up = (pc + 1) % 12;   // flat of next
+    if (pcMap[up]) { const n = pcMap[up]; return n.includes('#') ? n[0] : n[0] + 'b'; }
+    const dn = (pc + 11) % 12;  // sharp of prev
+    if (pcMap[dn]) { const n = pcMap[dn]; return n.includes('b') ? n[0] : n[0] + '#'; }
+    return ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'][pc];
+  });
+}
+
 // ══ STATIC DATA ══════════════════════════════════════════
-const DEG  = ['1','2','3','4','5','6','7'];
 const OPEN = [4,9,2,7,11,4];
 const SLAB = ['E','A','D','G','B','e'];
 
 const noteAt = (s,f) => (OPEN[s]+f)%12;
-const keyDef = () => ALL_KEYS.find(k=>k.id===S.key);
-const kScale = () => { const r=keyDef().root; return MAJ_ITV.map(i=>(r+i)%12); };
+const keyDef = () => {
+  const kd = ALL_KEYS.find(k => k.id === S.key);
+  if (S.scale === 'major') return kd;
+  return { ...kd, notes: computeNoteNames(kd.root, SCALES[S.scale].itv) };
+};
+const scaleDeg = () => SCALES[S.scale].deg;
+const kScale = () => { const r=keyDef().root; return SCALES[S.scale].itv.map(i=>(r+i)%12); };
 const inSc   = n => kScale().includes(n);
-const getDeg = n => { const i=kScale().indexOf(n); return i>=0?DEG[i]:null; };
+const getDeg = n => { const i=kScale().indexOf(n); return i>=0 ? scaleDeg()[i] : null; };
 const getNN  = n => { const i=kScale().indexOf(n); return i>=0?keyDef().notes[i]:null; };
 const isRoot = n => n===keyDef().root;
 
@@ -461,8 +600,9 @@ function getF7() {
   F7_BASE.forEach((f, i) => {
     let pos = f.pos.map(([s,frets]) => [s, frets.map(fr => fr+r)]);
     let mf  = minFret(pos);
-    const lbl = `${i+1} · ${kn[i]} ${MODE_NAMES[i]}`;
-    const sh  = `${i+1}·${kn[i]}`;
+    const noteName = kn[i] ?? '—';
+    const lbl = `${i+1} · ${noteName} ${MODE_NAMES[i]}`;
+    const sh  = `${i+1}·${noteName}`;
 
     if (mf >= 12) {
       // Keep fret-12 copy if it fits within fret 16
@@ -483,7 +623,7 @@ function getF7() {
 }
 
 // ══ STATE ═══════════════════════════════════════════════
-const S = { tab:'caged', caged:'C', form7:0, str:0, showNote:false, lang:'en', key:'C' };
+const S = { tab:'caged', caged:'C', form7:0, str:0, showNote:false, lang:'en', key:'C', scale:'major' };
 const t = k => LANGS[S.lang][k] ?? k;
 
 // ══ FRETBOARD RENDERER ══════════════════════════════════
@@ -578,7 +718,9 @@ function draw(svgEl, nFrets, hl, accent) {
     for (const [s,frets] of hl) {
       for (const f of frets) {
         const x=xOf(f), y=yOf(s);
-        const note=noteAt(s,f), root=isRoot(note);
+        const note=noteAt(s,f);
+        if (!inSc(note)) continue;   // skip notes outside current scale
+        const root=isRoot(note);
         const lbl = S.showNote ? (getNN(note)||'?') : (getDeg(note)||'?');
         const fill = root ? '#E8960A' : (accent||'#0B9488');
         const tc   = '#fff';
@@ -619,7 +761,7 @@ function rCaged() {
   document.getElementById('inf-caged').innerHTML = `
     <div class="info-row">
       <span class="info-lbl">${title}</span>
-      ${notes.map(x=>`<div class="badge">
+      ${notes.filter(x=>inSc(x.n)).map(x=>`<div class="badge">
         <span class="bdot" style="background:${x.root?'#E8960A':f.color}"></span>
         <strong>${getNN(x.n)}</strong>
         <span style="color:var(--muted)">(${getDeg(x.n)})</span>
@@ -640,14 +782,16 @@ function rForm7() {
   notice.style.display = f.open ? 'flex' : 'none';
   if (f.open) notice.querySelector('[data-i18n="openNotice"]').textContent = t('openNotice');
 
-  const rows=f.pos.map(([s,frets])=>
-    `<span style="color:var(--muted);font-size:11px">${SLAB[s]}:</span> `+
-    frets.map(fr=>{
-      const n=noteAt(s,fr),root=isRoot(n);
-      const lbl=S.showNote?getNN(n):getDeg(n);
-      return `<span style="color:${root?'#E8960A':f.color};font-weight:700">${lbl}</span>`;
-    }).join('–')
-  );
+  const rows=f.pos.map(([s,frets])=>{
+    const inScFrets=frets.filter(fr=>inSc(noteAt(s,fr)));
+    if (!inScFrets.length) return null;
+    return `<span style="color:var(--muted);font-size:11px">${SLAB[s]}:</span> `+
+      inScFrets.map(fr=>{
+        const n=noteAt(s,fr),root=isRoot(n);
+        const lbl=S.showNote?(getNN(n)||'?'):(getDeg(n)||'?');
+        return `<span style="color:${root?'#E8960A':f.color};font-weight:700">${lbl}</span>`;
+      }).join('–');
+  }).filter(Boolean);
   const suffix = f.open ? '  ·  Open String' : f.fret12 ? '  ·  Fret 12' : '';
   document.getElementById('inf-form7').innerHTML = `
     <div style="margin-bottom:8px;font-size:14px;font-weight:700;color:${f.color}">
@@ -723,7 +867,7 @@ function rPiano() {
   const kd   = keyDef();
   const sc   = kScale();          // pitch-class array [0..11] × 7
   const rPc  = kd.root;
-  const sig  = KEY_SIG[kd.id] || {sh:0,fl:0};
+  let   sig  = KEY_SIG[kd.id] || {sh:0,fl:0};
   const notes= kd.notes;          // e.g. ['G','A','B','C','D','E','F#']
 
   /* ── Piano keyboard (2 octaves, C–B × 2) ──────────── */
@@ -779,14 +923,32 @@ function rPiano() {
     }
   }
 
+  // Key signature only applies to major scale
+  if (S.scale !== 'major') { sig = {sh:0, fl:0}; }
   const sigN  = sig.sh || sig.fl;
   const CLEF_W = CLEF_FS + 4;         // clef glyph advance width ≈ 1em + margin
   const SIG_W  = sigN * LG + (sigN>0 ? 6 : 0); // each sig glyph ≈ 1 staff space wide
   const NS     = 34;
   const NX0    = CLEF_W + SIG_W + 10;
-  const SW     = NX0 + notes.length*NS + 28;
   const SH     = ST + 4*LG + HS*5 + 20;
   const MFONT  = "Bravura,'Times New Roman',serif";
+
+  // Determine which note letters are covered by key signature
+  const sigLetters = sig.sh>0 ? ['F','C','G','D','A','E','B'].slice(0,sig.sh)
+                   : sig.fl>0 ? ['B','E','A','D','G','C','F'].slice(0,sig.fl) : [];
+
+  // Pre-compute per-note x positions — notes with inline accidentals need extra left room
+  const ACC_W = 20;  // horizontal space reserved for an accidental glyph
+  const noteXs = [];
+  { let cx = NX0;
+    notes.forEach(n => {
+      const needsAcc = n.length > 1 && !sigLetters.includes(n[0]);
+      if (needsAcc) cx += ACC_W;
+      noteXs.push(cx);
+      cx += NS;
+    });
+  }
+  const SW = noteXs[noteXs.length-1] + NS + 28;
 
   let ss = `<svg width="${SW}" height="${SH}" viewBox="0 0 ${SW} ${SH}">`;
   ss += `<rect width="${SW}" height="${SH}" fill="var(--bg)" rx="6"/>`;
@@ -814,16 +976,12 @@ function rPiano() {
       font-family="${MFONT}">${ch}</text>`;
   });
 
-  // Note heads
-  // Determine which note letters are covered by key signature
-  const sigLetters = sig.sh>0 ? ['F','C','G','D','A','E','B'].slice(0,sig.sh)
-                   : sig.fl>0 ? ['B','E','A','D','G','C','F'].slice(0,sig.fl) : [];
-
+  // ── Note heads ────────────────────────────────────────
   notes.forEach((note,i)=>{
-    const step=noteSteps[i], y=sy(step), x=NX0+i*NS;
+    const step=noteSteps[i], y=sy(step), x=noteXs[i];
     const pc=sc[i], isR=pc===rPc;
     const fill=isR?'#E8960A':'#0B9488';
-    const lbl=S.showNote?note:DEG[i];
+    const lbl=S.showNote?note:scaleDeg()[i];
 
     // Ledger lines below staff
     if (step<0) {
@@ -839,10 +997,11 @@ function rPiano() {
     }
 
     // Accidental beside note head (only if NOT already in key signature)
+    // Use Bravura SMuFL glyphs at same font-size as clef/key-sig so y aligns correctly
     const acc=note.length>1?note[1]:null;
     if (acc && !sigLetters.includes(note[0])) {
-      const ch=acc==='#'?'&#9839;':'&#9837;';
-      ss+=`<text x="${x-13}" y="${y+5}" text-anchor="middle" font-size="13" fill="#1A1208" font-family="'Times New Roman',Georgia,serif">${ch}</text>`;
+      const ch=acc==='#'?'&#xE262;':'&#xE260;';
+      ss+=`<text x="${x-LG*0.82-11}" y="${y}" font-size="${CLEF_FS}" fill="#1A1208" font-family="${MFONT}">${ch}</text>`;
     }
 
     // Note head (filled oval) — rx ≈ LG*0.8, ry ≈ LG*0.5
@@ -884,6 +1043,7 @@ function switchLang(lang) {
   S.lang = lang;
   applyLang();
   updateHeader();
+  mkScalePills();
   mkKey(); mkCaged(); mkF7(); mkStr();
   renderActive();
 }
@@ -892,17 +1052,43 @@ document.getElementById('langTH').addEventListener('click', ()=>switchLang('th')
 
 // ══ HEADER / KEY SELECTOR ════════════════════════════════
 function updateHeader() {
-  const kd = keyDef();
-  document.getElementById('hdr-name').textContent = `${kd.id} Major`;
+  const kd  = keyDef();
+  const sc  = SCALES[S.scale];
+  const name = S.lang === 'th' ? sc.th : sc.en;
+  document.getElementById('hdr-name').textContent = `${kd.id} ${name}`;
   document.getElementById('hdr-sub').textContent  = kd.notes.join(' · ');
   mkChips();
+}
+
+function mkScalePills() {
+  const wrap = document.getElementById('scale-pills');
+  wrap.innerHTML = Object.entries(SCALES).map(([id, sc]) => {
+    const label = S.lang === 'th' ? sc.th : sc.en;
+    return `<button class="scale-pill ${id===S.scale?'on':''}" data-scale="${id}">${label}</button>`;
+  }).join('');
+  wrap.querySelectorAll('[data-scale]').forEach(b => b.addEventListener('click', () => {
+    S.scale = b.dataset.scale;
+    mkScalePills();
+    updateHeader();
+    mkKey();
+    renderActive();
+  }));
 }
 
 function mkKey() {
   const wrap = document.getElementById('cof-wrap');
   // Circle-of-fifths layout: C at top, clockwise
   const COF_ORDER = ['C','G','D','A','E','B','F#','Db','Ab','Eb','Bb','F'];
-  const W=200, H=200, CX=100, CY=100, CR=76, BR=16;
+
+  // Responsive size: small on mobile, default on tablet, larger on desktop
+  const vw = Math.min(window.innerWidth, 1280);
+  const SIZE = vw >= 1024 ? 228 : vw < 600 ? Math.min(vw - 28, 188) : 200;
+  const W=SIZE, H=SIZE, CX=SIZE/2, CY=SIZE/2;
+  const CR = SIZE * 0.38;   // ring radius
+  const BR = SIZE * 0.08;   // key bubble radius
+  // Text sizes proportional to SIZE (base: SIZE=200)
+  const fsNorm  = +(SIZE * 0.055).toFixed(1);  // ~11 at 200
+  const fsSmall = +(SIZE * 0.045).toFixed(1);  // ~9  at 200
 
   let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="overflow:visible">`;
   // Guide ring (warm, light theme)
@@ -916,20 +1102,23 @@ function mkKey() {
     const stroke = on ? '#C97D08' : '#E4D4BC';
     const tc     = on ? '#fff'    : '#8B7A60';
     const fw     = on ? '900'     : '700';
-    const fs = id.length > 1 ? '9' : '11';
+    const fs = id.length > 1 ? fsSmall : fsNorm;
     s += `<g data-key="${id}" style="cursor:pointer">
       <circle cx="${x}" cy="${y}" r="${BR}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>
-      <text x="${x}" y="${y+3.5}" text-anchor="middle" dominant-baseline="middle"
+      <text x="${x}" y="${y+BR*0.22}" text-anchor="middle" dominant-baseline="middle"
         font-size="${fs}" font-weight="${fw}" fill="${tc}"
         font-family="'DM Sans',-apple-system,sans-serif">${id}</text>
     </g>`;
   });
 
   // Center: selected key label
-  s += `<text x="${CX}" y="${CY-5}" text-anchor="middle" font-size="22" font-weight="900"
+  const scLabel = (S.lang==='th' ? SCALES[S.scale].th : SCALES[S.scale].en).toUpperCase();
+  const fsCtr   = +(SIZE * 0.11).toFixed(1);   // ~22 at 200
+  const fsScale = scLabel.length > 8 ? +(SIZE * 0.0375).toFixed(1) : +(SIZE * 0.045).toFixed(1);
+  s += `<text x="${CX}" y="${CY - SIZE*0.025}" text-anchor="middle" font-size="${fsCtr}" font-weight="900"
       fill="#E8960A" font-family="'Prompt',-apple-system,sans-serif">${S.key}</text>`;
-  s += `<text x="${CX}" y="${CY+13}" text-anchor="middle" font-size="10" font-weight="700"
-      fill="#8B7A60" font-family="'DM Sans',-apple-system,sans-serif" letter-spacing="1.5">MAJOR</text>`;
+  s += `<text x="${CX}" y="${CY + SIZE*0.065}" text-anchor="middle" font-size="${fsScale}" font-weight="700"
+      fill="#8B7A60" font-family="'DM Sans',-apple-system,sans-serif" letter-spacing="1">${scLabel}</text>`;
   s += '</svg>';
 
   wrap.innerHTML = s;
@@ -946,7 +1135,7 @@ function mkKey() {
 function mkChips() {
   document.getElementById('chips').innerHTML = keyDef().notes.map((n,i)=>`
     <div class="chip ${i===0?'root':''}">
-      <span class="cn">${n}</span><span class="ci">${DEG[i]}</span>
+      <span class="cn">${n}</span><span class="ci">${scaleDeg()[i]}</span>
     </div>`).join('');
 }
 
@@ -1021,12 +1210,20 @@ document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',
 // ══ BOOT ════════════════════════════════════════════════
 applyLang();
 updateHeader();
+mkScalePills();
 mkKey(); mkCaged(); mkF7(); mkStr();
 rCaged();
 
 // Preload Bravura so it's ready when Piano tab opens
 document.fonts.load('56px Bravura').then(() => {
   if (S.tab === 'piano') rPiano();
+});
+
+// Re-render COF on resize (responsive sizing)
+let _resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(_resizeTimer);
+  _resizeTimer = setTimeout(() => { mkKey(); }, 150);
 });
 </script>
 </body>
