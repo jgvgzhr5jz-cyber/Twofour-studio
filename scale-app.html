@@ -617,16 +617,66 @@ const F7_BASE = [
     pos:[ [0,[7,8,10]], [1,[7,8,10]], [2,[7,9,10]], [3,[7,9,10]], [4,[8,10,12]], [5,[7,8,10]] ] },
 ];
 
+// ══ CAGED helper ════════════════════════════════════════
+// Returns the right shape set for the current scale.
+// For penta_min: 5 pentatonic box positions derived from PENTA_MIN_BASE.
+// For all other scales: standard CAGED shapes from CAGED_BASE.
+function getShapes() {
+  if (S.scale !== 'penta_min') return getCaged();
+
+  const r  = keyDef().root;
+  const kn = keyDef().notes;   // ['A','C','D','E','G'] for A minor penta
+  const entries = [];
+
+  PENTA_MIN_BASE.forEach((f, i) => {
+    const key = `b${i+1}`;
+    let pos = f.pos.map(([s,frets]) => [s, frets.map(fr => fr+r)]);
+    let mf  = minFret(pos);
+
+    if (mf >= 12) {
+      if (maxFret(pos) <= 16) {
+        entries.push([key+'_12', { ...f, lbl: kn[i]??'', pos, open: false, fret12: true }]);
+      }
+      pos = pos.map(([s,frets]) => [s, frets.map(fr => fr-12)]);
+      mf  = minFret(pos);
+    }
+    entries.push([key, { ...f, lbl: kn[i]??'', pos, open: mf===0, fret12: false }]);
+  });
+
+  entries.sort((a,b) => minFret(a[1].pos) - minFret(b[1].pos));
+  return Object.fromEntries(entries);
+}
+
+// ══ PENTATONIC MINOR BASE (C minor penta, fret offset 0) ═
+// 5 box positions, 2 notes per string. Degrees: 1 ♭3 4 5 ♭7 = C Eb F G Bb
+// Ordered by scale degree so kn[i] gives the correct note label.
+const PENTA_MIN_BASE = [
+  { color:'#E8960A',  // 1 (root) — frets 8-11
+    pos:[ [0,[8,11]], [1,[8,10]], [2,[8,10]], [3,[8,10]], [4,[8,11]], [5,[8,11]] ] },
+  { color:'#0B9488',  // ♭3 — frets 10-13
+    pos:[ [0,[11,13]], [1,[10,13]], [2,[10,13]], [3,[10,12]], [4,[11,13]], [5,[11,13]] ] },
+  { color:'#a8e063',  // 4 — frets 1-4 (open area for C key)
+    pos:[ [0,[1,3]], [1,[1,3]], [2,[1,3]], [3,[0,3]], [4,[1,4]], [5,[1,3]] ] },
+  { color:'#c77dff',  // 5 — frets 3-6
+    pos:[ [0,[3,6]], [1,[3,6]], [2,[3,5]], [3,[3,5]], [4,[4,6]], [5,[3,6]] ] },
+  { color:'#ffd166',  // ♭7 — frets 6-8
+    pos:[ [0,[6,8]], [1,[6,8]], [2,[5,8]], [3,[5,8]], [4,[6,8]], [5,[6,8]] ] },
+];
+
 function getF7() {
   const r  = keyDef().root;
   const kn = keyDef().notes;
   const result = [];
+  const isPentaMin = S.scale === 'penta_min';
+  const base = isPentaMin ? PENTA_MIN_BASE : F7_BASE;
 
-  F7_BASE.forEach((f, i) => {
+  base.forEach((f, i) => {
     let pos = f.pos.map(([s,frets]) => [s, frets.map(fr => fr+r)]);
     let mf  = minFret(pos);
     const noteName = kn[i] ?? '—';
-    const lbl = `${i+1} · ${noteName} ${MODE_NAMES[i]}`;
+    const lbl = isPentaMin
+      ? `${i+1} · ${noteName}`
+      : `${i+1} · ${noteName} ${MODE_NAMES[i]}`;
     const sh  = `${i+1}·${noteName}`;
 
     if (mf >= 12) {
@@ -761,7 +811,7 @@ function draw(svgEl, nFrets, hl, accent) {
 
 // ══ RENDERS ══════════════════════════════════════════════
 function rCaged() {
-  const caged = getCaged();
+  const caged = getShapes();
   if (!caged[S.caged]) S.caged = Object.keys(caged)[0];
   const f = caged[S.caged];
   const svgC = document.getElementById('sv-caged');
@@ -821,7 +871,7 @@ function rForm7() {
   document.getElementById('inf-form7').innerHTML = `
     <div style="margin-bottom:8px;font-size:14px;font-weight:700;color:${f.color}">
       ${f.lbl}<span style="font-size:11px;font-weight:600;color:var(--muted);margin-left:6px">${suffix}</span>
-      <span style="font-size:11px;font-weight:400;color:var(--muted);margin-left:6px">${t('f7Nps')}</span>
+      <span style="font-size:11px;font-weight:400;color:var(--muted);margin-left:6px">${S.scale==='penta_min'?'2 notes per string':t('f7Nps')}</span>
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px 20px;font-size:13px">
       ${rows.map(r=>`<div>${r}</div>`).join('')}
@@ -948,8 +998,19 @@ function rPiano() {
     }
   }
 
-  // Key signature only applies to major scale
-  if (S.scale !== 'major') { sig = {sh:0, fl:0}; }
+  // Key signature: major uses its own sig; penta_min uses natural minor sig (= relative major)
+  if (S.scale === 'penta_min') {
+    const relRoot = (kd.root + 3) % 12;
+    const relKey  = ALL_KEYS.find(k => k.root === relRoot);
+    const relSig  = relKey ? (KEY_SIG[relKey.id] || {sh:0,fl:0}) : {sh:0,fl:0};
+    // Only use key sig when accidental type matches note spellings (avoids enharmonic conflicts)
+    const hasFlats  = notes.some(n => n.length > 1 && n[1]==='b');
+    const hasSharps = notes.some(n => n.length > 1 && n[1]==='#');
+    const compatible = (relSig.fl>0 && !hasSharps) || (relSig.sh>0 && !hasFlats) || (!relSig.fl && !relSig.sh);
+    sig = compatible ? relSig : {sh:0,fl:0};
+  } else if (S.scale !== 'major') {
+    sig = {sh:0, fl:0};
+  }
   const sigN  = sig.sh || sig.fl;
   const CLEF_W = CLEF_FS + 4;         // clef glyph advance width ≈ 1em + margin
   const SIG_W  = sigN * LG + (sigN>0 ? 6 : 0); // each sig glyph ≈ 1 staff space wide
@@ -1026,7 +1087,7 @@ function rPiano() {
     const acc=note.length>1?note[1]:null;
     if (acc && !sigLetters.includes(note[0])) {
       const ch=acc==='#'?'&#xE262;':'&#xE260;';
-      ss+=`<text x="${x-LG*0.82-11}" y="${y}" font-size="${CLEF_FS}" fill="#1A1208" font-family="${MFONT}">${ch}</text>`;
+      ss+=`<text x="${x-LG*0.82-11}" y="${acc==='b'?y+HS:y}" font-size="${CLEF_FS}" fill="#1A1208" font-family="${MFONT}">${ch}</text>`;
     }
 
     // Note head (filled oval) — rx ≈ LG*0.8, ry ≈ LG*0.5
@@ -1096,6 +1157,7 @@ function mkScalePills() {
     mkScalePills();
     updateHeader();
     mkKey();
+    mkCaged(); mkF7();
     renderActive();
   }));
 }
@@ -1149,7 +1211,7 @@ function mkKey() {
   wrap.innerHTML = s;
   wrap.querySelectorAll('[data-key]').forEach(g => g.addEventListener('click', () => {
     S.key = g.dataset.key;
-    const c = getCaged();
+    const c = getShapes();
     if (!c[S.caged]) S.caged = Object.keys(c)[0];
     mkKey(); updateHeader(); mkCaged(); mkF7();
     renderActive();
@@ -1165,7 +1227,7 @@ function mkChips() {
 }
 
 function mkCaged() {
-  const caged = getCaged();
+  const caged = getShapes();
   const el = document.getElementById('caged-btns');
   el.innerHTML = Object.entries(caged).map(([k,v])=>`
     <button class="pill ${v.open?'pill-open':v.fret12?'pill-fret12':''} ${k===S.caged?'on':''}"
