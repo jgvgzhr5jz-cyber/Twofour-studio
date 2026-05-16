@@ -525,19 +525,28 @@ const MODE_NAMES = ['Ionian','Dorian','Phrygian','Lydian','Mixolydian','Aeolian'
 
 // ══ SCALE TYPES ══════════════════════════════════════════
 const SCALES = {
-  major:     { itv:[0,2,4,5,7,9,11], deg:['1','2','3','4','5','6','7'],         en:'Major',           th:'เมเจอร์',            keySig:'own' },
-  nat_minor: { itv:[0,2,3,5,7,8,10], deg:['1','2','♭3','4','5','♭6','♭7'],     en:'Natural Minor',   th:'เนเชอรัล ไมเนอร์',   keySig:'rel_major' },
-  har_minor: { itv:[0,2,3,5,7,8,11], deg:['1','2','♭3','4','5','♭6','7'],      en:'Harmonic Minor',  th:'ฮาร์โมนิก ไมเนอร์',  keySig:'rel_major' },
-  mel_minor: { itv:[0,2,3,5,7,9,11], deg:['1','2','♭3','4','5','6','7'],       en:'Melodic Minor',   th:'เมโลดิก ไมเนอร์',    keySig:'rel_major' },
-  penta_maj: { itv:[0,2,4,7,9],      deg:['1','2','3','5','6'],                en:'Major Pentatonic', th:'เพนทาโทนิก Major',  keySig:'own' },
-  penta_min: { itv:[0,3,5,7,10],     deg:['1','♭3','4','5','♭7'],             en:'Minor Pentatonic', th:'เพนทาโทนิก Minor',  keySig:'rel_major' },
+  // Major
+  major:      { itv:[0,2,4,5,7,9,11], deg:['1','2','3','4','5','6','7'],          en:'Major',           th:'เมเจอร์',            keySig:'own' },
+  // Minor
+  nat_minor:  { itv:[0,2,3,5,7,8,10], deg:['1','2','♭3','4','5','♭6','♭7'],      en:'Natural Minor',   th:'เนเชอรัล ไมเนอร์',   keySig:'mode', keySigOffset:9 },
+  har_minor:  { itv:[0,2,3,5,7,8,11], deg:['1','2','♭3','4','5','♭6','7'],       en:'Harmonic Minor',  th:'ฮาร์โมนิก ไมเนอร์',  keySig:'mode', keySigOffset:9 },
+  mel_minor:  { itv:[0,2,3,5,7,9,11], deg:['1','2','♭3','4','5','6','7'],        en:'Melodic Minor',   th:'เมโลดิก ไมเนอร์',    keySig:'mode', keySigOffset:9 },
+  // Pentatonic
+  penta_maj:  { itv:[0,2,4,7,9],      deg:['1','2','3','5','6'],                 en:'Major Pentatonic', th:'เพนทาโทนิก Major',  keySig:'own' },
+  penta_min:  { itv:[0,3,5,7,10],     deg:['1','♭3','4','5','♭7'],              en:'Minor Pentatonic', th:'เพนทาโทนิก Minor',  keySig:'mode', keySigOffset:9 },
+  // Modes of Major
+  dorian:     { itv:[0,2,3,5,7,9,10], deg:['1','2','♭3','4','5','6','♭7'],      en:'Dorian',      th:'โดเรียน',      keySig:'mode', keySigOffset:2 },
+  phrygian:   { itv:[0,1,3,5,7,8,10], deg:['1','♭2','♭3','4','5','♭6','♭7'],   en:'Phrygian',    th:'ฟรีเจียน',     keySig:'mode', keySigOffset:4 },
+  lydian:     { itv:[0,2,4,6,7,9,11], deg:['1','2','3','♯4','5','6','7'],       en:'Lydian',      th:'ลีเดียน',      keySig:'mode', keySigOffset:5 },
+  mixolydian: { itv:[0,2,4,5,7,9,10], deg:['1','2','3','4','5','6','♭7'],       en:'Mixolydian',  th:'มิกโซลีเดียน', keySig:'mode', keySigOffset:7 },
+  locrian:    { itv:[0,1,3,5,6,8,10], deg:['1','♭2','♭3','4','♭5','♭6','♭7'],  en:'Locrian',     th:'โลเครียน',     keySig:'mode', keySigOffset:11 },
 };
 
 const SCALE_GROUPS = [
   { id:'major',  en:'Major',      th:'เมเจอร์',    scales:['major'] },
   { id:'minor',  en:'Minor',      th:'ไมเนอร์',    scales:['nat_minor','har_minor','mel_minor'] },
   { id:'penta',  en:'Pentatonic', th:'เพนทาโทนิก', scales:['penta_maj','penta_min'] },
-  { id:'modes',  en:'Modes',      th:'โหมด',       scales:[] },
+  { id:'modes',  en:'Modes',      th:'โหมด',       scales:['dorian','phrygian','lydian','mixolydian','locrian'] },
 ];
 
 // Derive note names for any scale from a root (uses major scale as reference)
@@ -1059,18 +1068,19 @@ function rPiano() {
   }
 
   // Key signature strategy from SCALES definition:
-  //   'own'       — use the key's own signature (major, major penta)
-  //   'rel_major' — use relative major signature (all minor scales)
-  //   'none'      — no key signature
-  const keySigStrategy = SCALES[S.scale].keySig || 'none';
-  if (keySigStrategy === 'rel_major') {
-    const relRoot = (kd.root + 3) % 12;
-    const relKey  = ALL_KEYS.find(k => k.root === relRoot);
-    const relSig  = relKey ? (KEY_SIG[relKey.id] || {sh:0,fl:0}) : {sh:0,fl:0};
-    const hasFlats  = notes.some(n => n.length > 1 && n[1]==='b');
-    const hasSharps = notes.some(n => n.length > 1 && n[1]==='#');
-    const compatible = (relSig.fl>0 && !hasSharps) || (relSig.sh>0 && !hasFlats) || (!relSig.fl && !relSig.sh);
-    sig = compatible ? relSig : {sh:0,fl:0};
+  //   'own'  — use the key's own sig (major, major penta)
+  //   'mode' — use parent major key sig (keySigOffset = semitones from parent root)
+  //   'none' — no key signature
+  const scDef = SCALES[S.scale];
+  const keySigStrategy = scDef.keySig || 'none';
+  if (keySigStrategy === 'mode') {
+    const parentRoot = (kd.root - (scDef.keySigOffset || 0) + 12) % 12;
+    const parentKey  = ALL_KEYS.find(k => k.root === parentRoot);
+    const parentSig  = parentKey ? (KEY_SIG[parentKey.id] || {sh:0,fl:0}) : {sh:0,fl:0};
+    const hasFlats   = notes.some(n => n.length > 1 && n[1]==='b');
+    const hasSharps  = notes.some(n => n.length > 1 && n[1]==='#');
+    const compatible = (parentSig.fl>0 && !hasSharps) || (parentSig.sh>0 && !hasFlats) || (!parentSig.fl && !parentSig.sh);
+    sig = compatible ? parentSig : {sh:0,fl:0};
   } else if (keySigStrategy !== 'own') {
     sig = {sh:0, fl:0};
   }
