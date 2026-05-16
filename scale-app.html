@@ -675,7 +675,14 @@ function getShapes() {
       pos = pos.map(([s, frets]) => [s, frets.map(fr => fr - 12)]);
       mf  = minFret(pos);
     }
-    entries.push([key, { ...box, lbl: kn[i]??'', pos, open: mf===0, fret12: false }]);
+    const isOpen = mf === 0;
+    entries.push([key, { ...box, lbl: kn[i]??'', pos, open: isOpen, fret12: false }]);
+    if (isOpen) {
+      const pos12 = pos.map(([s, frets]) => [s, frets.map(fr => fr + 12)]);
+      if (maxFret(pos12) <= 17) {
+        entries.push([key+'_12', { ...box, lbl: kn[i]??'', pos: pos12, open: false, fret12: true }]);
+      }
+    }
   });
 
   entries.sort((a, b) => minFret(a[1].pos) - minFret(b[1].pos));
@@ -759,7 +766,14 @@ function getF7() {
       mf  = minFret(pos);
     }
 
-    result.push({ ...f, lbl, sh, pos, open: mf === 0, fret12: false });
+    const isOpen = mf === 0;
+    result.push({ ...f, lbl, sh, pos, open: isOpen, fret12: false });
+    if (isOpen) {
+      const pos12 = pos.map(([s, frets]) => [s, frets.map(fr => fr + 12)]);
+      if (maxFret(pos12) <= 17) {
+        result.push({ ...f, lbl, sh, pos: pos12, open: false, fret12: true });
+      }
+    }
   });
 
   result.sort((a, b) => minFret(a.pos) - minFret(b.pos));
