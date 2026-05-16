@@ -123,14 +123,28 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',-apple-sys
 
 /* Scale type selector */
 .scale-sel-wrap {
-  display:flex; align-items:center; gap:10px;
-  padding:6px 16px 10px; overflow-x:auto;
+  display:flex; flex-direction:column; gap:6px;
+  padding:6px 16px 10px;
+}
+.scale-cat-row {
+  display:flex; gap:6px; overflow-x:auto; flex-wrap:nowrap;
   scrollbar-width:none;
 }
-.scale-sel-wrap::-webkit-scrollbar { display:none; }
-.scale-pills { display:flex; gap:6px; flex-wrap:nowrap; }
+.scale-cat-row::-webkit-scrollbar { display:none; }
+.scale-cat-pill {
+  padding:4px 13px; border-radius:100px;
+  border:1.5px solid var(--brd); background:var(--surf);
+  font-size:11px; font-weight:700; letter-spacing:.3px;
+  cursor:pointer; white-space:nowrap; transition:all .15s;
+  color:var(--text);
+}
+.scale-cat-pill.on { background:var(--teal); border-color:var(--teal); color:#fff; }
+.scale-cat-pill:hover:not(.on) { border-color:var(--teal); color:var(--teal); }
+.scale-cat-pill:disabled { opacity:.35; cursor:default; }
+.scale-pills { display:flex; gap:6px; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; }
+.scale-pills::-webkit-scrollbar { display:none; }
 .scale-pill {
-  padding:5px 13px; border-radius:100px;
+  padding:4px 12px; border-radius:100px;
   border:1.5px solid var(--brd); background:var(--surf);
   font-size:11px; font-weight:700; letter-spacing:.3px;
   cursor:pointer; white-space:nowrap; transition:all .15s;
@@ -361,6 +375,7 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',-apple-sys
 
 <!-- ═══ SCALE TYPE SELECTOR ══════════════════════════ -->
 <div class="scale-sel-wrap">
+  <div class="scale-cat-row" id="scale-cats"></div>
   <div class="scale-pills" id="scale-pills"></div>
 </div>
 
@@ -510,10 +525,20 @@ const MODE_NAMES = ['Ionian','Dorian','Phrygian','Lydian','Mixolydian','Aeolian'
 
 // ══ SCALE TYPES ══════════════════════════════════════════
 const SCALES = {
-  major:     { itv:[0,2,4,5,7,9,11], deg:['1','2','3','4','5','6','7'],    en:'Major',           th:'เมเจอร์' },
-  penta_maj: { itv:[0,2,4,7,9],      deg:['1','2','3','5','6'],            en:'Major Pentatonic', th:'เพนทาโทนิก Major' },
-  penta_min: { itv:[0,3,5,7,10],     deg:['1','♭3','4','5','♭7'],         en:'Minor Pentatonic', th:'เพนทาโทนิก Minor' },
+  major:     { itv:[0,2,4,5,7,9,11], deg:['1','2','3','4','5','6','7'],         en:'Major',           th:'เมเจอร์',            keySig:'own' },
+  nat_minor: { itv:[0,2,3,5,7,8,10], deg:['1','2','♭3','4','5','♭6','♭7'],     en:'Natural Minor',   th:'เนเชอรัล ไมเนอร์',   keySig:'rel_major' },
+  har_minor: { itv:[0,2,3,5,7,8,11], deg:['1','2','♭3','4','5','♭6','7'],      en:'Harmonic Minor',  th:'ฮาร์โมนิก ไมเนอร์',  keySig:'rel_major' },
+  mel_minor: { itv:[0,2,3,5,7,9,11], deg:['1','2','♭3','4','5','6','7'],       en:'Melodic Minor',   th:'เมโลดิก ไมเนอร์',    keySig:'rel_major' },
+  penta_maj: { itv:[0,2,4,7,9],      deg:['1','2','3','5','6'],                en:'Major Pentatonic', th:'เพนทาโทนิก Major',  keySig:'own' },
+  penta_min: { itv:[0,3,5,7,10],     deg:['1','♭3','4','5','♭7'],             en:'Minor Pentatonic', th:'เพนทาโทนิก Minor',  keySig:'rel_major' },
 };
+
+const SCALE_GROUPS = [
+  { id:'major',  en:'Major',      th:'เมเจอร์',    scales:['major'] },
+  { id:'minor',  en:'Minor',      th:'ไมเนอร์',    scales:['nat_minor','har_minor','mel_minor'] },
+  { id:'penta',  en:'Pentatonic', th:'เพนทาโทนิก', scales:['penta_maj','penta_min'] },
+  { id:'modes',  en:'Modes',      th:'โหมด',       scales:[] },
+];
 
 // Derive note names for any scale from a root (uses major scale as reference)
 function computeNoteNames(rootPc, intervals) {
@@ -619,31 +644,32 @@ const F7_BASE = [
 
 // ══ CAGED helper ════════════════════════════════════════
 // Returns the right shape set for the current scale.
-// For penta_min: 5 pentatonic box positions derived from PENTA_MIN_BASE.
-// For all other scales: standard CAGED shapes from CAGED_BASE.
+// Major uses CAGED_BASE (traditional chord-shape positions).
+// All other scales use computeBoxes() — auto-generated from intervals.
 function getShapes() {
-  if (S.scale !== 'penta_min') return getCaged();
+  if (S.scale === 'major') return getCaged();
 
-  const r  = keyDef().root;
-  const kn = keyDef().notes;   // ['A','C','D','E','G'] for A minor penta
+  const r       = keyDef().root;
+  const kn      = keyDef().notes;
+  const boxes   = computeBoxes(SCALES[S.scale].itv);
   const entries = [];
 
-  PENTA_MIN_BASE.forEach((f, i) => {
+  boxes.forEach((box, i) => {
     const key = `b${i+1}`;
-    let pos = f.pos.map(([s,frets]) => [s, frets.map(fr => fr+r)]);
+    let pos = box.pos.map(([s, frets]) => [s, frets.map(fr => fr + r)]);
     let mf  = minFret(pos);
 
     if (mf >= 12) {
       if (maxFret(pos) <= 16) {
-        entries.push([key+'_12', { ...f, lbl: kn[i]??'', pos, open: false, fret12: true }]);
+        entries.push([key+'_12', { ...box, lbl: kn[i]??'', pos, open: false, fret12: true }]);
       }
-      pos = pos.map(([s,frets]) => [s, frets.map(fr => fr-12)]);
+      pos = pos.map(([s, frets]) => [s, frets.map(fr => fr - 12)]);
       mf  = minFret(pos);
     }
-    entries.push([key, { ...f, lbl: kn[i]??'', pos, open: mf===0, fret12: false }]);
+    entries.push([key, { ...box, lbl: kn[i]??'', pos, open: mf===0, fret12: false }]);
   });
 
-  entries.sort((a,b) => minFret(a[1].pos) - minFret(b[1].pos));
+  entries.sort((a, b) => minFret(a[1].pos) - minFret(b[1].pos));
   return Object.fromEntries(entries);
 }
 
@@ -663,42 +689,76 @@ const PENTA_MIN_BASE = [
     pos:[ [0,[6,8]], [1,[6,8]], [2,[5,8]], [3,[5,8]], [4,[6,8]], [5,[6,8]] ] },
 ];
 
+// ══ AUTO BOX GENERATOR ══════════════════════════════════
+// Generates positional boxes for any scale from its intervals alone.
+// Boxes are computed relative to root=0 (C), then shifted by root at render time.
+// Tested: reproduces PENTA_MIN_BASE exactly for minor pentatonic.
+const BOX_COLORS = ['#E8960A','#0B9488','#a8e063','#c77dff','#ffd166','#f78c6c','#89b4fa'];
+function computeBoxes(intervals) {
+  const scalePCs    = new Set(intervals.map(i => i % 12));
+  const notesPerStr = intervals.length <= 5 ? 2 : 3;
+  const rootFret    = (12 - OPEN[0] % 12) % 12; // fret of root on str0 (low E)
+
+  // Scale note frets on str0 starting from rootFret for one octave
+  const rawAnchors = [];
+  for (let f = rootFret; f < rootFret + 12; f++) {
+    if (scalePCs.has((OPEN[0] + f) % 12)) rawAnchors.push(f);
+  }
+
+  // Deduplicate: skip anchors only 1 fret from the previous kept anchor.
+  // This collapses duplicate boxes in 7-note scales → always ~5 boxes.
+  const anchors = [];
+  for (const a of rawAnchors) {
+    if (!anchors.length || a - anchors[anchors.length - 1] > 1) anchors.push(a);
+  }
+
+  return anchors.map((anchor, idx) => {
+    const shouldWrap = anchor >= 12;
+    const pos = OPEN.map((open, s) => {
+      const frets = [];
+      for (let f = anchor - 1; f <= anchor + 5; f++) {
+        if (f >= 0 && scalePCs.has((open + f) % 12)) frets.push(f);
+      }
+      const taken = frets.slice(0, notesPerStr);
+      return [s, shouldWrap ? taken.map(f => f - 12) : taken];
+    });
+    return { color: BOX_COLORS[idx % BOX_COLORS.length], pos };
+  });
+}
+
 function getF7() {
-  const r  = keyDef().root;
-  const kn = keyDef().notes;
+  const r      = keyDef().root;
+  const kn     = keyDef().notes;
   const result = [];
-  const isPentaMin = S.scale === 'penta_min';
-  const base = isPentaMin ? PENTA_MIN_BASE : F7_BASE;
+  const isMajor = S.scale === 'major';
+  const base    = isMajor ? F7_BASE : computeBoxes(SCALES[S.scale].itv);
 
   base.forEach((f, i) => {
-    let pos = f.pos.map(([s,frets]) => [s, frets.map(fr => fr+r)]);
+    let pos = f.pos.map(([s, frets]) => [s, frets.map(fr => fr + r)]);
     let mf  = minFret(pos);
     const noteName = kn[i] ?? '—';
-    const lbl = isPentaMin
-      ? `${i+1} · ${noteName}`
-      : `${i+1} · ${noteName} ${MODE_NAMES[i]}`;
+    const lbl = isMajor
+      ? `${i+1} · ${noteName} ${MODE_NAMES[i]}`
+      : `${i+1} · ${noteName}`;
     const sh  = `${i+1}·${noteName}`;
 
     if (mf >= 12) {
-      // Keep fret-12 copy if it fits within fret 16
       if (maxFret(pos) <= 16) {
         result.push({ ...f, lbl, sh, pos, open: false, fret12: true });
       }
-      // Wrap to lower position (fret 12 = open string)
-      pos = pos.map(([s,frets]) => [s, frets.map(fr => fr-12)]);
+      pos = pos.map(([s, frets]) => [s, frets.map(fr => fr - 12)]);
       mf  = minFret(pos);
     }
 
     result.push({ ...f, lbl, sh, pos, open: mf === 0, fret12: false });
   });
 
-  // Sort left→right by starting fret
   result.sort((a, b) => minFret(a.pos) - minFret(b.pos));
   return result;
 }
 
 // ══ STATE ═══════════════════════════════════════════════
-const S = { tab:'caged', caged:'C', form7:0, str:0, showNote:false, lang:'en', key:'C', scale:'major' };
+const S = { tab:'caged', caged:'C', form7:0, str:0, showNote:false, lang:'en', key:'C', scale:'major', scaleGroup:'major' };
 const t = k => LANGS[S.lang][k] ?? k;
 
 // ══ FRETBOARD RENDERER ══════════════════════════════════
@@ -998,17 +1058,20 @@ function rPiano() {
     }
   }
 
-  // Key signature: major uses its own sig; penta_min uses natural minor sig (= relative major)
-  if (S.scale === 'penta_min') {
+  // Key signature strategy from SCALES definition:
+  //   'own'       — use the key's own signature (major, major penta)
+  //   'rel_major' — use relative major signature (all minor scales)
+  //   'none'      — no key signature
+  const keySigStrategy = SCALES[S.scale].keySig || 'none';
+  if (keySigStrategy === 'rel_major') {
     const relRoot = (kd.root + 3) % 12;
     const relKey  = ALL_KEYS.find(k => k.root === relRoot);
     const relSig  = relKey ? (KEY_SIG[relKey.id] || {sh:0,fl:0}) : {sh:0,fl:0};
-    // Only use key sig when accidental type matches note spellings (avoids enharmonic conflicts)
     const hasFlats  = notes.some(n => n.length > 1 && n[1]==='b');
     const hasSharps = notes.some(n => n.length > 1 && n[1]==='#');
     const compatible = (relSig.fl>0 && !hasSharps) || (relSig.sh>0 && !hasFlats) || (!relSig.fl && !relSig.sh);
     sig = compatible ? relSig : {sh:0,fl:0};
-  } else if (S.scale !== 'major') {
+  } else if (keySigStrategy !== 'own') {
     sig = {sh:0, fl:0};
   }
   const sigN  = sig.sh || sig.fl;
@@ -1147,12 +1210,40 @@ function updateHeader() {
 }
 
 function mkScalePills() {
-  const wrap = document.getElementById('scale-pills');
-  wrap.innerHTML = Object.entries(SCALES).map(([id, sc]) => {
+  const catWrap  = document.getElementById('scale-cats');
+  const pillWrap = document.getElementById('scale-pills');
+
+  // Ensure selected group is valid; if current scale not in group, reset to first
+  const grp = SCALE_GROUPS.find(g => g.id === S.scaleGroup) || SCALE_GROUPS[0];
+  if (!grp.scales.includes(S.scale) && grp.scales.length > 0) {
+    S.scale = grp.scales[0];
+  }
+
+  // Row 1: category pills
+  catWrap.innerHTML = SCALE_GROUPS.map(g => {
+    const label = S.lang === 'th' ? g.th : g.en;
+    const isEmpty = g.scales.length === 0;
+    const isOn = g.id === S.scaleGroup;
+    return `<button class="scale-cat-pill ${isOn?'on':''}" data-group="${g.id}"${isEmpty?' disabled':''}>${label}</button>`;
+  }).join('');
+  catWrap.querySelectorAll('[data-group]').forEach(b => b.addEventListener('click', () => {
+    S.scaleGroup = b.dataset.group;
+    const g = SCALE_GROUPS.find(g => g.id === S.scaleGroup);
+    if (g && g.scales.length > 0) S.scale = g.scales[0];
+    mkScalePills();
+    updateHeader();
+    mkKey();
+    mkCaged(); mkF7();
+    renderActive();
+  }));
+
+  // Row 2: scale pills for active group
+  pillWrap.innerHTML = grp.scales.map(id => {
+    const sc = SCALES[id];
     const label = S.lang === 'th' ? sc.th : sc.en;
     return `<button class="scale-pill ${id===S.scale?'on':''}" data-scale="${id}">${label}</button>`;
   }).join('');
-  wrap.querySelectorAll('[data-scale]').forEach(b => b.addEventListener('click', () => {
+  pillWrap.querySelectorAll('[data-scale]').forEach(b => b.addEventListener('click', () => {
     S.scale = b.dataset.scale;
     mkScalePills();
     updateHeader();
