@@ -1033,6 +1033,40 @@ const SHARP_STEPS = [8,5,9,6,3,7,4]; // F# C# G# D# A# E# B#
 const FLAT_STEPS  = [4,7,3,6,2,5,1]; // Bb Eb Ab Db Gb Cb Fb
 const LETTER_STEP = {C:-2,D:-1,E:0,F:1,G:2,A:3,B:4};
 
+// Compute correct note names for any scale (modes, blues, pentatonic, etc.)
+// kd.notes gives the KEY's major-scale notes, not the current SCALE's notes.
+// e.g. Bb Lydian: kd.notes=['Bb','C','D','Eb',...] but Lydian needs ['Bb','C','D','E',...]
+function scaleNoteNames() {
+  const kd      = keyDef();
+  const scDef   = SCALES[S.scale];
+  const sc      = kScale();                    // actual pitch classes
+  const LETTERS = ['C','D','E','F','G','A','B'];
+  const MAJ_PCS = [0,2,4,5,7,9,11];           // natural PCs for each letter
+  const rootNote   = kd.notes[0];              // e.g. 'Bb', 'F#', 'G'
+  const rootLetter = rootNote[0];
+  const rootIdx    = LETTERS.indexOf(rootLetter);
+
+  return scDef.deg.map((deg, i) => {
+    if (i === 0) return rootNote;              // degree 1 = root
+
+    let modAcc = '', degStr = deg;
+    if      (deg.startsWith('♭')) { modAcc = 'b'; degStr = deg.slice(1); }
+    else if (deg.startsWith('♯') || deg.startsWith('#')) { modAcc = '#'; degStr = deg.slice(1); }
+    const degNum    = parseInt(degStr);        // 1–7
+    const letterIdx = (rootIdx + degNum - 1) % 7;
+    const letter    = LETTERS[letterIdx];
+    const naturalPC = MAJ_PCS[letterIdx];
+    const actualPC  = sc[i];
+    const diff      = (actualPC - naturalPC + 12) % 12;
+
+    let acc = modAcc;                          // fallback
+    if      (diff === 0)  acc = '';
+    else if (diff === 1)  acc = '#';
+    else if (diff === 11) acc = 'b';
+    return letter + acc;
+  });
+}
+
 function rPiano() {
   if (!document.fonts.check('56px Bravura')) {
     document.fonts.load('56px Bravura').then(() => { if (S.tab==='piano') rPiano(); });
@@ -1041,7 +1075,7 @@ function rPiano() {
   const sc   = kScale();          // pitch-class array [0..11] × 7
   const rPc  = kd.root;
   let   sig  = KEY_SIG[kd.id] || {sh:0,fl:0};
-  const notes= kd.notes;          // e.g. ['G','A','B','C','D','E','F#']
+  const notes= scaleNoteNames();  // actual scale note names (handles modes, blues, etc.)
   const bluePC = getBluePC();
 
   /* ── Piano keyboard (2 octaves, C–B × 2) ──────────── */
@@ -1094,7 +1128,9 @@ function rPiano() {
   { let prev=-999;
     for (const n of notes) {
       let step=LETTER_STEP[n[0]];
-      while (step<=prev) step+=7;
+      // Use < (not <=) so chromatic pairs (e.g. ♭5 Db and ♮5 D) land on the
+      // same staff step rather than jumping an octave apart.
+      while (step<prev) step+=7;
       noteSteps.push(step); prev=step;
     }
   }
