@@ -534,6 +534,7 @@ const SCALES = {
   // Pentatonic
   penta_maj:  { itv:[0,2,4,7,9],      deg:['1','2','3','5','6'],                 en:'Major Pentatonic', th:'เพนทาโทนิก Major',  keySig:'own' },
   penta_min:  { itv:[0,3,5,7,10],     deg:['1','♭3','4','5','♭7'],              en:'Minor Pentatonic', th:'เพนทาโทนิก Minor',  keySig:'mode', keySigOffset:9 },
+  blues:      { itv:[0,3,5,6,7,10],   deg:['1','♭3','4','♭5','5','♭7'],          en:'Blues',           th:'บลูส์',              keySig:'mode', keySigOffset:9, blueNote:6 },
   // Modes of Major
   dorian:     { itv:[0,2,3,5,7,9,10], deg:['1','2','♭3','4','5','6','♭7'],      en:'Dorian',      th:'โดเรียน',      keySig:'mode', keySigOffset:2 },
   phrygian:   { itv:[0,1,3,5,7,8,10], deg:['1','♭2','♭3','4','5','♭6','♭7'],   en:'Phrygian',    th:'ฟรีเจียน',     keySig:'mode', keySigOffset:4 },
@@ -545,7 +546,7 @@ const SCALES = {
 const SCALE_GROUPS = [
   { id:'major',  en:'Major',      th:'เมเจอร์',    scales:['major'] },
   { id:'minor',  en:'Minor',      th:'ไมเนอร์',    scales:['nat_minor','har_minor','mel_minor'] },
-  { id:'penta',  en:'Pentatonic', th:'เพนทาโทนิก', scales:['penta_maj','penta_min'] },
+  { id:'penta',  en:'Pentatonic', th:'เพนทาโทนิก', scales:['penta_maj','penta_min','blues'] },
   { id:'modes',  en:'Modes',      th:'โหมด',       scales:['dorian','phrygian','lydian','mixolydian','locrian'] },
 ];
 
@@ -593,7 +594,7 @@ const CAGED_BASE = {
   E:  { lbl:'E', color:'#c77dff',
         pos:[ [0,[7,8,10]], [1,[7,8,10]], [2,[7,9,10]], [3,[7,9,10]], [4,[8,10]], [5,[7,8,10]] ] },
   D:  { lbl:'D', color:'#ffd166',
-        pos:[ [0,[10,12]], [1,[10,12]], [2,[10,12]], [3,[9,10,12]], [4,[10,12,13]], [5,[10,12,13]] ] },
+        pos:[ [0,[10,12]], [1,[10,12]], [2,[9,10,12]], [3,[9,10,12]], [4,[10,12,13]], [5,[10,12,13]] ] },
   C12:{ lbl:'C', color:'#E8960A', fret12Base:true,
         pos:[ [0,[12,13,15]], [1,[12,14,15]], [2,[12,14,15]], [3,[12,14]], [4,[12,13,15]], [5,[12,13,15]] ] },
 };
@@ -709,7 +710,15 @@ const PENTA_MIN_BASE = [
 // Generates positional boxes for any scale from its intervals alone.
 // Boxes are computed relative to root=0 (C), then shifted by root at render time.
 // Tested: reproduces PENTA_MIN_BASE exactly for minor pentatonic.
+const BLUE_NOTE_COLOR = '#1E90FF'; // blue note (♭5) highlight colour
 const BOX_COLORS = ['#E8960A','#0B9488','#a8e063','#c77dff','#ffd166','#f78c6c','#89b4fa'];
+// Returns pitch-class of the blue note for the current scale/key, or -1 if none.
+function getBluePC() {
+  const sc = SCALES[S.scale];
+  if (!sc || sc.blueNote === undefined) return -1;
+  return (keyDef().root + sc.blueNote) % 12;
+}
+
 function computeBoxes(intervals) {
   const scalePCs    = new Set(intervals.map(i => i % 12));
   const notesPerStr = intervals.length <= 5 ? 2 : 3;
@@ -732,8 +741,9 @@ function computeBoxes(intervals) {
     const shouldWrap = anchor >= 12;
     const pos = OPEN.map((open, s) => {
       const frets = [];
+      const minF = shouldWrap ? 12 : 0; // exclude frets that would wrap to negative
       for (let f = anchor - 1; f <= anchor + 5; f++) {
-        if (f >= 0 && scalePCs.has((open + f) % 12)) frets.push(f);
+        if (f >= minF && scalePCs.has((open + f) % 12)) frets.push(f);
       }
       const taken = frets.slice(0, notesPerStr);
       return [s, shouldWrap ? taken.map(f => f - 12) : taken];
@@ -873,17 +883,21 @@ function draw(svgEl, nFrets, hl, accent) {
 
   // note dots
   if (hl) {
+    const bluePC = getBluePC();
     for (const [s,frets] of hl) {
       for (const f of frets) {
         const x=xOf(f), y=yOf(s);
         const note=noteAt(s,f);
         if (!inSc(note)) continue;   // skip notes outside current scale
         const root=isRoot(note);
+        const isBlue = !root && bluePC >= 0 && (OPEN[s]+f)%12 === bluePC;
         const lbl = S.showNote ? (getNN(note)||'?') : (getDeg(note)||'?');
-        const fill = root ? '#E8960A' : (accent||'#0B9488');
+        const fill = root ? '#E8960A' : isBlue ? BLUE_NOTE_COLOR : (accent||'#0B9488');
         const tc   = '#fff';
+        const strokeC = root ? '#C97D08' : isBlue ? '#1565C0' : 'rgba(0,0,0,0.08)';
         if (root) g += `<circle cx="${x}" cy="${y}" r="${FB.NR+4}" fill="#E8960A" opacity="0.25"/>`;
-        g += `<circle cx="${x}" cy="${y}" r="${FB.NR}" fill="${fill}" stroke="${root?'#C97D08':'rgba(0,0,0,0.08)'}" stroke-width="1.5"/>`;
+        if (isBlue) g += `<circle cx="${x}" cy="${y}" r="${FB.NR+4}" fill="${BLUE_NOTE_COLOR}" opacity="0.20"/>`;
+        g += `<circle cx="${x}" cy="${y}" r="${FB.NR}" fill="${fill}" stroke="${strokeC}" stroke-width="1.5"/>`;
         g += `<text x="${x}" y="${y+4.5}" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="800" fill="${tc}" font-family="monospace,sans-serif">${lbl}</text>`;
       }
     }
@@ -919,11 +933,11 @@ function rCaged() {
   document.getElementById('inf-caged').innerHTML = `
     <div class="info-row">
       <span class="info-lbl">${title}</span>
-      ${notes.filter(x=>inSc(x.n)).map(x=>`<div class="badge">
-        <span class="bdot" style="background:${x.root?'#E8960A':f.color}"></span>
+      ${notes.filter(x=>inSc(x.n)).map(x=>{const bpc=getBluePC();const isB=!x.root&&bpc>=0&&x.n===bpc;return`<div class="badge">
+        <span class="bdot" style="background:${x.root?'#E8960A':isB?BLUE_NOTE_COLOR:f.color}"></span>
         <strong>${getNN(x.n)}</strong>
         <span style="color:var(--muted)">(${getDeg(x.n)})</span>
-      </div>`).join('')}
+      </div>`}).join('')}
     </div>`;
 }
 
@@ -946,8 +960,9 @@ function rForm7() {
     return `<span style="color:var(--muted);font-size:11px">${SLAB[s]}:</span> `+
       inScFrets.map(fr=>{
         const n=noteAt(s,fr),root=isRoot(n);
+        const bpc=getBluePC();const isB=!root&&bpc>=0&&(OPEN[s]+fr)%12===bpc;
         const lbl=S.showNote?(getNN(n)||'?'):(getDeg(n)||'?');
-        return `<span style="color:${root?'#E8960A':f.color};font-weight:700">${lbl}</span>`;
+        return `<span style="color:${root?'#E8960A':isB?BLUE_NOTE_COLOR:f.color};font-weight:700">${lbl}</span>`;
       }).join('–');
   }).filter(Boolean);
   const suffix = f.open ? '  ·  Open String' : f.fret12 ? '  ·  Fret 12' : '';
@@ -996,7 +1011,7 @@ function rStr() {
     <div class="info-row">
       <span class="info-lbl">${t('strLabel')(SLAB[s])}</span>
       ${details.map(d=>`<div class="badge">
-        <span class="bdot" style="background:${isRoot(d.n)?'#E8960A':'#0B9488'}"></span>
+        <span class="bdot" style="background:${isRoot(d.n)?'#E8960A':(getBluePC()>=0&&(OPEN[S.str]+d.f)%12===getBluePC())?BLUE_NOTE_COLOR:'#0B9488'}"></span>
         <strong>${getNN(d.n)}</strong>
         <span style="color:var(--muted)">(${getDeg(d.n)}) fr.${d.f}${d.f===0?' 🔓':''}</span>
       </div>`).join('')}
@@ -1027,6 +1042,7 @@ function rPiano() {
   const rPc  = kd.root;
   let   sig  = KEY_SIG[kd.id] || {sh:0,fl:0};
   const notes= kd.notes;          // e.g. ['G','A','B','C','D','E','F#']
+  const bluePC = getBluePC();
 
   /* ── Piano keyboard (2 octaves, C–B × 2) ──────────── */
   const WW=34, WH=108, BW=22, BH=66;
@@ -1044,8 +1060,9 @@ function rPiano() {
   // white keys
   for (let i=0;i<14;i++) {
     const pc=WHITE_PC[i], inS=sc.includes(pc), isR=pc===rPc;
-    const fill=isR?'#E8960A':inS?'rgba(11,148,136,.88)':'#FAF4EB';
-    const stroke=isR?'#C97D08':inS?'#0B9488':'#E4D4BC';
+    const isBlue=!isR&&bluePC>=0&&pc===bluePC;
+    const fill=isR?'#E8960A':isBlue?BLUE_NOTE_COLOR:inS?'rgba(11,148,136,.88)':'#FAF4EB';
+    const stroke=isR?'#C97D08':isBlue?'#1565C0':inS?'#0B9488':'#E4D4BC';
     const lbl=inS?(S.showNote?(getNN(pc)||WHITE_LB[i]):(getDeg(pc)||'')):'';
     pk += `<rect x="${i*WW+1}" y="14" width="${WW-2}" height="${WH-4}" fill="${fill}" stroke="${stroke}" stroke-width="1.2" rx="3"/>`;
     if (lbl) pk+=`<text x="${i*WW+WW/2}" y="${14+WH-12}" text-anchor="middle" font-size="10" font-weight="900" fill="#fff" font-family="monospace">${lbl}</text>`;
@@ -1054,7 +1071,8 @@ function rPiano() {
   // black keys
   for (const bk of BLACK_KEYS) {
     const pc=bk.pc, inS=sc.includes(pc), isR=pc===rPc;
-    const fill=isR?'#E8960A':inS?'#0B9488':'#1A1208';
+    const isBlue=!isR&&bluePC>=0&&pc===bluePC;
+    const fill=isR?'#E8960A':isBlue?BLUE_NOTE_COLOR:inS?'#0B9488':'#1A1208';
     const lbl=inS?(S.showNote?(getNN(pc)||''):(getDeg(pc)||'')):'';
     const x=bk.i*WW-BW/2+1;
     pk += `<rect x="${x}" y="14" width="${BW}" height="${BH}" fill="${fill}" stroke="rgba(0,0,0,.4)" stroke-width="1" rx="3"/>`;
@@ -1090,9 +1108,16 @@ function rPiano() {
   if (keySigStrategy === 'mode') {
     const parentRoot = (kd.root - (scDef.keySigOffset || 0) + 12) % 12;
     const parentKey  = ALL_KEYS.find(k => k.root === parentRoot);
-    const parentSig  = parentKey ? (KEY_SIG[parentKey.id] || {sh:0,fl:0}) : {sh:0,fl:0};
+    let   parentSig  = parentKey ? (KEY_SIG[parentKey.id] || {sh:0,fl:0}) : {sh:0,fl:0};
     const hasFlats   = notes.some(n => n.length > 1 && n[1]==='b');
     const hasSharps  = notes.some(n => n.length > 1 && n[1]==='#');
+    // ALL_KEYS only contains sharp-side enharmonics (F# not Gb, B not Cb).
+    // When notes are flat-based but the looked-up parent key is sharp-based,
+    // swap to the enharmonic flat key signature.
+    const ENHARMONIC_FLAT = { 6:{sh:0,fl:6}, 11:{sh:0,fl:7} }; // F#→Gb, B→Cb
+    if (hasFlats && parentSig.sh > 0 && ENHARMONIC_FLAT[parentRoot]) {
+      parentSig = ENHARMONIC_FLAT[parentRoot];
+    }
     const compatible = (parentSig.fl>0 && !hasSharps) || (parentSig.sh>0 && !hasFlats) || (!parentSig.fl && !parentSig.sh);
     sig = compatible ? parentSig : {sh:0,fl:0};
   } else if (keySigStrategy !== 'own') {
@@ -1153,7 +1178,8 @@ function rPiano() {
   notes.forEach((note,i)=>{
     const step=noteSteps[i], y=sy(step), x=noteXs[i];
     const pc=sc[i], isR=pc===rPc;
-    const fill=isR?'#E8960A':'#0B9488';
+    const isBlue=!isR&&bluePC>=0&&pc===bluePC;
+    const fill=isR?'#E8960A':isBlue?BLUE_NOTE_COLOR:'#0B9488';
     const lbl=S.showNote?note:scaleDeg()[i];
 
     // Ledger lines below staff
@@ -1174,7 +1200,7 @@ function rPiano() {
     const acc=note.length>1?note[1]:null;
     if (acc && !sigLetters.includes(note[0])) {
       const ch=acc==='#'?'&#xE262;':'&#xE260;';
-      ss+=`<text x="${x-LG*0.82-11}" y="${acc==='b'?y+HS:y}" font-size="${CLEF_FS}" fill="#1A1208" font-family="${MFONT}">${ch}</text>`;
+      ss+=`<text x="${x-LG*0.82-11}" y="${acc==='b'?y+HS:y}" font-size="${CLEF_FS}" fill="${isBlue?BLUE_NOTE_COLOR:'#1A1208'}" font-family="${MFONT}">${ch}</text>`;
     }
 
     // Note head (filled oval) — rx ≈ LG*0.8, ry ≈ LG*0.5
