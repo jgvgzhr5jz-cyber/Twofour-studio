@@ -536,18 +536,36 @@ const SCALES = {
   penta_min:  { itv:[0,3,5,7,10],     deg:['1','♭3','4','5','♭7'],              en:'Minor Pentatonic', th:'เพนทาโทนิก Minor',  keySig:'mode', keySigOffset:9 },
   blues:      { itv:[0,3,5,6,7,10],   deg:['1','♭3','4','♭5','5','♭7'],          en:'Blues',           th:'บลูส์',              keySig:'mode', keySigOffset:9, blueNote:6 },
   // Modes of Major
+  ionian:     { itv:[0,2,4,5,7,9,11], deg:['1','2','3','4','5','6','7'],         en:'Ionian',      th:'ไอโอเนียน',    keySig:'own' },
   dorian:     { itv:[0,2,3,5,7,9,10], deg:['1','2','♭3','4','5','6','♭7'],      en:'Dorian',      th:'โดเรียน',      keySig:'mode', keySigOffset:2 },
   phrygian:   { itv:[0,1,3,5,7,8,10], deg:['1','♭2','♭3','4','5','♭6','♭7'],   en:'Phrygian',    th:'ฟรีเจียน',     keySig:'mode', keySigOffset:4 },
   lydian:     { itv:[0,2,4,6,7,9,11], deg:['1','2','3','♯4','5','6','7'],       en:'Lydian',      th:'ลีเดียน',      keySig:'mode', keySigOffset:5 },
   mixolydian: { itv:[0,2,4,5,7,9,10], deg:['1','2','3','4','5','6','♭7'],       en:'Mixolydian',  th:'มิกโซลีเดียน', keySig:'mode', keySigOffset:7 },
+  aeolian:    { itv:[0,2,3,5,7,8,10], deg:['1','2','♭3','4','5','♭6','♭7'],     en:'Aeolian',     th:'เอโอเลียน',    keySig:'mode', keySigOffset:9 },
   locrian:    { itv:[0,1,3,5,6,8,10], deg:['1','♭2','♭3','4','♭5','♭6','♭7'],  en:'Locrian',     th:'โลเครียน',     keySig:'mode', keySigOffset:11 },
+  // Modes of Melodic Minor
+  mel_m2: { itv:[0,1,3,5,7,9,10], deg:['1','♭2','♭3','4','5','6','♭7'],        en:'Dorian ♭2',      th:'โดเรียน ♭2',          keySig:'mode', keySigOffset:11 },
+  mel_m3: { itv:[0,2,4,6,8,9,11], deg:['1','2','3','♯4','♯5','6','7'],          en:'Lydian Aug.',     th:'ลีเดียนออคเมนเตด',    keySig:'mode', keySigOffset:0  },
+  mel_m4: { itv:[0,2,4,6,7,9,10], deg:['1','2','3','♯4','5','6','♭7'],          en:'Lydian Dom.',     th:'ลีเดียนโดมิแนนท์',    keySig:'mode', keySigOffset:2  },
+  mel_m5: { itv:[0,2,4,5,7,8,10], deg:['1','2','3','4','5','♭6','♭7'],          en:'Mixo. ♭6',        th:'มิกโซลีเดียน ♭6',     keySig:'mode', keySigOffset:4  },
+  mel_m6: { itv:[0,2,3,5,6,8,10], deg:['1','2','♭3','4','♭5','♭6','♭7'],        en:'Locrian ♯2',      th:'โลเครียน ♯2',         keySig:'mode', keySigOffset:6  },
+  mel_m7: { itv:[0,1,3,4,6,8,10], deg:['1','♭2','♯2','3','♭5','♭6','♭7'],       en:'Altered',         th:'อัลเทอร์ด',           keySig:'mode', keySigOffset:8  },
+  // Modes of Harmonic Minor
+  har_m2: { itv:[0,1,3,5,6,9,10], deg:['1','♭2','♭3','4','♭5','6','♭7'],        en:'Locrian ♯6',      th:'โลเครียน ♯6',         keySig:'mode', keySigOffset:11 },
+  har_m3: { itv:[0,2,4,5,8,9,11], deg:['1','2','3','4','♯5','6','7'],            en:'Ionian ♯5',       th:'ไอโอเนียน ♯5',        keySig:'mode', keySigOffset:0  },
+  har_m4: { itv:[0,2,3,6,7,9,10], deg:['1','2','♭3','♯4','5','6','♭7'],          en:'Dorian ♯4',       th:'โดเรียน ♯4',          keySig:'mode', keySigOffset:2  },
+  har_m5: { itv:[0,1,4,5,7,8,10], deg:['1','♭2','3','4','5','♭6','♭7'],          en:'Phrygian Dom.',   th:'ฟรีเจียนโดมิแนนท์',   keySig:'mode', keySigOffset:4  },
+  har_m6: { itv:[0,3,4,6,7,9,11], deg:['1','♯2','3','♯4','5','6','7'],           en:'Lydian ♯2',       th:'ลีเดียน ♯2',          keySig:'mode', keySigOffset:5  },
+  har_m7: { itv:[0,1,3,4,6,8,9],  deg:['1','♭2','♭3','♭4','♭5','♭6','♭♭7'],     en:'Alt. Dim.',       th:'อัลเทอร์ดดิมินิช',    keySig:'mode', keySigOffset:8  },
 };
 
 const SCALE_GROUPS = [
   { id:'major',  en:'Major',      th:'เมเจอร์',    scales:['major'] },
   { id:'minor',  en:'Minor',      th:'ไมเนอร์',    scales:['nat_minor','har_minor','mel_minor'] },
   { id:'penta',  en:'Pentatonic', th:'เพนทาโทนิก', scales:['penta_maj','penta_min','blues'] },
-  { id:'modes',  en:'Modes',      th:'โหมด',       scales:['dorian','phrygian','lydian','mixolydian','locrian'] },
+  { id:'modes',     en:'Major Modes',  th:'โหมดเมเจอร์',  scales:['ionian','dorian','phrygian','lydian','mixolydian','aeolian','locrian'] },
+  { id:'mel_modes', en:'Mel. Modes',  th:'โหมดเมโลดิก',  scales:['mel_m2','mel_m3','mel_m4','mel_m5','mel_m6','mel_m7'] },
+  { id:'har_modes', en:'Har. Modes',  th:'โหมดฮาร์โมนิก', scales:['har_m2','har_m3','har_m4','har_m5','har_m6','har_m7'] },
 ];
 
 // Derive note names for any scale from a root (uses major scale as reference)
@@ -573,7 +591,7 @@ const SLAB = ['E','A','D','G','B','e'];
 const noteAt = (s,f) => (OPEN[s]+f)%12;
 const keyDef = () => {
   const kd = ALL_KEYS.find(k => k.id === S.key);
-  if (S.scale === 'major') return kd;
+  if (S.scale === 'major' || S.scale === 'ionian') return kd;
   return { ...kd, notes: computeNoteNames(kd.root, SCALES[S.scale].itv) };
 };
 const scaleDeg = () => SCALES[S.scale].deg;
@@ -658,7 +676,7 @@ const F7_BASE = [
 // Blues uses BLUES_BASE (minor-penta positions + ♭5 passing note).
 // All other scales use computeBoxes() — auto-generated from intervals.
 function getShapes() {
-  if (S.scale === 'major') return getCaged();
+  if (S.scale === 'major' || S.scale === 'ionian') return getCaged();
 
   const r       = keyDef().root;
   const kn      = keyDef().notes;
@@ -784,7 +802,7 @@ function getF7() {
   const r      = keyDef().root;
   const kn     = keyDef().notes;
   const result = [];
-  const isMajor = S.scale === 'major';
+  const isMajor = S.scale === 'major' || S.scale === 'ionian';
   const base    = isMajor ? F7_BASE : computeBoxes(SCALES[S.scale].itv);
 
   base.forEach((f, i) => {
@@ -1078,8 +1096,9 @@ function scaleNoteNames() {
     if (i === 0) return rootNote;              // degree 1 = root
 
     let modAcc = '', degStr = deg;
-    if      (deg.startsWith('♭')) { modAcc = 'b'; degStr = deg.slice(1); }
-    else if (deg.startsWith('♯') || deg.startsWith('#')) { modAcc = '#'; degStr = deg.slice(1); }
+    if      (deg.startsWith('♭♭'))                    { modAcc = 'bb'; degStr = deg.slice(2); }
+    else if (deg.startsWith('♭'))                     { modAcc = 'b';  degStr = deg.slice(1); }
+    else if (deg.startsWith('♯') || deg.startsWith('#')) { modAcc = '#';  degStr = deg.slice(1); }
     const degNum    = parseInt(degStr);        // 1–7
     const letterIdx = (rootIdx + degNum - 1) % 7;
     const letter    = LETTERS[letterIdx];
@@ -1091,6 +1110,7 @@ function scaleNoteNames() {
     if      (diff === 0)  acc = '';
     else if (diff === 1)  acc = '#';
     else if (diff === 11) acc = 'b';
+    else if (diff === 10) acc = 'bb';          // double-flat (e.g. ♭♭7 in Altered Dim.)
     return letter + acc;
   });
 }
@@ -1281,10 +1301,11 @@ function rPiano() {
 
     // Accidental beside note head (only if NOT already in key signature)
     // Use Bravura SMuFL glyphs at same font-size as clef/key-sig so y aligns correctly
-    const acc=note.length>1?note[1]:null;
+    const isDoubleFl = note.length>2 && note[1]==='b' && note[2]==='b';
+    const acc = isDoubleFl ? 'bb' : (note.length>1 ? note[1] : null);
     if (acc && !sigLetters.includes(note[0])) {
-      const ch=acc==='#'?'&#xE262;':'&#xE260;';
-      ss+=`<text x="${x-LG*0.82-11}" y="${acc==='b'?y+HS:y}" font-size="${CLEF_FS}" fill="${isBlue?BLUE_NOTE_COLOR:'#1A1208'}" font-family="${MFONT}">${ch}</text>`;
+      const ch = acc==='#' ? '&#xE262;' : acc==='bb' ? '&#xE264;' : '&#xE260;';
+      ss+=`<text x="${x-LG*0.82-11}" y="${(acc==='b'||acc==='bb')?y+HS:y}" font-size="${CLEF_FS}" fill="${isBlue?BLUE_NOTE_COLOR:'#1A1208'}" font-family="${MFONT}">${ch}</text>`;
     } else if (!acc && sigLetters.includes(note[0])) {
       // Natural note contradicts key sig — show ♮ natural sign (Bravura U+E261)
       ss+=`<text x="${x-LG*0.82-11}" y="${y}" font-size="${CLEF_FS}" fill="${isBlue?BLUE_NOTE_COLOR:'#1A1208'}" font-family="${MFONT}">&#xE261;</text>`;
