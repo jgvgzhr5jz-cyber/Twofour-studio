@@ -1175,15 +1175,34 @@ function rPiano() {
     let   parentSig  = parentKey ? (KEY_SIG[parentKey.id] || {sh:0,fl:0}) : {sh:0,fl:0};
     const hasFlats   = notes.some(n => n.length > 1 && n[1]==='b');
     const hasSharps  = notes.some(n => n.length > 1 && n[1]==='#');
-    // ALL_KEYS only contains sharp-side enharmonics (F# not Gb, B not Cb).
-    // When notes are flat-based but the looked-up parent key is sharp-based,
-    // swap to the enharmonic flat key signature.
-    const ENHARMONIC_FLAT = { 6:{sh:0,fl:6}, 11:{sh:0,fl:7} }; // F#→Gb, B→Cb
-    if (hasFlats && parentSig.sh > 0 && ENHARMONIC_FLAT[parentRoot]) {
+    // ALL_KEYS stores one enharmonic per root. When the parent key's accidental
+    // direction conflicts with the scale notes, swap to the correct enharmonic.
+    const ENHARMONIC_FLAT  = { 6:{sh:0,fl:6}, 11:{sh:0,fl:7} }; // F#→Gb, B→Cb
+    const ENHARMONIC_SHARP = { 1:{sh:7,fl:0} };                   // Db→C# (7♯)
+    if (hasFlats  && parentSig.sh > 0 && ENHARMONIC_FLAT[parentRoot])
       parentSig = ENHARMONIC_FLAT[parentRoot];
-    }
+    else if (hasSharps && parentSig.fl > 0 && ENHARMONIC_SHARP[parentRoot])
+      parentSig = ENHARMONIC_SHARP[parentRoot];
     const compatible = (parentSig.fl>0 && !hasSharps) || (parentSig.sh>0 && !hasFlats) || (!parentSig.fl && !parentSig.sh);
-    sig = compatible ? parentSig : {sh:0,fl:0};
+    if (compatible) {
+      sig = parentSig;
+    } else {
+      // No standard parent key matches the notes' accidental direction.
+      // Derive key sig from the notes: find highest flat/sharp in circle-of-fifths order.
+      const FLAT_ORDER  = ['B','E','A','D','G','C','F'];
+      const SHARP_ORDER = ['F','C','G','D','A','E','B'];
+      if (hasFlats && !hasSharps) {
+        let maxIdx = -1;
+        for (const n of notes) if (n.length>1&&n[1]==='b') { const i=FLAT_ORDER.indexOf(n[0]); if(i>maxIdx) maxIdx=i; }
+        sig = maxIdx>=0 ? {sh:0,fl:maxIdx+1} : {sh:0,fl:0};
+      } else if (hasSharps && !hasFlats) {
+        let maxIdx = -1;
+        for (const n of notes) if (n.length>1&&n[1]==='#') { const i=SHARP_ORDER.indexOf(n[0]); if(i>maxIdx) maxIdx=i; }
+        sig = maxIdx>=0 ? {sh:maxIdx+1,fl:0} : {sh:0,fl:0};
+      } else {
+        sig = {sh:0,fl:0};
+      }
+    }
   } else if (keySigStrategy !== 'own') {
     sig = {sh:0, fl:0};
   }
@@ -1204,7 +1223,8 @@ function rPiano() {
   const noteXs = [];
   { let cx = NX0;
     notes.forEach(n => {
-      const needsAcc = n.length > 1 && !sigLetters.includes(n[0]);
+      const needsAcc = (n.length > 1 && !sigLetters.includes(n[0]))
+                    || (n.length === 1 && sigLetters.includes(n[0])); // natural overrides key sig
       if (needsAcc) cx += ACC_W;
       noteXs.push(cx);
       cx += NS;
@@ -1265,6 +1285,9 @@ function rPiano() {
     if (acc && !sigLetters.includes(note[0])) {
       const ch=acc==='#'?'&#xE262;':'&#xE260;';
       ss+=`<text x="${x-LG*0.82-11}" y="${acc==='b'?y+HS:y}" font-size="${CLEF_FS}" fill="${isBlue?BLUE_NOTE_COLOR:'#1A1208'}" font-family="${MFONT}">${ch}</text>`;
+    } else if (!acc && sigLetters.includes(note[0])) {
+      // Natural note contradicts key sig — show ♮ natural sign (Bravura U+E261)
+      ss+=`<text x="${x-LG*0.82-11}" y="${y}" font-size="${CLEF_FS}" fill="${isBlue?BLUE_NOTE_COLOR:'#1A1208'}" font-family="${MFONT}">&#xE261;</text>`;
     }
 
     // Note head (filled oval) — rx ≈ LG*0.8, ry ≈ LG*0.5
