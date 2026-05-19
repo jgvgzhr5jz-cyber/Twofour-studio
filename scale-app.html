@@ -755,56 +755,54 @@ const BLUES_BASE = [
 // ══ AUTO BOX GENERATOR ══════════════════════════════════
 // Generates positional boxes for any scale from its intervals alone.
 // Boxes are computed relative to root=0 (C), then shifted by root at render time.
-// Tested: reproduces PENTA_MIN_BASE exactly for minor pentatonic.
-const BLUE_NOTE_COLOR = '#1E90FF'; // blue note (♭5) highlight colour
-const BOX_COLORS = ['#E8960A','#0B9488','#a8e063','#c77dff','#ffd166','#f78c6c','#89b4fa'];
-// Returns pitch-class of the blue note for the current scale/key, or -1 if none.
+const BLUE_NOTE_COLOR = '#1E90FF';
+const BOX_COLORS  = ['#E8960A','#0B9488','#a8e063','#c77dff','#ffd166','#f78c6c','#89b4fa'];
+const F7_COLORS   = ['#ff7849','#ffd166','#a8e063','#0B9488','#c77dff','#f78c6c','#89b4fa'];
+// Semitone height of each open string relative to low-E (E2=0, A2=5, …)
+const OPEN_PITCHES = [0, 5, 10, 15, 19, 24];
+
 function getBluePC() {
   const sc = SCALES[S.scale];
   if (!sc || sc.blueNote === undefined) return -1;
   return (keyDef().root + sc.blueNote) % 12;
 }
 
-function computeBoxes(intervals) {
-  const scalePCs    = new Set(intervals.map(i => i % 12));
-  const notesPerStr = intervals.length <= 5 ? 2 : 3;
-  const rootFret    = (12 - OPEN[0] % 12) % 12; // fret of root on str0 (low E)
+// computeBoxes: pitch-class–based 3NPS (or 2NPS for pentatonic) box generator.
+// For each scale degree as a starting point, assigns exactly notesPerStr consecutive
+// scale notes per string by computing from pitch class directly.
+// The ascending-pitch constraint (first note on string s+1 > last note on string s)
+// automatically handles the G→B major-3rd tuning gap without any deduplication.
+function computeBoxes(intervals, colors = BOX_COLORS) {
+  const n          = intervals.length;
+  const notesPerStr = n <= 5 ? 2 : 3;
+  const pcs        = intervals.map(i => i % 12); // pitch class per degree
 
-  // Scale note frets on str0 starting from rootFret for one octave
-  const rawAnchors = [];
-  for (let f = rootFret; f < rootFret + 12; f++) {
-    if (scalePCs.has((OPEN[0] + f) % 12)) rawAnchors.push(f);
-  }
+  return pcs.map((_, startDeg) => {
+    let prevLastPitch = -1;
 
-  // Deduplicate: skip anchors only 1 fret from the previous kept anchor.
-  // This collapses duplicate boxes in 7-note scales → always ~5 boxes.
-  const anchors = [];
-  for (const a of rawAnchors) {
-    if (!anchors.length || a - anchors[anchors.length - 1] > 1) anchors.push(a);
-  }
-
-  return anchors.map((anchor, idx) => {
-    const shouldWrap = anchor >= 12;
     const pos = OPEN.map((open, s) => {
-      const frets = [];
-      const minF = shouldWrap ? 12 : 0; // exclude frets that would wrap to negative
-      for (let f = anchor - 1; f <= anchor + 5; f++) {
-        if (f >= minF && scalePCs.has((open + f) % 12)) frets.push(f);
+      const firstDeg = (startDeg + s * notesPerStr) % n;
+
+      // Lowest fret where this degree sounds on string s
+      let fret  = (pcs[firstDeg] - open + 12) % 12;
+      let pitch = OPEN_PITCHES[s] + fret;
+
+      // Ascend by octaves until strictly above the previous string's last note
+      while (pitch <= prevLastPitch) { fret += 12; pitch += 12; }
+
+      const frets = [fret];
+      for (let k = 1; k < notesPerStr; k++) {
+        const pc = pcs[(firstDeg + k) % n];
+        let f = (pc - open + 12) % 12;
+        while (f <= frets[frets.length - 1]) f += 12;
+        frets.push(f);
       }
-      const taken = frets.slice(0, notesPerStr);
-      return [s, shouldWrap ? taken.map(f => f - 12) : taken];
+
+      prevLastPitch = OPEN_PITCHES[s] + frets[frets.length - 1];
+      return [s, frets];
     });
-    // Deduplicate: if last note of string s has same PC as first note of string s+1
-    // (caused by the G→B major-3rd gap in standard tuning), remove it from string s.
-    for (let si = 0; si < pos.length - 1; si++) {
-      const [sA, frA] = pos[si];
-      const [sB, frB] = pos[si + 1];
-      if (!frA.length || !frB.length) continue;
-      const lastPC  = (OPEN[sA] + frA[frA.length - 1]) % 12;
-      const firstPC = (OPEN[sB] + frB[0]) % 12;
-      if (lastPC === firstPC) pos[si] = [sA, frA.slice(0, -1)];
-    }
-    return { color: BOX_COLORS[idx % BOX_COLORS.length], pos };
+
+    return { color: colors[startDeg % colors.length], pos };
   });
 }
 
@@ -813,7 +811,8 @@ function getF7() {
   const kn     = keyDef().notes;
   const result = [];
   const isMajor = S.scale === 'major' || S.scale === 'ionian';
-  const base    = isMajor ? F7_BASE : computeBoxes(SCALES[S.scale].itv);
+  const base    = isMajor ? computeBoxes(SCALES[S.scale].itv, F7_COLORS)
+                          : computeBoxes(SCALES[S.scale].itv);
 
   base.forEach((f, i) => {
     let pos = f.pos.map(([s, frets]) => [s, frets.map(fr => fr + r)]);
