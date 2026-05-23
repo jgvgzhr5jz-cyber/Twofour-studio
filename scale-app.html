@@ -690,14 +690,19 @@ const F7_BASE = [
 // Major uses CAGED_BASE (traditional chord-shape positions).
 // Blues uses BLUES_BASE (minor-penta positions + ♭5 passing note).
 // All other scales use computeBoxes() — auto-generated from intervals.
+// Semitone offset of each mode above its parent Ionian root.
+// C Dorian = Bb Major (D is 2 above Bb), so offset = 2.
+const MODE_IONIAN_OFFSET = { ionian:0, dorian:2, phrygian:4, lydian:5, mixolydian:7, aeolian:9, locrian:11, nat_minor:9 };
+
 function getShapes() {
   if (S.scale === 'major' || S.scale === 'ionian') return getCaged();
 
-  // Natural Minor (Aeolian) = relative major shifted by +3 semitones.
-  // Fingering positions are identical to the relative major CAGED shapes —
-  // only the root note and degree labels differ.
-  if (S.scale === 'nat_minor' || S.scale === 'aeolian') {
-    const relMajRoot = (keyDef().root + 3) % 12;
+  // All major-scale modes (and natural minor = aeolian) share the same notes as
+  // some Ionian (major) key. Use that key's CAGED positions so the fingering
+  // patterns match the actual major-scale shapes — only the root/degree labels differ.
+  if (MODE_IONIAN_OFFSET[S.scale] !== undefined) {
+    const offset      = MODE_IONIAN_OFFSET[S.scale];
+    const relMajRoot  = (keyDef().root - offset + 12) % 12;
     return getCaged(relMajRoot);
   }
 
