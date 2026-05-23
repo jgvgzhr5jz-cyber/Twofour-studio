@@ -630,12 +630,14 @@ const CAGED_BASE = {
         pos:[ [0,[12,13,15]], [1,[12,14,15]], [2,[12,14,15]], [3,[12,14]], [4,[12,13,15]], [5,[12,13,15]] ] },
 };
 
-function getCaged() {
-  const r = keyDef().root;
+// getCaged(rootOverride): generate CAGED shapes for given root (default = current key root).
+// Pass a different root to get positions for a relative key (e.g. relative major of minor).
+function getCaged(rootOverride) {
+  const r = rootOverride !== undefined ? rootOverride : keyDef().root;
   const entries = [];
 
   for (const [k,sh] of Object.entries(CAGED_BASE)) {
-    // C12 shape only shown for C key (intentional fret-12 octave shape)
+    // C12 shape only shown when relative root is C (= 0)
     if (sh.fret12Base && r !== 0) continue;
 
     let pos = sh.pos.map(([s,frets]) => [s, frets.map(f => f+r)]);
@@ -690,6 +692,14 @@ const F7_BASE = [
 // All other scales use computeBoxes() — auto-generated from intervals.
 function getShapes() {
   if (S.scale === 'major' || S.scale === 'ionian') return getCaged();
+
+  // Natural Minor (Aeolian) = relative major shifted by +3 semitones.
+  // Fingering positions are identical to the relative major CAGED shapes —
+  // only the root note and degree labels differ.
+  if (S.scale === 'nat_minor' || S.scale === 'aeolian') {
+    const relMajRoot = (keyDef().root + 3) % 12;
+    return getCaged(relMajRoot);
+  }
 
   const r       = keyDef().root;
   const kn      = keyDef().notes;
