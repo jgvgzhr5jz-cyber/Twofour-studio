@@ -698,7 +698,10 @@ function getShapes() {
   // Labels use actual blues note names (skipping index 3 = ♭5) so shape tabs
   // read 1/♭3/4/5/♭7 note names rather than the passing ♭5.
   const isBlues        = S.scale === 'blues';
-  const boxes          = isBlues ? BLUES_BASE : computeBoxes(SCALES[S.scale].itv);
+  const allBoxes       = isBlues ? BLUES_BASE : computeBoxes(SCALES[S.scale].itv);
+  // CAGED System shows 5 positions for 7-note scales (not 7 like 3NPS).
+  // Take the first 5 starting degrees so labels kn[0..4] remain correct.
+  const boxes          = (!isBlues && allBoxes.length === 7) ? allBoxes.slice(0, 5) : allBoxes;
   const bluesNames     = isBlues ? scaleNoteNames() : null;
   const bluesLblIdx    = [0,1,2,4,5]; // skip ♭5 at index 3
 
