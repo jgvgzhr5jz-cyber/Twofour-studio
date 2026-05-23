@@ -630,6 +630,38 @@ const CAGED_BASE = {
         pos:[ [0,[12,13,15]], [1,[12,14,15]], [2,[12,14,15]], [3,[12,14]], [4,[12,13,15]], [5,[12,13,15]] ] },
 };
 
+// ══ MELODIC MINOR CAGED BASE (C melodic minor = C,D,Eb,F,G,A,B) ═══
+// 5 positions derived from major CAGED shapes with ♭3 substitution.
+// Each position: 2-3 notes/string in a ~4-5 fret window (non-uniform, CAGED style).
+// String order: 0=E 1=A 2=D 3=G 4=B 5=e
+const MEL_MIN_CAGED_BASE = [
+  { color:'#E8960A', openBase:true,  // C-shape area, frets 0-3
+    pos:[ [0,[1,3]], [1,[0,2,3]], [2,[0,1,3]], [3,[0,2]], [4,[0,1,3]], [5,[1,3]] ] },
+  { color:'#0B9488',                 // A-shape area, frets 1-6
+    pos:[ [0,[3,5]], [1,[2,3,5]], [2,[1,3,5]], [3,[2,4,5]], [4,[3,4,6]], [5,[3,5]] ] },
+  { color:'#a8e063',                 // G-shape area, frets 4-8
+    pos:[ [0,[5,7,8]], [1,[5,6,8]], [2,[5,7]], [3,[4,5,7]], [4,[4,6,8]], [5,[5,7,8]] ] },
+  { color:'#c77dff',                 // E-shape area, frets 6-10
+    pos:[ [0,[7,8,10]], [1,[6,8,10]], [2,[7,9,10]], [3,[7,8,10]], [4,[8,10]], [5,[7,8,10]] ] },
+  { color:'#ffd166',                 // D-shape area, frets 8-13
+    pos:[ [0,[10,11,13]], [1,[10,12]], [2,[9,10,12]], [3,[8,10,12]], [4,[10,12,13]], [5,[10,11,13]] ] },
+];
+
+// ══ HARMONIC MINOR CAGED BASE (C harmonic minor = C,D,Eb,F,G,Ab,B) ═
+// Derived from MEL_MIN_CAGED_BASE with A(9)→Ab(8) substitution on each string.
+const HAR_MIN_CAGED_BASE = [
+  { color:'#E8960A', openBase:true,  // C-shape area, frets 0-3
+    pos:[ [0,[1,3]], [1,[2,3]], [2,[0,1,3]], [3,[0,1]], [4,[0,1,3]], [5,[1,3]] ] },
+  { color:'#0B9488',                 // A-shape area, frets 1-6
+    pos:[ [0,[3,4]], [1,[2,3,5]], [2,[1,3,5]], [3,[1,4,5]], [4,[3,4,6]], [5,[3,4]] ] },
+  { color:'#a8e063',                 // G-shape area, frets 4-8
+    pos:[ [0,[4,7,8]], [1,[5,6,8]], [2,[5,6]], [3,[4,5,7]], [4,[4,6,8]], [5,[4,7,8]] ] },
+  { color:'#c77dff',                 // E-shape area, frets 6-10
+    pos:[ [0,[7,8,10]], [1,[6,8,10]], [2,[6,9,10]], [3,[7,8,10]], [4,[8,9]], [5,[7,8,10]] ] },
+  { color:'#ffd166',                 // D-shape area, frets 8-13
+    pos:[ [0,[10,11,13]], [1,[10,11]], [2,[9,10,12]], [3,[8,10,12]], [4,[9,12,13]], [5,[10,11,13]] ] },
+];
+
 // getCaged(rootOverride): generate CAGED shapes for given root (default = current key root).
 // Pass a different root to get positions for a relative key (e.g. relative major of minor).
 function getCaged(rootOverride) {
@@ -723,18 +755,21 @@ function buildShapeEntries(boxes, shiftRoot, labelFn) {
   return Object.fromEntries(entries);
 }
 
-// Derive 5 CAGED-tab boxes for a mode using its parent scale's computeBoxes() output.
+// Derive 5 CAGED-tab boxes for a mode of a parent scale.
+// cagedBase: optional pre-built base array (2-3 notes/string, non-3NPS).
+//            When omitted, falls back to computeBoxes() for the parent intervals.
 // Rotate so box 0 starts on the mode root (degree at `offset` in parent).
-function getModeShapes(parentScaleKey, offsetTable) {
+function getModeShapes(parentScaleKey, offsetTable, cagedBase) {
   const r      = keyDef().root;
   const kn     = keyDef().notes;
   const offset = offsetTable[S.scale] ?? 0;
-  const parentItv = SCALES[parentScaleKey].itv;          // parent scale intervals
-  const degIdx    = parentItv.indexOf(offset);            // which degree of parent = mode root
+  const parentItv  = SCALES[parentScaleKey].itv;         // parent scale intervals
+  const degIdx     = parentItv.indexOf(offset);           // which degree of parent = mode root
   const parentRoot = (r - offset + 12) % 12;             // parent root in this key
-  const allBoxes   = computeBoxes(parentItv);             // 7 boxes for parent
-  // Rotate: box[degIdx] starts on the mode root → take 5 consecutive boxes
-  const boxes = Array.from({length:5}, (_, i) => allBoxes[(degIdx + i) % allBoxes.length]);
+  const allBoxes   = cagedBase ?? computeBoxes(parentItv);
+  // Rotate: box[degIdx % allBoxes.length] starts on the mode root → take 5 consecutive boxes
+  const n    = allBoxes.length;
+  const boxes = Array.from({length:5}, (_, i) => allBoxes[(degIdx + i) % n]);
   return buildShapeEntries(boxes, parentRoot, i => kn[i] ?? '');
 }
 
@@ -750,11 +785,11 @@ function getShapes() {
     return getCaged(relMajRoot);
   }
 
-  // Melodic minor modes: share parent mel_minor positions (rotated to mode root).
-  if (MEL_MODE_OFFSET[S.scale] !== undefined) return getModeShapes('mel_minor', MEL_MODE_OFFSET);
+  // Melodic minor modes: use dedicated CAGED base (2-3 notes/string, non-3NPS).
+  if (MEL_MODE_OFFSET[S.scale] !== undefined) return getModeShapes('mel_minor', MEL_MODE_OFFSET, MEL_MIN_CAGED_BASE);
 
-  // Harmonic minor modes: share parent har_minor positions (rotated to mode root).
-  if (HAR_MODE_OFFSET[S.scale] !== undefined) return getModeShapes('har_minor', HAR_MODE_OFFSET);
+  // Harmonic minor modes: use dedicated CAGED base (2-3 notes/string, non-3NPS).
+  if (HAR_MODE_OFFSET[S.scale] !== undefined) return getModeShapes('har_minor', HAR_MODE_OFFSET, HAR_MIN_CAGED_BASE);
 
   const r       = keyDef().root;
   const kn      = keyDef().notes;
