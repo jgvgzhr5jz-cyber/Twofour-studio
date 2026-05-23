@@ -694,6 +694,50 @@ const F7_BASE = [
 // C Dorian = Bb Major (D is 2 above Bb), so offset = 2.
 const MODE_IONIAN_OFFSET = { ionian:0, dorian:2, phrygian:4, lydian:5, mixolydian:7, aeolian:9, locrian:11, nat_minor:9 };
 
+// Offsets of each melodic / harmonic minor mode within its parent scale.
+// mel_minor intervals: [0,2,3,5,7,9,11]   har_minor: [0,2,3,5,7,8,11]
+const MEL_MODE_OFFSET = { mel_minor:0, mel_m2:2, mel_m3:3, mel_m4:5, mel_m5:7, mel_m6:9, mel_m7:11 };
+const HAR_MODE_OFFSET = { har_minor:0, har_m2:2, har_m3:3, har_m4:5, har_m5:7, har_m6:8, har_m7:11 };
+
+// Build a sorted shape-entry map from a pre-selected array of boxes, a fret shift, and a label function.
+function buildShapeEntries(boxes, shiftRoot, labelFn) {
+  const entries = [];
+  boxes.forEach((box, i) => {
+    const key = `b${i+1}`;
+    const lbl = labelFn(i);
+    let pos = box.pos.map(([s, frets]) => [s, frets.map(fr => fr + shiftRoot)]);
+    let mf  = minFret(pos);
+    if (mf >= 12) {
+      if (maxFret(pos) <= 16) entries.push([key+'_12', { ...box, lbl, pos, open:false, fret12:true }]);
+      pos = pos.map(([s, frets]) => [s, frets.map(fr => fr - 12)]);
+      mf  = minFret(pos);
+    }
+    const isOpen = mf === 0;
+    entries.push([key, { ...box, lbl, pos, open:isOpen, fret12:false }]);
+    if (isOpen) {
+      const pos12 = pos.map(([s, frets]) => [s, frets.map(fr => fr + 12)]);
+      if (maxFret(pos12) <= 17) entries.push([key+'_12', { ...box, lbl, pos:pos12, open:false, fret12:true }]);
+    }
+  });
+  entries.sort((a, b) => minFret(a[1].pos) - minFret(b[1].pos));
+  return Object.fromEntries(entries);
+}
+
+// Derive 5 CAGED-tab boxes for a mode using its parent scale's computeBoxes() output.
+// Rotate so box 0 starts on the mode root (degree at `offset` in parent).
+function getModeShapes(parentScaleKey, offsetTable) {
+  const r      = keyDef().root;
+  const kn     = keyDef().notes;
+  const offset = offsetTable[S.scale] ?? 0;
+  const parentItv = SCALES[parentScaleKey].itv;          // parent scale intervals
+  const degIdx    = parentItv.indexOf(offset);            // which degree of parent = mode root
+  const parentRoot = (r - offset + 12) % 12;             // parent root in this key
+  const allBoxes   = computeBoxes(parentItv);             // 7 boxes for parent
+  // Rotate: box[degIdx] starts on the mode root → take 5 consecutive boxes
+  const boxes = Array.from({length:5}, (_, i) => allBoxes[(degIdx + i) % allBoxes.length]);
+  return buildShapeEntries(boxes, parentRoot, i => kn[i] ?? '');
+}
+
 function getShapes() {
   if (S.scale === 'major' || S.scale === 'ionian') return getCaged();
 
@@ -705,6 +749,12 @@ function getShapes() {
     const relMajRoot  = (keyDef().root - offset + 12) % 12;
     return getCaged(relMajRoot);
   }
+
+  // Melodic minor modes: share parent mel_minor positions (rotated to mode root).
+  if (MEL_MODE_OFFSET[S.scale] !== undefined) return getModeShapes('mel_minor', MEL_MODE_OFFSET);
+
+  // Harmonic minor modes: share parent har_minor positions (rotated to mode root).
+  if (HAR_MODE_OFFSET[S.scale] !== undefined) return getModeShapes('har_minor', HAR_MODE_OFFSET);
 
   const r       = keyDef().root;
   const kn      = keyDef().notes;
@@ -720,33 +770,9 @@ function getShapes() {
   const bluesNames     = isBlues ? scaleNoteNames() : null;
   const bluesLblIdx    = [0,1,2,4,5]; // skip ♭5 at index 3
 
-  const entries = [];
-
-  boxes.forEach((box, i) => {
-    const key = `b${i+1}`;
-    const lbl = isBlues ? (bluesNames[bluesLblIdx[i]] ?? '') : (kn[i] ?? '');
-    let pos = box.pos.map(([s, frets]) => [s, frets.map(fr => fr + r)]);
-    let mf  = minFret(pos);
-
-    if (mf >= 12) {
-      if (maxFret(pos) <= 16) {
-        entries.push([key+'_12', { ...box, lbl, pos, open: false, fret12: true }]);
-      }
-      pos = pos.map(([s, frets]) => [s, frets.map(fr => fr - 12)]);
-      mf  = minFret(pos);
-    }
-    const isOpen = mf === 0;
-    entries.push([key, { ...box, lbl, pos, open: isOpen, fret12: false }]);
-    if (isOpen) {
-      const pos12 = pos.map(([s, frets]) => [s, frets.map(fr => fr + 12)]);
-      if (maxFret(pos12) <= 17) {
-        entries.push([key+'_12', { ...box, lbl, pos: pos12, open: false, fret12: true }]);
-      }
-    }
-  });
-
-  entries.sort((a, b) => minFret(a[1].pos) - minFret(b[1].pos));
-  return Object.fromEntries(entries);
+  return buildShapeEntries(boxes, r, i =>
+    isBlues ? (bluesNames[bluesLblIdx[i]] ?? '') : (kn[i] ?? '')
+  );
 }
 
 // ══ PENTATONIC MINOR BASE (C minor penta, fret offset 0) ═
