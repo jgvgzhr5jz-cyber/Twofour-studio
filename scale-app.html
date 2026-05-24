@@ -1556,6 +1556,24 @@ function mkKey() {
   // Circle-of-fifths layout: C at top, clockwise
   const COF_ORDER = ['C','G','D','A','E','B','F#','Db','Ab','Eb','Bb','F'];
 
+  // Theme-aware CoF colors
+  const dark = document.body.classList.contains('dark');
+  const cof = dark ? {
+    ringFill   : '#221E14',   // dark warm inner disc
+    ringStroke : '#3A3020',   // dark warm ring track
+    keyFill    : '#2E2818',   // unselected bubble
+    keyStroke  : '#4A3E28',   // unselected bubble border
+    keyText    : '#9A8B6E',   // unselected label
+    ctrText    : '#9A8B6E',   // scale name text
+  } : {
+    ringFill   : '#FAF4EB',
+    ringStroke : '#E4D4BC',
+    keyFill    : '#ffffff',
+    keyStroke  : '#E4D4BC',
+    keyText    : '#8B7A60',
+    ctrText    : '#8B7A60',
+  };
+
   // Responsive size: small on mobile, default on tablet, larger on desktop
   const vw = Math.min(window.innerWidth, 1280);
   const SIZE = vw >= 1024 ? 228 : vw < 600 ? Math.min(vw - 28, 188) : 200;
@@ -1567,17 +1585,17 @@ function mkKey() {
   const fsSmall = +(SIZE * 0.045).toFixed(1);  // ~9  at 200
 
   let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="overflow:visible">`;
-  // Guide ring (warm, light theme)
-  s += `<circle cx="${CX}" cy="${CY}" r="${CR}" fill="#FAF4EB" stroke="#E4D4BC" stroke-width="${BR*2+8}"/>`;
+  // Guide ring
+  s += `<circle cx="${CX}" cy="${CY}" r="${CR}" fill="${cof.ringFill}" stroke="${cof.ringStroke}" stroke-width="${BR*2+8}"/>`;
 
   COF_ORDER.forEach((id, i) => {
     const ang = (i*30 - 90) * Math.PI/180;
     const x = CX + CR*Math.cos(ang), y = CY + CR*Math.sin(ang);
     const on = id === S.key;
-    const fill   = on ? '#E8960A' : '#fff';
-    const stroke = on ? '#C97D08' : '#E4D4BC';
-    const tc     = on ? '#fff'    : '#8B7A60';
-    const fw     = on ? '900'     : '700';
+    const fill   = on ? '#E8960A'       : cof.keyFill;
+    const stroke = on ? '#C97D08'       : cof.keyStroke;
+    const tc     = on ? '#fff'          : cof.keyText;
+    const fw     = on ? '900'           : '700';
     const fs = id.length > 1 ? fsSmall : fsNorm;
     s += `<g data-key="${id}" style="cursor:pointer">
       <circle cx="${x}" cy="${y}" r="${BR}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>
@@ -1594,7 +1612,7 @@ function mkKey() {
   s += `<text x="${CX}" y="${CY - SIZE*0.025}" text-anchor="middle" font-size="${fsCtr}" font-weight="900"
       fill="#E8960A" font-family="'Prompt',-apple-system,sans-serif">${S.key}</text>`;
   s += `<text x="${CX}" y="${CY + SIZE*0.065}" text-anchor="middle" font-size="${fsScale}" font-weight="700"
-      fill="#8B7A60" font-family="'DM Sans',-apple-system,sans-serif" letter-spacing="1">${scLabel}</text>`;
+      fill="${cof.ctrText}" font-family="'DM Sans',-apple-system,sans-serif" letter-spacing="1">${scLabel}</text>`;
   s += '</svg>';
 
   wrap.innerHTML = s;
@@ -1688,6 +1706,7 @@ function applyDark(dark) {
   document.body.classList.toggle('dark', dark);
   document.getElementById('darkToggle').textContent = dark ? '🌙' : '☀️';
   document.getElementById('darkToggle').classList.toggle('on', dark);
+  mkKey();        // re-draw CoF with correct theme colors
   renderActive();
 }
 
