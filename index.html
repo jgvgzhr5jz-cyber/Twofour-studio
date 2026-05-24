@@ -11,17 +11,51 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   :root {
-    --bg:     #fdfcf8;
-    --bg2:    #f5f0e6;
-    --card:   #ffffff;
-    --amber:  #e8960a;
-    --amber2: #c97d08;
-    --teal:   #0b9488;
-    --text:   #1a1208;
-    --muted:  #8b7a60;
-    --border: #e8e0cc;
-    --sh:     0 2px 16px rgba(0,0,0,0.07);
-    --sh2:    0 8px 40px rgba(0,0,0,0.12);
+    --bg:        #fdfcf8;
+    --bg2:       #f5f0e6;
+    --card:      #ffffff;
+    --amber:     #e8960a;
+    --amber2:    #c97d08;
+    --teal:      #0b9488;
+    --text:      #1a1208;
+    --muted:     #8b7a60;
+    --border:    #e8e0cc;
+    --sh:        0 2px 16px rgba(0,0,0,0.07);
+    --sh2:       0 8px 40px rgba(0,0,0,0.12);
+    /* surface helpers */
+    --nav-bg:      rgba(253,252,248,0.94);
+    --hero-from:   #fdfcf8;
+    --hero-mid:    #f9f3e4;
+    --lock-bg:     rgba(253,252,248,0.82);
+    --sched-tabs:  rgba(255,255,255,0.75);
+    --slot-booked-bg: #fafafa;
+    --slot-booked-c:  #ccc;
+    --slot-pending-bg:#fffbf0;
+    --footer-bg:   #1a1208;
+    --scroll-thumb:#d0c4b4;
+  }
+  body.dark {
+    --bg:        #18150F;
+    --bg2:       #221E14;
+    --card:      #272116;
+    --amber:     #e8960a;
+    --amber2:    #d98e10;
+    --teal:      #0fa898;
+    --text:      #ede4d0;
+    --muted:     #9a8b6e;
+    --border:    #3a3020;
+    --sh:        0 2px 16px rgba(0,0,0,0.28);
+    --sh2:       0 8px 40px rgba(0,0,0,0.45);
+    --nav-bg:      rgba(24,21,15,0.94);
+    --hero-from:   #18150F;
+    --hero-mid:    #1e1a10;
+    --lock-bg:     rgba(24,21,15,0.88);
+    --sched-tabs:  rgba(0,0,0,0.35);
+    --slot-booked-bg: #1e1a10;
+    --slot-booked-c:  #5a5040;
+    --slot-pending-bg:#201c0e;
+    --footer-bg:   #0c0a06;
+    --scroll-thumb:#4a3e2a;
   }
   *{margin:0;padding:0;box-sizing:border-box;}
   html{scroll-behavior:smooth;}
@@ -32,7 +66,7 @@
     position:fixed;top:0;left:0;right:0;z-index:100;
     display:flex;align-items:center;justify-content:space-between;
     padding:14px 48px;
-    background:rgba(253,252,248,0.94);backdrop-filter:blur(12px);
+    background:var(--nav-bg);backdrop-filter:blur(12px);
     border-bottom:1px solid var(--border);box-shadow:0 1px 10px rgba(0,0,0,0.06);
   }
   .logo{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:2px;}
@@ -49,7 +83,7 @@
   #hero{
     min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
     text-align:center;padding:120px 24px 80px;position:relative;overflow:hidden;
-    background:linear-gradient(160deg,#fdfcf8 0%,#f9f3e4 60%,#fdfcf8 100%);
+    background:linear-gradient(160deg,var(--hero-from) 0%,var(--hero-mid) 60%,var(--hero-from) 100%);
   }
   .hero-dots{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(circle,rgba(232,150,10,0.13) 1px,transparent 1px);background-size:28px 28px;}
   h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(4rem,12vw,9rem);line-height:.95;letter-spacing:3px;animation:fadeDown .9s .1s ease both;position:relative;}
@@ -96,7 +130,7 @@
   .section-lock{position:relative;}
   .lock-overlay{
     position:absolute;inset:0;z-index:10;
-    background:rgba(253,252,248,0.82);backdrop-filter:blur(3px);
+    background:var(--lock-bg);backdrop-filter:blur(3px);
     border-radius:16px;display:flex;align-items:center;justify-content:center;
     flex-direction:column;gap:10px;
     transition:opacity .35s;
@@ -130,7 +164,7 @@
     position:relative;overflow:hidden;display:flex;flex-direction:column;
     box-shadow:var(--sh);cursor:pointer;
   }
-  .pkg-card.featured{border-color:var(--amber);background:linear-gradient(160deg,rgba(232,150,10,.05),#fff);box-shadow:0 4px 28px rgba(232,150,10,.14);}
+  .pkg-card.featured{border-color:var(--amber);background:linear-gradient(160deg,rgba(232,150,10,.07),var(--card));box-shadow:0 4px 28px rgba(232,150,10,.14);}
   .pkg-card.selected-pkg{border-color:var(--amber);box-shadow:0 0 0 2px var(--amber),0 10px 36px rgba(232,150,10,.2);}
   .pkg-card:hover{border-color:rgba(232,150,10,.5);transform:translateY(-4px);box-shadow:var(--sh2);}
   .pkg-badge{position:absolute;top:16px;right:16px;background:var(--amber);color:#fff;font-size:.64rem;font-weight:700;padding:3px 10px;border-radius:100px;}
@@ -154,7 +188,7 @@
     cursor:pointer;transition:background .22s,color .22s;
   }
   .pkg-card.featured .pkg-select-btn,.pkg-card:hover .pkg-select-btn,.pkg-card.selected-pkg .pkg-select-btn{background:var(--amber);color:#fff;border-color:var(--amber);}
-  .pkg-card.trial-card{border-color:rgba(11,148,136,.4);background:linear-gradient(160deg,rgba(11,148,136,.04),#fff);}
+  .pkg-card.trial-card{border-color:rgba(11,148,136,.4);background:linear-gradient(160deg,rgba(11,148,136,.06),var(--card));}
   .pkg-card.trial-card:hover{border-color:var(--teal);transform:translateY(-4px);box-shadow:var(--sh2);}
   .pkg-card.trial-card.selected-pkg{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal),0 10px 36px rgba(11,148,136,.2);}
   .pkg-card.trial-card .pkg-selected-check{background:var(--teal);}
@@ -179,7 +213,7 @@
   /* SCHEDULE */
   #schedule{background:var(--bg2);max-width:100%;padding:80px 24px;}
   .schedule-inner{max-width:1200px;margin:0 auto;}
-  .schedule-tabs{display:flex;gap:6px;margin-bottom:24px;background:rgba(255,255,255,.75);border:1px solid var(--border);border-radius:11px;padding:4px;width:fit-content;}
+  .schedule-tabs{display:flex;gap:6px;margin-bottom:24px;background:var(--sched-tabs);border:1px solid var(--border);border-radius:11px;padding:4px;width:fit-content;}
   .tab-btn{padding:9px 26px;border-radius:8px;border:none;cursor:pointer;font-family:'Anuphan',sans-serif;font-weight:600;font-size:.9rem;background:transparent;color:var(--muted);transition:background .22s,color .22s;}
   .tab-btn.active{background:var(--amber);color:#fff;}
   .schedule-grid{overflow-x:auto;}
@@ -193,8 +227,8 @@
     color:var(--teal);font-size:.85rem;font-weight:600;user-select:none;box-shadow:var(--sh);
   }
   .slot:hover{border-color:rgba(11,148,136,.45);background:rgba(11,148,136,.06);transform:scale(1.04);}
-  .slot.booked{cursor:default;color:#ccc;font-size:.78rem;background:#fafafa;box-shadow:none;border-color:#eee;}
-  .slot.pending{cursor:default;color:#e8960a;font-size:.72rem;background:#fffbf0;box-shadow:none;border-color:rgba(232,150,10,.3);}
+  .slot.booked{cursor:default;color:var(--slot-booked-c);font-size:.78rem;background:var(--slot-booked-bg);box-shadow:none;border-color:var(--border);}
+  .slot.pending{cursor:default;color:var(--amber);font-size:.72rem;background:var(--slot-pending-bg);box-shadow:none;border-color:rgba(232,150,10,.3);}
   .slot.selected{background:rgba(232,150,10,.12);border-color:var(--amber);color:var(--amber2);font-weight:700;}
 
   /* BOOKING SUMMARY BAR */
@@ -244,7 +278,7 @@
   .qr-sub{color:var(--muted);font-size:.84rem;}
 
   /* FOOTER */
-  footer{background:var(--text);text-align:center;padding:26px;color:rgba(255,255,255,.45);font-size:.84rem;}
+  footer{background:var(--footer-bg);text-align:center;padding:26px;color:rgba(255,255,255,.45);font-size:.84rem;}
   footer strong{color:var(--amber);}
 
   /* MODAL */
@@ -306,6 +340,7 @@
       <button class="lang-btn active" onclick="setLang('th')">TH</button>
       <button class="lang-btn"        onclick="setLang('en')">EN</button>
     </div>
+    <button id="darkToggle" onclick="toggleDark()" title="Toggle dark mode" style="background:transparent;border:1px solid var(--border);border-radius:100px;padding:5px 12px;cursor:pointer;font-size:.82rem;color:var(--muted);transition:all .2s;font-family:'DM Sans',sans-serif;">☀️</button>
   </div>
 </nav>
 
@@ -1141,6 +1176,24 @@
   let selectedPkgCard = null;
   let selectedSlot = null, selectedSlotDisplay = null;
   let selectedPreferredTime = null;
+
+  /* ─── DARK MODE ─── */
+  function applyDark(dark) {
+    document.body.classList.toggle('dark', dark);
+    const btn = document.getElementById('darkToggle');
+    if (btn) { btn.textContent = dark ? '🌙' : '☀️'; btn.style.color = dark ? 'var(--amber)' : 'var(--muted)'; }
+  }
+  function toggleDark() {
+    const isDark = !document.body.classList.contains('dark');
+    localStorage.setItem('twofour-dark', isDark ? '1' : '0');
+    applyDark(isDark);
+  }
+  // boot: restore preference → system → default light
+  (function() {
+    const saved = localStorage.getItem('twofour-dark');
+    const sys = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    applyDark(saved !== null ? saved === '1' : sys);
+  })();
 
   /* ─── LANGUAGE ─── */
   function setLang(lang) {
