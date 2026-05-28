@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chord Explorer · Twofour Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800;900&family=Prompt:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#FDFCF8; --surf:#F5EDE0; --brd:#E4D4BC; --acc:#E8960A; --teal:#0B9488;
+  --text:#1A1208; --muted:#8B7A60; --gold:#C97D08; --card:#ffffff; --ctrl-bg:#FAF4EB;
+  --nav-bg:rgba(253,252,248,0.94); --scroll-thumb:#d0c4b4;
+}
+body.dark {
+  --bg:#18150F; --surf:#221E14; --brd:#3A3020; --acc:#E8960A; --teal:#0FA898;
+  --text:#EDE4D0; --muted:#9A8B6E; --gold:#D98E10; --card:#272116; --ctrl-bg:#201C12;
+  --nav-bg:rgba(24,21,15,0.94); --scroll-thumb:#4A3E2A;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'DM Sans',-apple-system,sans-serif; background:var(--bg); color:var(--text); transition:background .25s,color .25s; }
+@media (min-width:1024px){ body{ max-width:1280px; margin:0 auto; } }
+
+.site-nav { display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:10px 16px; background:var(--nav-bg); border-bottom:1px solid var(--brd);
+  position:sticky; top:0; z-index:20; backdrop-filter:blur(8px); }
+.site-logo { font-family:'Prompt',sans-serif; font-weight:900; font-size:18px; letter-spacing:-.5px; color:var(--text); text-decoration:none; }
+.site-logo span { color:var(--acc); }
+.site-tools { display:flex; gap:8px; flex-wrap:wrap; }
+.site-tool { font-size:.82rem; text-decoration:none; padding:6px 13px; border-radius:100px;
+  border:1px solid var(--brd); color:var(--muted); background:var(--card); white-space:nowrap; }
+.site-tool.on { background:var(--acc); border-color:var(--acc); color:#fff; font-weight:700; }
+
+.hdr { display:flex; align-items:flex-start; justify-content:space-between; gap:8px 12px;
+  flex-wrap:wrap; padding:12px 16px 8px; }
+.hdr-name { font-size:24px; font-weight:900; color:var(--text); letter-spacing:-.5px; line-height:1.1; font-family:'Prompt',sans-serif; }
+.hdr-name .acc { color:var(--acc); }
+.hdr-sub { font-size:13px; color:var(--muted); margin-top:4px; letter-spacing:.5px; }
+.hdr-right { display:flex; flex-direction:column; gap:6px; align-items:flex-end; }
+.btn-row { display:flex; gap:6px; }
+.icon-btn { border:1.5px solid var(--brd); background:var(--card); color:var(--muted);
+  border-radius:8px; padding:6px 11px; font-size:12px; font-weight:700; cursor:pointer;
+  font-family:'DM Sans',sans-serif; transition:all .15s; }
+.icon-btn.on { background:var(--acc); border-color:var(--acc); color:#fff; }
+.icon-btn.lang-on { background:var(--text); border-color:var(--text); color:var(--bg); }
+
+.sel-wrap { padding:6px 16px 10px; background:var(--ctrl-bg); border-top:1px solid var(--brd); border-bottom:1px solid var(--brd); }
+.sel-lbl { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin:8px 0 5px; }
+.pill-row { display:flex; gap:6px; flex-wrap:wrap; }
+.pill { border:1.5px solid var(--brd); background:var(--card); color:var(--text);
+  border-radius:100px; padding:6px 13px; font-size:13px; font-weight:700; cursor:pointer;
+  font-family:'DM Sans',sans-serif; transition:all .15s; }
+.pill.on { background:var(--teal); border-color:var(--teal); color:#fff; }
+.pill.root-on { background:var(--acc); border-color:var(--acc); color:#fff; }
+
+.voicing-row { display:flex; gap:6px; flex-wrap:wrap; padding:10px 16px 0; align-items:center; }
+.voicing-row .ctrl-lbl { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-right:4px; }
+
+.fb-wrap { padding:16px; overflow-x:auto; }
+.fb-wrap::-webkit-scrollbar { height:5px; }
+.fb-wrap::-webkit-scrollbar-thumb { background:var(--scroll-thumb); border-radius:3px; }
+.fb-wrap svg { display:block; }
+
+.info { margin:4px 16px 18px; padding:12px 16px; background:var(--card); border:1.5px solid var(--brd); border-radius:10px; font-size:13px; }
+.info-row { display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+.info-lbl { color:var(--muted); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; margin-right:2px; }
+.badge { display:flex; align-items:center; gap:5px; background:var(--surf); border:1px solid var(--brd);
+  border-radius:7px; padding:3px 9px; font-size:12px; color:var(--text); }
+.bdot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.theory-panel { margin:10px 16px 0; padding:13px 15px; background:var(--card); border:1.5px solid var(--brd); border-radius:12px; }
+.theory-desc { font-size:13px; color:var(--text); line-height:1.55; }
+.theory-formula { font-family:'DM Sans',monospace; font-size:12px; font-weight:700; color:var(--acc); }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="/" class="site-logo">TWOFOUR <span>STUDIO</span></a>
+  <div class="site-tools">
+    <a href="/scale-app.html" class="site-tool">🎸 Scale Explorer</a>
+    <a href="/chord-app.html" class="site-tool on">🎹 Chord Explorer</a>
+  </div>
+</nav>
+
+<div class="hdr">
+  <div class="hdr-left">
+    <div class="hdr-name" id="hdr-name">C Major</div>
+    <div class="hdr-sub" id="hdr-sub">C · E · G</div>
+  </div>
+  <div class="hdr-right">
+    <div class="btn-row">
+      <button class="icon-btn on" id="dInt" data-i18n="dispInterval">Interval</button>
+      <button class="icon-btn" id="dNote" data-i18n="dispNote">Note</button>
+      <button class="icon-btn" id="dFinger" data-i18n="dispFinger">Finger</button>
+      <button class="icon-btn" id="darkToggle" title="Toggle dark mode">☀️</button>
+    </div>
+    <div class="btn-row">
+      <button class="icon-btn lang-on" id="langEN" data-lang="en">EN</button>
+      <button class="icon-btn" id="langTH" data-lang="th">TH</button>
+    </div>
+  </div>
+</div>
+
+<div class="sel-wrap">
+  <div class="sel-lbl" data-i18n="lblRoot">Root</div>
+  <div class="pill-row" id="root-pills"></div>
+  <div class="sel-lbl" data-i18n="lblQuality">Chord Quality</div>
+  <div class="pill-row" id="quality-pills"></div>
+</div>
+
+<div class="theory-panel" id="theory-panel"></div>
+
+<div class="voicing-row">
+  <span class="ctrl-lbl" data-i18n="lblVoicing">Voicing</span>
+  <div class="pill-row" id="voicing-pills"></div>
+</div>
+<div class="fb-wrap"><svg id="sv-fb"></svg></div>
+<div class="info" id="inf-fb"></div>
+
+<script>
+// ══ NOTE / KEY DATA ═════════════════════════════════════
+const NOTE_SHARP = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const NOTE_FLAT  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+// Roots that conventionally use flats
+const FLAT_ROOTS = new Set(['F','Bb','Eb','Ab','Db','Gb']);
+const ROOTS = ['C','Db','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+const ROOT_PC = { C:0,'C#':1,Db:1,D:2,'D#':3,Eb:3,E:4,F:5,'F#':6,Gb:6,G:7,'G#':8,Ab:8,A:9,'A#':10,Bb:10,B:11 };
+
+// Guitar: string pitch classes low→high E A D G B e
+const OPEN = [4,9,2,7,11,4];
+const SLAB = ['E','A','D','G','B','e'];
+
+// ══ CHORD QUALITIES ═════════════════════════════════════
+// itv = intervals from root (semitones); deg = degree label per interval
+const CHORDS = {
+  maj:  { sym:'',    itv:[0,4,7],  deg:['1','3','5'],
+          en:{name:'Major', mood:'Stable, bright'}, th:{name:'เมเจอร์', mood:'มั่นคง สดใส'} },
+  min:  { sym:'m',   itv:[0,3,7],  deg:['1','♭3','5'],
+          en:{name:'Minor', mood:'Sad, dark'},     th:{name:'ไมเนอร์', mood:'เศร้า ขรึม'} },
+  dim:  { sym:'dim', itv:[0,3,6],  deg:['1','♭3','♭5'],
+          en:{name:'Diminished', mood:'Tense, unstable'}, th:{name:'ดิมินิช', mood:'ตึง ไม่นิ่ง'} },
+  aug:  { sym:'aug', itv:[0,4,8],  deg:['1','3','♯5'],
+          en:{name:'Augmented', mood:'Dreamy, suspended'}, th:{name:'ออกเมนเต็ด', mood:'ล่องลอย'} },
+  sus2: { sym:'sus2',itv:[0,2,7],  deg:['1','2','5'],
+          en:{name:'Suspended 2', mood:'Open, airy'}, th:{name:'ซัส 2', mood:'โปร่ง'} },
+  sus4: { sym:'sus4',itv:[0,5,7],  deg:['1','4','5'],
+          en:{name:'Suspended 4', mood:'Unresolved'}, th:{name:'ซัส 4', mood:'ค้างคา'} },
+};
+const QUALITY_ORDER = ['maj','min','dim','aug','sus2','sus4'];
+
+// ══ MOVABLE CHORD SHAPES (hand-authored, verified) ══════
+// Each shape: anchorString (where the root sits) + frets relative to that root's
+// fret. -1 = muted/not played. fingers parallel array (0=open string in shape).
+// The shape is transposed by placing the root note at its target fret.
+// rootStr 0 = low-E shape, 1 = A shape. baseFret = fret of the root in the open
+// reference (used to compute the transpose offset).
+//
+// frets: per string [E A D G B e], relative semitone offset from ROOT pitch;
+// we convert to actual frets at render time so any root works.
+// We store the intervals each string plays (relative to root) + the lowest
+// playable fret pattern as an offset map. Simpler & robust: store, per shape,
+// the scale-degree each string plays and a fret-offset shape anchored to root.
+//
+// Representation: shape.offsets[stringIndex] = fret offset from the root's fret
+//   on the low-E (or A) string; null = muted. Root sits at offset 0 on rootStr.
+const SHAPES = {
+  // E-shape barre (root on low-E string). Works for any root fret >=0.
+  E_maj:  { rootStr:0, label:'E', offsets:[0,2,2,1,0,0],  fingers:[1,3,4,2,1,1] },
+  E_min:  { rootStr:0, label:'Em', offsets:[0,2,2,0,0,0], fingers:[1,3,4,1,1,1] },
+  E_dim:  { rootStr:0, label:'Edim', offsets:[0,1,2,0,null,null], fingers:[1,2,3,1,0,0] },
+  E_aug:  { rootStr:0, label:'Eaug', offsets:[0,3,2,1,1,null], fingers:[1,4,3,2,2,0] },
+  E_sus2: { rootStr:0, label:'Esus2', offsets:[0,2,4,4,0,0], fingers:[1,2,3,4,1,1] },
+  E_sus4: { rootStr:0, label:'Esus4', offsets:[0,2,2,2,0,0], fingers:[1,3,4,2,1,1] },
+  // A-shape barre (root on A string). Low-E string muted.
+  A_maj:  { rootStr:1, label:'A', offsets:[null,0,2,2,2,0], fingers:[0,1,3,3,3,1] },
+  A_min:  { rootStr:1, label:'Am', offsets:[null,0,2,2,1,0], fingers:[0,1,3,4,2,1] },
+  A_dim:  { rootStr:1, label:'Adim', offsets:[null,0,1,2,1,null], fingers:[0,1,2,4,3,0] },
+  A_aug:  { rootStr:1, label:'Aaug', offsets:[null,0,3,2,2,null], fingers:[0,1,4,2,3,0] },
+  A_sus2: { rootStr:1, label:'Asus2', offsets:[null,0,2,2,0,0], fingers:[0,1,3,4,0,0] },
+  A_sus4: { rootStr:1, label:'Asus4', offsets:[null,0,2,2,3,0], fingers:[0,1,3,3,4,1] },
+};
+// Which shapes apply to each quality, in order shown
+const QUALITY_SHAPES = {
+  maj:  ['E_maj','A_maj'],
+  min:  ['E_min','A_min'],
+  dim:  ['E_dim','A_dim'],
+  aug:  ['E_aug','A_aug'],
+  sus2: ['E_sus2','A_sus2'],
+  sus4: ['E_sus4','A_sus4'],
+};
+
+// ══ STATE ═══════════════════════════════════════════════
+const S = { root:'C', quality:'maj', voicing:0, disp:'int', lang:'en' };
+
+// ══ I18N ════════════════════════════════════════════════
+const LANGS = {
+  en:{ dispInterval:'Interval', dispNote:'Note', dispFinger:'Finger',
+       lblRoot:'Root', lblQuality:'Chord Quality', lblVoicing:'Voicing',
+       notes:'Notes', mutedHint:'✕ = muted string' },
+  th:{ dispInterval:'Interval', dispNote:'Note', dispFinger:'นิ้ว',
+       lblRoot:'รูท', lblQuality:'ชนิดคอร์ด', lblVoicing:'รูปคอร์ด',
+       notes:'โน้ต', mutedHint:'✕ = สายที่ไม่ดีด' },
+};
+function t(k){ return LANGS[S.lang][k]; }
+
+// ══ HELPERS ═════════════════════════════════════════════
+function rootPc(){ return ROOT_PC[S.root]; }
+function useFlat(){ return FLAT_ROOTS.has(S.root) || S.root.includes('b'); }
+function noteName(pc){ return (useFlat()?NOTE_FLAT:NOTE_SHARP)[((pc%12)+12)%12]; }
+// Spell a note according to its chord-degree accidental: ♭ degree → flat,
+// ♯ degree → sharp, natural → root's default convention.
+function spellByDeg(pc, deg){
+  pc = ((pc%12)+12)%12;
+  if (deg && deg.includes('♭')) return NOTE_FLAT[pc];
+  if (deg && deg.includes('♯')) return NOTE_SHARP[pc];
+  return noteName(pc);
+}
+function chordPcs(){ return CHORDS[S.quality].itv.map(i=>(rootPc()+i)%12); }
+function chordNotes(){ const c=CHORDS[S.quality]; return c.itv.map((i,idx)=>spellByDeg(rootPc()+i, c.deg[idx])); }
+function degOf(pc){ const i=chordPcs().indexOf(((pc%12)+12)%12); return i<0?null:CHORDS[S.quality].deg[i]; }
+function inChord(pc){ return chordPcs().includes(((pc%12)+12)%12); }
+function isRootPc(pc){ return ((pc%12)+12)%12 === rootPc(); }
+
+// Build the active voicings (resolved to actual frets for the current root).
+function getVoicings(){
+  const keys = QUALITY_SHAPES[S.quality] || [];
+  return keys.map(k=>{
+    const sh = SHAPES[k];
+    // Fret of the root on the anchor string so the whole shape sits in a low,
+    // playable position (lowest fret >= 0; prefer frets 0-12).
+    let anchorFret = (rootPc() - OPEN[sh.rootStr] + 12) % 12; // 0-11
+    // pos: [stringIndex, [fret]] for strings that are played
+    const pos = [];
+    const fingerMap = {};
+    sh.offsets.forEach((off, s)=>{
+      if (off === null) return;            // muted
+      const fret = anchorFret + off;
+      pos.push([s, [fret]]);
+      fingerMap[s+':'+fret] = sh.fingers[s];
+    });
+    const muted = sh.offsets.map((o,s)=>o===null?s:null).filter(s=>s!==null);
+    return { key:k, label:sh.label, pos, fingerMap, muted, anchorFret };
+  });
+}
+
+// ══ FRETBOARD RENDER ════════════════════════════════════
+const FB = { PL:46, PR:16, PT:30, PB:14, FW:46, SH:30, NR:13 };
+const yOf = s => FB.PT + (5-s)*FB.SH;     // string 0 (low E) at bottom
+const xOf = f => f===0 ? FB.PL-22 : FB.PL + (f-0.5)*FB.FW;
+
+function getFbTheme(){
+  const d = document.body.classList.contains('dark');
+  return d ? { gradTop:'#3A2C18', gradBot:'#2C2010', nut:'#C4A060', fret:'#5A4828',
+    string:'#A08050', inlay:'#6A5530', numDark:'#C8A878', numLight:'#907050', label:'#C8A878', mute:'#9A6A4A' }
+    : { gradTop:'#f2e4ce', gradBot:'#e8d4b4', nut:'#8B6340', fret:'#c4a878',
+    string:'#7a5c3a', inlay:'#c8b090', numDark:'#5a3e28', numLight:'#8a6a4a', label:'#5a3e28', mute:'#a05a30' };
+}
+
+function drawFb(){
+  const v = getVoicings()[S.voicing];
+  const svg = document.getElementById('sv-fb');
+  const fb = getFbTheme();
+  const allFrets = v.pos.flatMap(p=>p[1]);
+  const maxF = Math.max(4, ...allFrets);
+  const startFret = 0;
+  const nFrets = Math.max(5, maxF + 1);
+  const W = FB.PL + nFrets*FB.FW + FB.PR;
+  const H = FB.PT + 5*FB.SH + FB.PB;
+  svg.setAttribute('width', W); svg.setAttribute('height', H);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  let g = `<defs><linearGradient id="fbg" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="${fb.gradTop}"/><stop offset="100%" stop-color="${fb.gradBot}"/></linearGradient></defs>`;
+  g += `<rect width="${W}" height="${H}" fill="url(#fbg)" rx="8"/>`;
+  // inlays
+  for (const f of [3,5,7,9,12,15]) { if(f>nFrets)continue; const x=FB.PL+(f-0.5)*FB.FW;
+    if(f===12){ g+=`<circle cx="${x}" cy="${yOf(1.5)}" r="4" fill="${fb.inlay}" opacity=".6"/><circle cx="${x}" cy="${yOf(3.5)}" r="4" fill="${fb.inlay}" opacity=".6"/>`; }
+    else g+=`<circle cx="${x}" cy="${yOf(2.5)}" r="4" fill="${fb.inlay}" opacity=".6"/>`; }
+  // nut + frets
+  const ty=yOf(5)-7, by=yOf(0)+7;
+  g += `<line x1="${FB.PL}" y1="${ty}" x2="${FB.PL}" y2="${by}" stroke="${fb.nut}" stroke-width="4.5" stroke-linecap="round"/>`;
+  for(let f=1; f<=nFrets; f++){ const x=FB.PL+f*FB.FW; g+=`<line x1="${x}" y1="${ty}" x2="${x}" y2="${by}" stroke="${fb.fret}" stroke-width="1.5"/>`; }
+  // strings
+  for(let s=0;s<6;s++){ const y=yOf(s), sw=0.6+(5-s)*0.28; g+=`<line x1="${FB.PL-22}" y1="${y}" x2="${FB.PL+nFrets*FB.FW+2}" y2="${y}" stroke="${fb.string}" stroke-width="${sw}" opacity=".55"/>`; }
+  // fret numbers
+  const markers=new Set([3,5,7,9,12,15]);
+  for(let f=1;f<=nFrets;f++) g+=`<text x="${xOf(f)}" y="18" text-anchor="middle" font-size="10" fill="${markers.has(f)?fb.numDark:fb.numLight}" font-family="monospace">${f}</text>`;
+  // string labels + muted X
+  for(let s=0;s<6;s++){
+    const muted = v.muted.includes(s);
+    g+=`<text x="16" y="${yOf(s)+5}" text-anchor="middle" font-size="13" fill="${muted?fb.mute:fb.label}" font-family="monospace" font-weight="700">${muted?'✕':SLAB[s]}</text>`;
+  }
+  // dots
+  for(const [s,frets] of v.pos){
+    for(const f of frets){
+      const x=xOf(f), y=yOf(s); const pc=(OPEN[s]+f)%12;
+      const root=isRootPc(pc);
+      let lbl;
+      if(S.disp==='finger') lbl = String(v.fingerMap[s+':'+f] ?? (f===0?0:''));
+      else if(S.disp==='note') lbl = spellByDeg(pc, degOf(pc));
+      else lbl = degOf(pc) || '?';
+      const fill = root ? '#E8960A' : '#0B9488';
+      const stroke = root ? '#C97D08' : 'rgba(0,0,0,0.08)';
+      if(root) g+=`<circle cx="${x}" cy="${y}" r="${FB.NR+4}" fill="#E8960A" opacity=".25"/>`;
+      g+=`<circle cx="${x}" cy="${y}" r="${FB.NR}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`;
+      g+=`<text x="${x}" y="${y+4.5}" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="800" fill="#fff" font-family="monospace,sans-serif">${lbl}</text>`;
+    }
+  }
+  svg.innerHTML = g;
+}
+
+// ══ UI RENDER ═══════════════════════════════════════════
+function chordLabel(){
+  const c = CHORDS[S.quality];
+  const nm = S.lang==='th' ? c.th.name : c.en.name;
+  return { full:`${S.root}${c.sym}`, name:nm };
+}
+
+function renderHeader(){
+  const cl = chordLabel();
+  document.getElementById('hdr-name').innerHTML = `<span class="acc">${S.root}</span>${CHORDS[S.quality].sym} <span style="font-weight:400;font-size:.7em;color:var(--muted)">${cl.name}</span>`;
+  document.getElementById('hdr-sub').textContent = chordNotes().join(' · ');
+}
+
+function renderTheory(){
+  const c = CHORDS[S.quality];
+  const txt = S.lang==='th' ? c.th : c.en;
+  const formula = c.deg.join(' – ');
+  document.getElementById('theory-panel').innerHTML =
+    `<div class="theory-desc"><b>${txt.mood}</b> &nbsp;·&nbsp; <span class="theory-formula">${formula}</span></div>`;
+}
+
+function renderRootPills(){
+  const el = document.getElementById('root-pills');
+  el.innerHTML = ROOTS.map(r=>`<button class="pill ${r===S.root?'root-on':''}" data-root="${r}">${r}</button>`).join('');
+  el.querySelectorAll('[data-root]').forEach(b=>b.addEventListener('click',()=>{ S.root=b.dataset.root; renderAll(); }));
+}
+function renderQualityPills(){
+  const el = document.getElementById('quality-pills');
+  el.innerHTML = QUALITY_ORDER.map(q=>{
+    const nm = S.lang==='th' ? CHORDS[q].th.name : CHORDS[q].en.name;
+    return `<button class="pill ${q===S.quality?'on':''}" data-q="${q}">${nm}</button>`;
+  }).join('');
+  el.querySelectorAll('[data-q]').forEach(b=>b.addEventListener('click',()=>{ S.quality=b.dataset.q; S.voicing=0; renderAll(); }));
+}
+function renderVoicingPills(){
+  const el = document.getElementById('voicing-pills');
+  const vs = getVoicings();
+  if(S.voicing>=vs.length) S.voicing=0;
+  el.innerHTML = vs.map((v,i)=>`<button class="pill ${i===S.voicing?'on':''}" data-v="${i}">${v.label}</button>`).join('');
+  el.querySelectorAll('[data-v]').forEach(b=>b.addEventListener('click',()=>{ S.voicing=+b.dataset.v; renderVoicingPills(); drawFb(); renderInfo(); }));
+}
+function renderInfo(){
+  const pcs=chordPcs(), degs=CHORDS[S.quality].deg;
+  const badges = chordPcs().map((pc,i)=>{
+    const root=isRootPc(pc);
+    return `<div class="badge"><span class="bdot" style="background:${root?'#E8960A':'#0B9488'}"></span><strong>${spellByDeg(pc, degs[i])}</strong><span style="color:var(--muted)">(${degs[i]})</span></div>`;
+  }).join('');
+  document.getElementById('inf-fb').innerHTML =
+    `<div class="info-row"><span class="info-lbl">${t('notes')}</span>${badges}</div>
+     <div style="font-size:11px;color:var(--muted);margin-top:8px">${t('mutedHint')}</div>`;
+}
+
+function renderAll(){ renderHeader(); renderTheory(); renderRootPills(); renderQualityPills(); renderVoicingPills(); drawFb(); renderInfo(); }
+
+// ══ DISPLAY / LANG / DARK ═══════════════════════════════
+function applyLang(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ const v=LANGS[S.lang][el.dataset.i18n]; if(typeof v==='string') el.textContent=v; });
+  document.getElementById('langEN').classList.toggle('lang-on', S.lang==='en');
+  document.getElementById('langTH').classList.toggle('lang-on', S.lang==='th');
+}
+document.getElementById('langEN').addEventListener('click',()=>{ S.lang='en'; applyLang(); renderAll(); });
+document.getElementById('langTH').addEventListener('click',()=>{ S.lang='th'; applyLang(); renderAll(); });
+
+function setDisp(m){ S.disp=m;
+  document.getElementById('dInt').classList.toggle('on',m==='int');
+  document.getElementById('dNote').classList.toggle('on',m==='note');
+  document.getElementById('dFinger').classList.toggle('on',m==='finger');
+  drawFb();
+}
+document.getElementById('dInt').addEventListener('click',()=>setDisp('int'));
+document.getElementById('dNote').addEventListener('click',()=>setDisp('note'));
+document.getElementById('dFinger').addEventListener('click',()=>setDisp('finger'));
+
+function applyDark(d){
+  document.body.classList.toggle('dark', d);
+  document.getElementById('darkToggle').textContent = d?'🌙':'☀️';
+  document.getElementById('darkToggle').classList.toggle('on', d);
+  drawFb();
+}
+document.getElementById('darkToggle').addEventListener('click',()=>{
+  const d=!document.body.classList.contains('dark');
+  localStorage.setItem('twofour-dark', d?'1':'0'); applyDark(d);
+});
+
+// ══ BOOT ════════════════════════════════════════════════
+const _sd=localStorage.getItem('twofour-dark');
+applyDark(_sd!==null ? _sd==='1' : window.matchMedia('(prefers-color-scheme: dark)').matches);
+applyLang();
+renderAll();
+</script>
+</body>
+</html>
