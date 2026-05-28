@@ -426,8 +426,9 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',-apple-sys
   <div class="chips" id="chips"></div>
   <div class="hdr-right">
     <div class="btn-row">
-      <button class="icon-btn on"  id="dInt"  data-i18n="dispInterval">Interval</button>
-      <button class="icon-btn"     id="dNote" data-i18n="dispNote">Note</button>
+      <button class="icon-btn on"  id="dInt"    data-i18n="dispInterval">Interval</button>
+      <button class="icon-btn"     id="dNote"   data-i18n="dispNote">Note</button>
+      <button class="icon-btn"     id="dFinger" data-i18n="dispFinger">Finger</button>
       <button class="icon-btn"     id="darkToggle" title="Toggle dark mode">☀️</button>
     </div>
     <div class="btn-row">
@@ -527,12 +528,13 @@ const LANGS = {
     tabForm7:         '7-Form (3NPS)',
     tabFull:          'Full Board',
     tabStr:           'Single String',
-    ctrlShape:        'Shape',
+    ctrlShape:        'Position',
     ctrlPos:          'Position',
     ctrlStr:          'String',
     ctrlKey:          'Key',
     dispInterval:     'Interval',
     dispNote:         'Note',
+    dispFinger:       'Finger',
     fullSubtitle:     k => `All ${k} ${S.scale==='major'?'Major':'Major Pentatonic'} notes · Fret 0–22`,
     legendRoot:       r => `Root (${r} · 1)`,
     legendScale:      'Scale notes',
@@ -544,9 +546,9 @@ const LANGS = {
     f7Nps:            '3 notes per string',
     strOpenNote:      (nn,dg,ok) => ok ? `🔓 Open string: ${nn} (${dg})` : `🔒 Open string: ${nn||'?'} — not in scale`,
     strLabel:         s => `String ${s}`,
-    shapeLabel:       s => `${s} Shape`,
-    openShapeLabel:   s => `${s} Shape  (Open String Position)`,
-    fret12ShapeLabel: s => `${s} Shape  (Fret 12 · Octave Higher)`,
+    shapeLabel:       s => `Position ${s}`,
+    openShapeLabel:   s => `Position ${s}  (Open Strings)`,
+    fret12ShapeLabel: s => `Position ${s}  (Octave Higher)`,
     tabPiano:         'Piano & Staff',
   },
   th: {
@@ -555,12 +557,13 @@ const LANGS = {
     tabForm7:         '7-Form (3NPS)',
     tabFull:          'ทั้งคอ',
     tabStr:           'ทีละสาย',
-    ctrlShape:        'รูปแบบ',
+    ctrlShape:        'ตำแหน่ง',
     ctrlPos:          'ตำแหน่ง',
     ctrlStr:          'สาย',
     ctrlKey:          'คีย์',
     dispInterval:     'Interval',
     dispNote:         'Note',
+    dispFinger:       'นิ้ว',
     fullSubtitle:     k => `โน้ตทั้งหมดใน ${k} ${S.scale==='major'?'Major':'Major Pentatonic'} · เฟรต 0–22`,
     legendRoot:       r => `Root (${r} · 1)`,
     legendScale:      'โน้ตในสเกล',
@@ -572,9 +575,9 @@ const LANGS = {
     f7Nps:            '3 โน้ตต่อสาย',
     strOpenNote:      (nn,dg,ok) => ok ? `🔓 สายเปล่า: ${nn} (${dg})` : `🔒 สายเปล่า: ${nn||'?'} — ไม่อยู่ในสเกล`,
     strLabel:         s => `สาย ${s}`,
-    shapeLabel:       s => `รูป ${s}`,
-    openShapeLabel:   s => `รูป ${s}  (Open String Position)`,
-    fret12ShapeLabel: s => `รูป ${s}  (เฟรต 12 · สูงขึ้น 1 Octave)`,
+    shapeLabel:       s => `ตำแหน่ง ${s}`,
+    openShapeLabel:   s => `ตำแหน่ง ${s}  (สายเปล่า)`,
+    fret12ShapeLabel: s => `ตำแหน่ง ${s}  (สูงขึ้น 1 Octave)`,
     tabPiano:         'เปียโน & โน้ต',
   }
 };
@@ -998,47 +1001,60 @@ function getModeShapes(parentScaleKey, offsetTable, cagedBase) {
   return buildShapeEntries(boxes, parentRoot, i => kn[i] ?? '');
 }
 
+// ══ FRET-WINDOW POSITION ENGINE ═════════════════════════
+// Generates 5 CAGED-style position boxes for ANY scale using vertical fret
+// windows (not notes-per-string). Each box = a 4-5 fret window across all 6
+// strings, filled with every scale note that falls inside it. This guarantees:
+//   • exactly 5 positions          • boxes that overlap at the edges
+//   • natural 2-3 notes/string     • playable hand spans → finger numbers
+// Windows are anchored on the root's location on the low-E string, stepped by
+// the major-pentatonic intervals [0,2,4,7,9] for an even spread up the neck.
+const POS_ANCHORS = [0, 2, 4, 7, 9];
+
+function getPositionShapes() {
+  const R = keyDef().root;
+  const rootFretLowE = (R - OPEN[0] + 12) % 12;   // lowest root on string 6
+
+  // Build a box for each anchor: a fret window filled with in-scale notes.
+  const raw = POS_ANCHORS.map((a, idx) => {
+    const low = (rootFretLowE + a) % 12;           // window low fret (0-11)
+    // Adaptive width: prefer a 4-fret window (W=3); widen to 5 (W=4) only if
+    // that better fills all 6 strings without exceeding 3 notes on any string.
+    let chosen = null;
+    for (const W of [3, 4]) {
+      const pos = OPEN.map((open, s) => {
+        const frets = [];
+        for (let f = low; f <= low + W; f++) if (inSc(noteAt(s, f))) frets.push(f);
+        return [s, frets];
+      });
+      const counts = pos.map(p => p[1].length);
+      if (counts.every(c => c >= 1) && Math.max(...counts) <= 3) { chosen = pos; break; }
+      if (!chosen) chosen = pos;
+    }
+    return { pos: chosen, color: BOX_COLORS[idx % BOX_COLORS.length] };
+  });
+
+  // Sort by neck position so boxes read left→right as Position 1-5.
+  raw.sort((a, b) => minFret(a.pos) - minFret(b.pos));
+
+  const out = {};
+  raw.forEach((b, i) => {
+    const key  = 'p' + (i + 1);
+    const open = minFret(b.pos) === 0;
+    out[key] = { lbl: String(i + 1), color: b.color, pos: b.pos, open, fret12: false };
+    // Octave-up copy of the open-position box (mirrors prior CAGED behaviour).
+    if (open) {
+      const pos12 = b.pos.map(([s, fr]) => [s, fr.map(f => f + 12)]);
+      if (maxFret(pos12) <= 17)
+        out[key + '_12'] = { lbl: String(i + 1), color: b.color, pos: pos12, open: false, fret12: true };
+    }
+  });
+  return out;
+}
+
+// All scales now use the unified fret-window position engine.
 function getShapes() {
-  if (S.scale === 'major' || S.scale === 'ionian') return getCaged();
-
-  // All major-scale modes (and natural minor = aeolian) share the same notes as
-  // some Ionian (major) key. Use that key's CAGED positions so the fingering
-  // patterns match the actual major-scale shapes — only the root/degree labels differ.
-  if (MODE_IONIAN_OFFSET[S.scale] !== undefined) {
-    const offset      = MODE_IONIAN_OFFSET[S.scale];
-    const relMajRoot  = (keyDef().root - offset + 12) % 12;
-    return getCaged(relMajRoot);
-  }
-
-  // Melodic minor modes: use dedicated CAGED base (2-3 notes/string, non-3NPS).
-  if (MEL_MODE_OFFSET[S.scale] !== undefined) return getModeShapes('mel_minor', MEL_MODE_OFFSET, MEL_MIN_CAGED_BASE);
-
-  // Harmonic minor modes: use dedicated CAGED base (2-3 notes/string, non-3NPS).
-  if (HAR_MODE_OFFSET[S.scale] !== undefined) return getModeShapes('har_minor', HAR_MODE_OFFSET, HAR_MIN_CAGED_BASE);
-
-  // Hungarian minor: dedicated CAGED base (harmonic minor with ♯4, 2-3 notes/string).
-  if (S.scale === 'hungarian_min') {
-    const hr = keyDef().root, hkn = keyDef().notes;
-    return buildShapeEntries(HUNGARIAN_MIN_CAGED_BASE, hr, i => hkn[i] ?? '');
-  }
-
-  const r       = keyDef().root;
-  const kn      = keyDef().notes;
-
-  // Blues: use dedicated base that mirrors minor-penta positions with ♭5 added.
-  // Labels use actual blues note names (skipping index 3 = ♭5) so shape tabs
-  // read 1/♭3/4/5/♭7 note names rather than the passing ♭5.
-  const isBlues        = S.scale === 'blues';
-  const allBoxes       = isBlues ? BLUES_BASE : computeBoxes(SCALES[S.scale].itv);
-  // CAGED System shows 5 positions for 7-note scales (not 7 like 3NPS).
-  // Take the first 5 starting degrees so labels kn[0..4] remain correct.
-  const boxes          = (!isBlues && allBoxes.length === 7) ? allBoxes.slice(0, 5) : allBoxes;
-  const bluesNames     = isBlues ? scaleNoteNames() : null;
-  const bluesLblIdx    = [0,1,2,4,5]; // skip ♭5 at index 3
-
-  return buildShapeEntries(boxes, r, i =>
-    isBlues ? (bluesNames[bluesLblIdx[i]] ?? '') : (kn[i] ?? '')
-  );
+  return getPositionShapes();
 }
 
 // ══ BLUES SCALE BASE (C blues = minor penta + ♭5 passing note) ═
@@ -1155,7 +1171,7 @@ function getF7() {
 }
 
 // ══ STATE ═══════════════════════════════════════════════
-const S = { tab:'caged', caged:'C', form7:0, str:0, showNote:false, lang:'en', key:'C', scale:'major', scaleGroup:'major' };
+const S = { tab:'caged', caged:'C', form7:0, str:0, showNote:false, fingerMode:false, lang:'en', key:'C', scale:'major', scaleGroup:'major' };
 const t = k => LANGS[S.lang][k] ?? k;
 
 // ══ FRETBOARD RENDERER ══════════════════════════════════
@@ -1202,8 +1218,14 @@ function getFbTheme() {
   };
 }
 
-function draw(svgEl, nFrets, hl, accent) {
+function draw(svgEl, nFrets, hl, accent, opts) {
   const fb = getFbTheme();
+  // Finger-number mode (positional): finger = fret offset from the box's lowest
+  // fretted note (1-4); open strings = 0. Only used when opts.finger is set.
+  const showFinger = !!(opts && opts.finger);
+  let boxMin = 99;
+  if (showFinger && hl) for (const [,frets] of hl) for (const f of frets) if (f > 0 && f < boxMin) boxMin = f;
+  const fingerOf = f => f === 0 ? '0' : String(Math.min(4, Math.max(1, f - boxMin + 1)));
   const W = FB.PL + nFrets*FB.FW + FB.PR;
   const H = FB.PT + 5*FB.SH + FB.PB;
   svgEl.setAttribute('width',  W);
@@ -1274,7 +1296,7 @@ function draw(svgEl, nFrets, hl, accent) {
         if (!inSc(note)) continue;   // skip notes outside current scale
         const root=isRoot(note);
         const isBlue = !root && bluePC >= 0 && (OPEN[s]+f)%12 === bluePC;
-        const lbl = S.showNote ? (getNN(note)||'?') : (getDeg(note)||'?');
+        const lbl = showFinger ? fingerOf(f) : S.showNote ? (getNN(note)||'?') : (getDeg(note)||'?');
         const fill = root ? '#E8960A' : isBlue ? BLUE_NOTE_COLOR : (accent||'#0B9488');
         const tc   = '#fff';
         const strokeC = root ? '#C97D08' : isBlue ? '#1565C0' : 'rgba(0,0,0,0.08)';
@@ -1297,7 +1319,7 @@ function rCaged() {
   const svgC = document.getElementById('sv-caged');
 
   const nf = Math.max(15, maxFret(f.pos) + 3);
-  draw(svgC, nf, f.pos, f.color);
+  draw(svgC, nf, f.pos, f.color, { finger: S.fingerMode });
   scrollToHl(svgC, f.pos, true);
 
   const notice = document.getElementById('open-notice');
@@ -1908,19 +1930,18 @@ function mkStr() {
   }));
 }
 
-// display toggle
-document.getElementById('dInt').addEventListener('click',()=>{
-  S.showNote=false;
-  document.getElementById('dInt').classList.add('on');
-  document.getElementById('dNote').classList.remove('on');
+// display toggle (Interval / Note / Finger)
+function setDisp(mode){
+  S.fingerMode = mode === 'finger';
+  S.showNote   = mode === 'note';
+  document.getElementById('dInt').classList.toggle('on', mode==='int');
+  document.getElementById('dNote').classList.toggle('on', mode==='note');
+  document.getElementById('dFinger').classList.toggle('on', mode==='finger');
   renderActive();
-});
-document.getElementById('dNote').addEventListener('click',()=>{
-  S.showNote=true;
-  document.getElementById('dNote').classList.add('on');
-  document.getElementById('dInt').classList.remove('on');
-  renderActive();
-});
+}
+document.getElementById('dInt').addEventListener('click',   ()=>setDisp('int'));
+document.getElementById('dNote').addEventListener('click',  ()=>setDisp('note'));
+document.getElementById('dFinger').addEventListener('click',()=>setDisp('finger'));
 
 // tabs
 document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>{
