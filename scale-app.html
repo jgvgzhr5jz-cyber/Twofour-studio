@@ -797,18 +797,28 @@ function stepFormula(intervals) {
   }).join('–');
 }
 
-// Derive note names for any scale from a root (uses major scale as reference)
-function computeNoteNames(rootPc, intervals) {
+// Derive note names for any scale from a root (uses major scale as reference).
+// `degs` (optional) lets a chromatic note follow its scale-degree spelling:
+// a ♯ degree spells as a sharpened lower letter (♯4 → F♯, not G♭) and a ♭
+// degree as a flattened upper letter — so note names match the degree labels.
+function computeNoteNames(rootPc, intervals, degs) {
   const majNotes = ALL_KEYS.find(k => k.root === rootPc).notes;
   const pcMap = {};
   MAJ_ITV.forEach((itv, i) => { pcMap[(rootPc + itv) % 12] = majNotes[i]; });
-  return intervals.map(itv => {
+  const asFlat  = up => { const n = pcMap[up]; return n.includes('#') ? n[0] : n[0] + 'b'; };
+  const asSharp = dn => { const n = pcMap[dn]; return n.includes('b') ? n[0] : n[0] + '#'; };
+  return intervals.map((itv, idx) => {
     const pc = (rootPc + itv) % 12;
     if (pcMap[pc]) return pcMap[pc];
-    const up = (pc + 1) % 12;   // flat of next
-    if (pcMap[up]) { const n = pcMap[up]; return n.includes('#') ? n[0] : n[0] + 'b'; }
-    const dn = (pc + 11) % 12;  // sharp of prev
-    if (pcMap[dn]) { const n = pcMap[dn]; return n.includes('b') ? n[0] : n[0] + '#'; }
+    const up = (pc + 1) % 12;   // letter above → flat spelling
+    const dn = (pc + 11) % 12;  // letter below → sharp spelling
+    const deg = degs ? (degs[idx] || '') : '';
+    // Prefer the spelling direction the degree label asks for.
+    if (deg.includes('♯') && pcMap[dn]) return asSharp(dn);
+    if (deg.includes('♭') && pcMap[up]) return asFlat(up);
+    // Fallback: flat-biased (legacy behaviour).
+    if (pcMap[up]) return asFlat(up);
+    if (pcMap[dn]) return asSharp(dn);
     return ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'][pc];
   });
 }
@@ -821,7 +831,7 @@ const noteAt = (s,f) => (OPEN[s]+f)%12;
 const keyDef = () => {
   const kd = ALL_KEYS.find(k => k.id === S.key);
   if (S.scale === 'major' || S.scale === 'ionian') return kd;
-  return { ...kd, notes: computeNoteNames(kd.root, SCALES[S.scale].itv) };
+  return { ...kd, notes: computeNoteNames(kd.root, SCALES[S.scale].itv, SCALES[S.scale].deg) };
 };
 const scaleDeg = () => SCALES[S.scale].deg;
 const kScale = () => { const r=keyDef().root; return SCALES[S.scale].itv.map(i=>(r+i)%12); };
