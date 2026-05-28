@@ -241,6 +241,45 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',-apple-sys
 .leg-item { display:flex; align-items:center; gap:5px; }
 .leg-dot  { width:13px; height:13px; border-radius:50%; }
 
+/* ── Theory Panel ────────────────────────────────────── */
+.theory-panel {
+  margin:10px 20px 0; padding:14px 16px;
+  background:var(--card); border:1.5px solid var(--brd);
+  border-radius:12px;
+}
+.theory-head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+.theory-mood {
+  display:inline-flex; align-items:center; gap:6px;
+  background:var(--surf); border:1px solid var(--brd);
+  color:var(--acc); font-weight:800; font-size:12px;
+  border-radius:100px; padding:3px 11px;
+}
+.theory-formula {
+  font-family:'DM Sans',monospace; font-size:11.5px; font-weight:700;
+  letter-spacing:.5px; color:var(--muted);
+  background:var(--surf); border:1px solid var(--brd);
+  border-radius:7px; padding:3px 9px;
+}
+.theory-desc { font-size:13px; color:var(--text); line-height:1.55; margin-bottom:9px; }
+.theory-grid { display:flex; flex-direction:column; gap:7px; }
+.theory-item { display:flex; gap:9px; align-items:baseline; font-size:12.5px; }
+.theory-item .tk {
+  flex-shrink:0; min-width:62px; color:var(--muted);
+  font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:.7px;
+  padding-top:1px;
+}
+.theory-item .tv { color:var(--text); line-height:1.5; }
+.theory-item .tv b { color:var(--acc); font-weight:800; }
+.theory-tags { display:flex; gap:6px; flex-wrap:wrap; }
+.theory-tag {
+  background:var(--surf); border:1px solid var(--brd);
+  color:var(--muted); font-size:11.5px; font-weight:600;
+  border-radius:6px; padding:2px 8px;
+}
+@media (max-width:600px){ .theory-panel { margin:8px 12px 0; padding:11px 13px; } }
+@media (min-width:768px){ .theory-panel { margin:12px 24px 0; } }
+@media (min-width:1024px){ .theory-panel { margin:14px 48px 0; } }
+
 /* ── Site Nav (matches index.html style) ─────────────── */
 .site-nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 200;
@@ -411,6 +450,9 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',-apple-sys
   <div class="scale-cat-row" id="scale-cats"></div>
   <div class="scale-pills" id="scale-pills"></div>
 </div>
+
+<!-- ═══ THEORY PANEL ══════════════════════════════════ -->
+<div class="theory-panel" id="theory-panel"></div>
 
 <!-- ═══ TABS ══════════════════════════════════════════ -->
 <div class="tabs">
@@ -600,6 +642,134 @@ const SCALE_GROUPS = [
   { id:'mel_modes', en:'Mel. Modes',  th:'โหมดเมโลดิก',  scales:['mel_m2','mel_m3','mel_m4','mel_m5','mel_m6','mel_m7'] },
   { id:'har_modes', en:'Har. Modes',  th:'โหมดฮาร์โมนิก', scales:['har_m2','har_m3','har_m4','har_m5','har_m6','har_m7'] },
 ];
+
+// ══ SCALE META (theory content) ═════════════════════════
+// Rich content layer keyed by the SAME keys as SCALES.
+// All fields optional — fill in incrementally. UI reads via getScaleMeta().
+//   en/th : { mood, desc, use, tip }  — bilingual text
+//   chords: string  — diatonic chords or typical harmonic context
+//   related: string[] — related scales (relative / parallel / sibling modes)
+//   caged : array  — optional hand-authored CAGED base (else 3NPS auto)
+//   quiz  : array  — reserved for Phase 4
+const SCALE_META = {
+  major: {
+    en:{ mood:'Bright, happy', desc:'The most fundamental scale — the reference every other scale is described against.', use:'Pop, rock, country, almost everything', tip:'Solo over a C–F–G (I–IV–V) progression.' },
+    th:{ mood:'สดใส ร่าเริง', desc:'สเกลพื้นฐานที่สุด เป็นตัวอ้างอิงของสเกลอื่นทั้งหมด', use:'ป็อป ร็อก คันทรี แทบทุกแนว', tip:'ลองโซโลทับคอร์ด C–F–G (I–IV–V)' },
+    chords:'I  ii  iii  IV  V  vi  vii°',
+    related:['Natural Minor (relative)','Lydian','Mixolydian'],
+  },
+  nat_minor: {
+    en:{ mood:'Sad, serious', desc:'The relative minor of the major scale — same notes, different home base (the 6th degree).', use:'Rock, pop ballads, film', tip:'Pairs with i–♭VI–♭VII–i progressions.' },
+    th:{ mood:'เศร้า ขรึม', desc:'ไมเนอร์คู่ขนานของเมเจอร์ โน้ตเดียวกันแต่ตั้งต้นที่ขั้น 6', use:'ร็อก เพลงช้า ดนตรีประกอบหนัง', tip:'เข้ากับคอร์ด i–♭VI–♭VII–i' },
+    chords:'i  ii°  ♭III  iv  v  ♭VI  ♭VII',
+    related:['Major (relative)','Harmonic Minor','Melodic Minor'],
+  },
+  har_minor: {
+    en:{ mood:'Dramatic, exotic', desc:'Natural minor with a raised 7th, creating a strong leading tone and a dramatic ♭6→7 gap.', use:'Classical, neoclassical metal, Middle-Eastern', tip:'The V7 chord (with raised 7) resolves strongly to i.' },
+    th:{ mood:'ดราม่า แปลกหู', desc:'เนเชอรัลไมเนอร์ที่ยกขั้น 7 ขึ้น ทำให้มีเสียงนำที่ดึงกลับรากแรง และช่วงกว้าง ♭6→7', use:'คลาสสิก เมทัลนีโอคลาสสิก ดนตรีตะวันออกกลาง', tip:'คอร์ด V7 (ขั้น 7 ที่ยกขึ้น) คืนกลับ i ได้หนักแน่น' },
+    chords:'i  ii°  ♭III+  iv  V  ♭VI  vii°',
+    related:['Natural Minor','Phrygian Dominant (5th mode)'],
+  },
+  mel_minor: {
+    en:{ mood:'Smooth, jazzy', desc:'Minor with raised 6th and 7th (ascending) — like a major scale with a ♭3.', use:'Jazz, fusion, sophisticated minor lines', tip:'Parent of the Altered scale and Lydian Dominant.' },
+    th:{ mood:'นุ่มนวล แจ๊สซี่', desc:'ไมเนอร์ที่ยกขั้น 6 และ 7 (ขาขึ้น) เหมือนเมเจอร์ที่มี ♭3', use:'แจ๊ส ฟิวชั่น ไลน์ไมเนอร์ที่ซับซ้อน', tip:'เป็นสเกลแม่ของ Altered และ Lydian Dominant' },
+    chords:'i  ii  ♭III+  IV  V  vi°  vii°',
+    related:['Major','Altered (7th mode)','Lydian Dominant (4th mode)'],
+  },
+  penta_maj: {
+    en:{ mood:'Open, safe', desc:'Major scale minus the 4th and 7th — five notes with no semitone clashes.', use:'Country, pop, rock solos, folk', tip:'Hard to play a wrong note over a major key.' },
+    th:{ mood:'โปร่ง ปลอดภัย', desc:'เมเจอร์ที่ตัดขั้น 4 และ 7 ออก เหลือ 5 โน้ตที่ไม่มีเสียงครึ่งชนกัน', use:'คันทรี ป็อป โซโลร็อก โฟล์ก', tip:'เล่นผิดยากมากเมื่ออยู่ในคีย์เมเจอร์' },
+    chords:'Works over I, IV, V (major key)',
+    related:['Major','Minor Pentatonic (relative)'],
+  },
+  penta_min: {
+    en:{ mood:'Bluesy, strong', desc:'The backbone of rock and blues lead guitar — natural minor minus the 2nd and ♭6.', use:'Blues, rock, metal solos', tip:'Add the ♭5 to turn it into the Blues scale.' },
+    th:{ mood:'บลูส์ หนักแน่น', desc:'แกนหลักของกีตาร์โซโลร็อกและบลูส์ เนเชอรัลไมเนอร์ที่ตัดขั้น 2 และ ♭6', use:'บลูส์ ร็อก โซโลเมทัล', tip:'เติม ♭5 จะกลายเป็นสเกลบลูส์' },
+    chords:'Works over i, blues 12-bar',
+    related:['Major Pentatonic (relative)','Blues','Natural Minor'],
+  },
+  blues: {
+    en:{ mood:'Gritty, soulful', desc:'Minor pentatonic plus the ♭5 "blue note" — the signature tension of blues.', use:'Blues, rock & roll, R&B', tip:'Treat the ♭5 as a passing note, not a landing spot.' },
+    th:{ mood:'ดิบ มีอารมณ์', desc:'เพนทาโทนิกไมเนอร์บวก "blue note" (♭5) เสียงตึงเอกลักษณ์ของบลูส์', use:'บลูส์ ร็อกแอนด์โรล อาร์แอนด์บี', tip:'ใช้ ♭5 เป็นโน้ตผ่าน อย่าค้างไว้' },
+    chords:'Works over a 12-bar blues',
+    related:['Minor Pentatonic'],
+  },
+  // Modes of Major
+  ionian:     { en:{ mood:'Bright', desc:'The major scale itself — the 1st mode.', use:'Major-key music', tip:'Identical to the Major scale.' },
+                th:{ mood:'สดใส', desc:'ตัวเมเจอร์สเกลเอง (โหมดที่ 1)', use:'เพลงคีย์เมเจอร์', tip:'เหมือนเมเจอร์สเกลทุกประการ' },
+                chords:'Imaj7', related:['Major'] },
+  dorian:     { en:{ mood:'Cool, jazzy minor', desc:'Minor scale with a natural 6th — the brightest minor mode.', use:'Jazz, funk, modal rock (e.g. "So What")', tip:'The natural 6 is the sound — emphasize it over m7.' },
+                th:{ mood:'ไมเนอร์เท่ๆ แจ๊สซี่', desc:'สเกลไมเนอร์ที่มีขั้น 6 ปกติ เป็นโหมดไมเนอร์ที่สว่างสุด', use:'แจ๊ส ฟังก์ โมดัลร็อก (เช่น "So What")', tip:'ขั้น 6 ปกติคือเอกลักษณ์ เน้นมันทับคอร์ด m7' },
+                chords:'over m7 / m6', related:['Aeolian','Mixolydian'] },
+  phrygian:   { en:{ mood:'Dark, Spanish', desc:'Minor scale with a ♭2 — instantly Spanish/flamenco or metal.', use:'Flamenco, metal, film tension', tip:'The ♭2 right next to the root is the flavor.' },
+                th:{ mood:'มืด สเปน', desc:'สเกลไมเนอร์ที่มี ♭2 ให้กลิ่นสเปน/ฟลาเมงโกหรือเมทัลทันที', use:'ฟลาเมงโก เมทัล ความตึงในหนัง', tip:'♭2 ที่ติดกับรากคือรสชาติ' },
+                chords:'over m7 / sus♭9', related:['Phrygian Dominant','Aeolian'] },
+  lydian:     { en:{ mood:'Dreamy, floating', desc:'Major scale with a ♯4 — bright and ethereal.', use:'Film scores, dreamy pop, jazz', tip:'The ♯4 over a maj7 chord is the magic.' },
+                th:{ mood:'ฝัน ล่องลอย', desc:'เมเจอร์ที่มี ♯4 ให้เสียงสว่างและล่องลอย', use:'ดนตรีประกอบหนัง ป็อปแนวฝัน แจ๊ส', tip:'♯4 ทับคอร์ด maj7 คือความมหัศจรรย์' },
+                chords:'over maj7♯11', related:['Major','Lydian Dominant'] },
+  mixolydian: { en:{ mood:'Rootsy, dominant', desc:'Major scale with a ♭7 — the dominant-7th sound.', use:'Blues, rock, funk, jam bands', tip:'The go-to scale over a dominant 7 chord.' },
+                th:{ mood:'ติดดิน โดมิแนนท์', desc:'เมเจอร์ที่มี ♭7 ให้เสียงแบบโดมิแนนท์เซเวนท์', use:'บลูส์ ร็อก ฟังก์ วงแจม', tip:'สเกลตัวเลือกแรกเมื่อเล่นทับคอร์ด dominant 7' },
+                chords:'over 7 (dominant)', related:['Major','Lydian Dominant'] },
+  aeolian:    { en:{ mood:'Sad', desc:'The natural minor scale — the 6th mode of major.', use:'Rock, pop, film', tip:'Identical to Natural Minor.' },
+                th:{ mood:'เศร้า', desc:'ตัวเนเชอรัลไมเนอร์ (โหมดที่ 6 ของเมเจอร์)', use:'ร็อก ป็อป หนัง', tip:'เหมือนเนเชอรัลไมเนอร์' },
+                chords:'over m7', related:['Natural Minor','Dorian'] },
+  locrian:    { en:{ mood:'Unstable, dark', desc:'Diminished mode with ♭2 and ♭5 — no stable tonic, used as colour.', use:'Over m7♭5 chords, metal', tip:'Rarely a key center — think of it as the ii° sound.' },
+                th:{ mood:'ไม่นิ่ง มืด', desc:'โหมดดิมินิชที่มี ♭2 และ ♭5 ไม่มีโทนิกที่นิ่ง ใช้เป็นสีสัน', use:'ทับคอร์ด m7♭5 เมทัล', tip:'แทบไม่ใช้เป็นคีย์หลัก คิดเป็นเสียง ii° แทน' },
+                chords:'over m7♭5 (half-dim)', related:['Phrygian'] },
+  // Modes of Melodic Minor
+  mel_m2: { en:{ mood:'Suspended, exotic', desc:'Dorian with a ♭2 — used over sus♭9 chords.', use:'Jazz, fusion', tip:'Try it over a sus4♭9 chord.' },
+            th:{ mood:'แขวนลอย แปลกหู', desc:'โดเรียนที่มี ♭2 ใช้ทับคอร์ด sus♭9', use:'แจ๊ส ฟิวชั่น', tip:'ลองทับคอร์ด sus4♭9' },
+            chords:'over sus♭9', related:['Melodic Minor','Dorian'] },
+  mel_m3: { en:{ mood:'Bright, tense', desc:'Lydian with a ♯5 — augmented major sound.', use:'Jazz over maj7♯5', tip:'For augmented major-7 chords.' },
+            th:{ mood:'สว่าง ตึง', desc:'ลีเดียนที่มี ♯5 ให้เสียงออคเมนเต็ดเมเจอร์', use:'แจ๊สทับ maj7♯5', tip:'ใช้กับคอร์ดออคเมนเต็ดเมเจอร์เซเวนท์' },
+            chords:'over maj7♯5', related:['Lydian','Melodic Minor'] },
+  mel_m4: { en:{ mood:'Fusion, edgy', desc:'Lydian with a ♭7 — the classic dominant ♯11 sound.', use:'Fusion, jazz over 7♯11', tip:'A favourite over unaltered dominant ♯11 chords.' },
+            th:{ mood:'ฟิวชั่น คม', desc:'ลีเดียนที่มี ♭7 เสียงโดมิแนนท์ ♯11 สุดคลาสสิก', use:'ฟิวชั่น แจ๊สทับ 7♯11', tip:'ยอดนิยมเมื่อเล่นทับคอร์ด dominant ♯11' },
+            chords:'over 7♯11', related:['Mixolydian','Lydian','Melodic Minor'] },
+  mel_m5: { en:{ mood:'Dominant, dark', desc:'Mixolydian with a ♭6 — dominant resolving to a minor chord.', use:'Jazz, latin', tip:'Great over V7 going to a minor i.' },
+            th:{ mood:'โดมิแนนท์ มืด', desc:'มิกโซลีเดียนที่มี ♭6 โดมิแนนท์ที่คืนกลับคอร์ดไมเนอร์', use:'แจ๊ส ลาติน', tip:'ดีมากกับ V7 ที่ไป i ไมเนอร์' },
+            chords:'over 7♭13', related:['Mixolydian','Melodic Minor'] },
+  mel_m6: { en:{ mood:'Half-diminished', desc:'Locrian with a natural 2 — the modern m7♭5 sound.', use:'Jazz over m7♭5', tip:'Brighter alternative to plain Locrian.' },
+            th:{ mood:'ฮาล์ฟดิมินิช', desc:'โลเครียนที่มีขั้น 2 ปกติ เสียง m7♭5 แบบโมเดิร์น', use:'แจ๊สทับ m7♭5', tip:'ตัวเลือกที่สว่างกว่าโลเครียนธรรมดา' },
+            chords:'over m7♭5', related:['Locrian','Melodic Minor'] },
+  mel_m7: { en:{ mood:'Maximum tension', desc:'The Altered scale (Super Locrian) — every extension altered. The key jazz dominant scale.', use:'Jazz over 7alt (♭9♯9♭5♯5)', tip:'Play over a V7alt resolving to the I.' },
+            th:{ mood:'ตึงสุดขีด', desc:'สเกล Altered (Super Locrian) ทุกเทนชั่นถูก alter เป็นสเกลโดมิแนนท์สำคัญของแจ๊ส', use:'แจ๊สทับ 7alt (♭9♯9♭5♯5)', tip:'เล่นทับ V7alt ที่คืนกลับ I' },
+            chords:'over 7alt', related:['Melodic Minor'] },
+  // Modes of Harmonic Minor
+  har_m2: { en:{ mood:'Dark, unusual', desc:'Locrian with a natural 6.', use:'Jazz colour over m7♭5', tip:'A brighter half-diminished colour.' },
+            th:{ mood:'มืด แปลก', desc:'โลเครียนที่มีขั้น 6 ปกติ', use:'สีสันแจ๊สทับ m7♭5', tip:'สีฮาล์ฟดิมินิชที่สว่างขึ้น' },
+            chords:'over m7♭5', related:['Locrian','Harmonic Minor'] },
+  har_m3: { en:{ mood:'Bright, augmented', desc:'Ionian with a ♯5 — augmented major sound.', use:'Jazz over maj7♯5', tip:'Use sparingly for colour.' },
+            th:{ mood:'สว่าง ออคเมนเต็ด', desc:'ไอโอเนียนที่มี ♯5 เสียงออคเมนเต็ดเมเจอร์', use:'แจ๊สทับ maj7♯5', tip:'ใช้เป็นสีสันเล็กน้อย' },
+            chords:'over maj7♯5', related:['Major','Harmonic Minor'] },
+  har_m4: { en:{ mood:'Folk, exotic', desc:'Dorian with a ♯4 — the "Ukrainian Dorian"/Romanian sound.', use:'Folk, gypsy jazz, fusion', tip:'The ♯4 over a m7 gives an exotic lift.' },
+            th:{ mood:'พื้นเมือง แปลกหู', desc:'โดเรียนที่มี ♯4 เสียงแบบ "ยูเครเนียนโดเรียน"/โรมาเนีย', use:'โฟล์ก ยิปซีแจ๊ส ฟิวชั่น', tip:'♯4 ทับ m7 ให้กลิ่นแปลกหูที่ลอยขึ้น' },
+            chords:'over m7♯11', related:['Dorian','Harmonic Minor'] },
+  har_m5: { en:{ mood:'Spanish, Middle-Eastern', desc:'The Phrygian Dominant — major 3rd with a ♭2 and ♭6. Instantly exotic.', use:'Flamenco, metal, Middle-Eastern, V7 in minor keys', tip:'The go-to scale over a dominant 7 resolving to a minor chord.' },
+            th:{ mood:'สเปน ตะวันออกกลาง', desc:'ฟรีเจียนโดมิแนนท์ ขั้น 3 เมเจอร์พร้อม ♭2 และ ♭6 แปลกหูทันที', use:'ฟลาเมงโก เมทัล ตะวันออกกลาง V7 ในคีย์ไมเนอร์', tip:'สเกลตัวเลือกแรกเมื่อ dominant 7 คืนกลับคอร์ดไมเนอร์' },
+            chords:'over 7♭9 (→ minor)', related:['Harmonic Minor','Phrygian'] },
+  har_m6: { en:{ mood:'Bright, sharp', desc:'Lydian with a ♯2.', use:'Jazz colour', tip:'Rare — used for its unusual ♯2.' },
+            th:{ mood:'สว่าง แหลม', desc:'ลีเดียนที่มี ♯2', use:'สีสันแจ๊ส', tip:'หายาก ใช้เพื่อ ♯2 ที่แปลก' },
+            chords:'over maj7♯11', related:['Lydian','Harmonic Minor'] },
+  har_m7: { en:{ mood:'Maximum tension', desc:'Altered Diminished (Super Locrian ♭♭7) — a diminished-flavoured altered dominant.', use:'Jazz over dim7 / 7alt', tip:'For very dark dominant tension.' },
+            th:{ mood:'ตึงสุดขีด', desc:'อัลเทอร์ดดิมินิช (Super Locrian ♭♭7) โดมิแนนท์ alter กลิ่นดิมินิช', use:'แจ๊สทับ dim7 / 7alt', tip:'ใช้สำหรับความตึงโดมิแนนท์ที่มืดมาก' },
+            chords:'over dim7 / 7alt', related:['Harmonic Minor','Altered'] },
+};
+
+// Safe accessor — never throws for scales without meta yet.
+function getScaleMeta(scaleKey) {
+  return SCALE_META[scaleKey] ?? {};
+}
+
+// Build a Whole/Half step formula string from a scale's intervals.
+// 1 semitone = H, 2 = W, 3 = W½ (augmented 2nd), else raw count.
+function stepFormula(intervals) {
+  const n = intervals.length;
+  return intervals.map((v, i) => {
+    const d = ((intervals[(i + 1) % n] - v) + 12) % 12;
+    return d === 1 ? 'H' : d === 2 ? 'W' : d === 3 ? 'W½' : String(d);
+  }).join('–');
+}
 
 // Derive note names for any scale from a root (uses major scale as reference)
 function computeNoteNames(rootPc, intervals) {
@@ -1505,6 +1675,40 @@ function updateHeader() {
   document.getElementById('hdr-name').textContent = `${kd.id} ${name}`;
   document.getElementById('hdr-sub').textContent  = kd.notes.join(' · ');
   mkChips();
+  renderTheory();
+}
+
+// ══ THEORY PANEL ════════════════════════════════════════
+function renderTheory() {
+  const el = document.getElementById('theory-panel');
+  if (!el) return;
+  const meta = getScaleMeta(S.scale);
+  const txt  = meta[S.lang] || meta.en;
+  if (!txt) { el.style.display = 'none'; return; }
+  el.style.display = '';
+
+  const L = S.lang === 'th'
+    ? { use:'เหมาะกับ', chords:'คอร์ด', tip:'ทริก', related:'เกี่ยวข้อง', formula:'สูตร' }
+    : { use:'Use for', chords:'Chords', tip:'Tip', related:'Related', formula:'Formula' };
+
+  const formula = stepFormula(SCALES[S.scale].itv);
+  const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+  let h = `<div class="theory-head">`;
+  if (txt.mood) h += `<span class="theory-mood">🎼 ${esc(txt.mood)}</span>`;
+  h += `<span class="theory-formula" title="${L.formula}">${formula}</span>`;
+  h += `</div>`;
+  if (txt.desc) h += `<div class="theory-desc">${esc(txt.desc)}</div>`;
+
+  h += `<div class="theory-grid">`;
+  if (txt.use)      h += `<div class="theory-item"><span class="tk">${L.use}</span><span class="tv">${esc(txt.use)}</span></div>`;
+  if (meta.chords)  h += `<div class="theory-item"><span class="tk">${L.chords}</span><span class="tv">${esc(meta.chords)}</span></div>`;
+  if (txt.tip)      h += `<div class="theory-item"><span class="tk">${L.tip}</span><span class="tv">💡 ${esc(txt.tip)}</span></div>`;
+  if (meta.related && meta.related.length)
+    h += `<div class="theory-item"><span class="tk">${L.related}</span><span class="tv theory-tags">${meta.related.map(r => `<span class="theory-tag">${esc(r)}</span>`).join('')}</span></div>`;
+  h += `</div>`;
+
+  el.innerHTML = h;
 }
 
 function mkScalePills() {
