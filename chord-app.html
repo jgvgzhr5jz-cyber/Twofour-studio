@@ -149,48 +149,40 @@ const CHORDS = {
 };
 const QUALITY_ORDER = ['maj','min','dim','aug','sus2','sus4'];
 
-// ══ MOVABLE CHORD SHAPES (hand-authored, verified) ══════
-// Each shape: anchorString (where the root sits) + frets relative to that root's
-// fret. -1 = muted/not played. fingers parallel array (0=open string in shape).
-// The shape is transposed by placing the root note at its target fret.
-// rootStr 0 = low-E shape, 1 = A shape. baseFret = fret of the root in the open
-// reference (used to compute the transpose offset).
-//
-// frets: per string [E A D G B e], relative semitone offset from ROOT pitch;
-// we convert to actual frets at render time so any root works.
-// We store the intervals each string plays (relative to root) + the lowest
-// playable fret pattern as an offset map. Simpler & robust: store, per shape,
-// the scale-degree each string plays and a fret-offset shape anchored to root.
-//
-// Representation: shape.offsets[stringIndex] = fret offset from the root's fret
-//   on the low-E (or A) string; null = muted. Root sits at offset 0 on rootStr.
-const SHAPES = {
-  // E-shape barre (root on low-E string). Works for any root fret >=0.
-  E_maj:  { rootStr:0, label:'E', offsets:[0,2,2,1,0,0],  fingers:[1,3,4,2,1,1] },
-  E_min:  { rootStr:0, label:'Em', offsets:[0,2,2,0,0,0], fingers:[1,3,4,1,1,1] },
-  E_dim:  { rootStr:0, label:'Edim', offsets:[0,1,2,0,null,null], fingers:[1,2,3,1,0,0] },
-  E_aug:  { rootStr:0, label:'Eaug', offsets:[0,3,2,1,1,null], fingers:[1,4,3,2,2,0] },
-  E_sus2: { rootStr:0, label:'Esus2', offsets:[0,2,4,4,0,0], fingers:[1,2,3,4,1,1] },
-  E_sus4: { rootStr:0, label:'Esus4', offsets:[0,2,2,2,0,0], fingers:[1,3,4,2,1,1] },
-  // A-shape barre (root on A string). Low-E string muted.
-  A_maj:  { rootStr:1, label:'A', offsets:[null,0,2,2,2,0], fingers:[0,1,3,3,3,1] },
-  A_min:  { rootStr:1, label:'Am', offsets:[null,0,2,2,1,0], fingers:[0,1,3,4,2,1] },
-  A_dim:  { rootStr:1, label:'Adim', offsets:[null,0,1,2,1,null], fingers:[0,1,2,4,3,0] },
-  A_aug:  { rootStr:1, label:'Aaug', offsets:[null,0,3,2,2,null], fingers:[0,1,4,2,3,0] },
-  A_sus2: { rootStr:1, label:'Asus2', offsets:[null,0,2,2,0,0], fingers:[0,1,3,4,0,0] },
-  A_sus4: { rootStr:1, label:'Asus4', offsets:[null,0,2,2,3,0], fingers:[0,1,3,3,4,1] },
-};
-// Which shapes apply to each quality, in order shown
-const QUALITY_SHAPES = {
-  maj:  ['E_maj','A_maj'],
-  min:  ['E_min','A_min'],
-  dim:  ['E_dim','A_dim'],
-  aug:  ['E_aug','A_aug'],
-  sus2: ['E_sus2','A_sus2'],
-  sus4: ['E_sus4','A_sus4'],
+// ══ CAGED VOICINGS — KEY OF C (hand-authored, verified) ══
+// Absolute fret positions for C chords, as the 5 CAGED chord forms up the neck.
+// frets[stringIndex] : fret number, 0 = open, null = muted.  strings [E A D G B e]
+// fingers[stringIndex]: fretting-hand finger (0 = open/none).
+// Each form is the open chord shape (C-A-G-E-D) transposed so it spells the C chord.
+const C_VOICINGS = {
+  maj: [ // C E G
+    { form:'C', frets:[null,3,2,0,1,0],            fingers:[0,3,2,0,1,0] },
+    { form:'A', frets:[null,3,5,5,5,3],            fingers:[0,1,3,3,3,1] },
+    { form:'G', frets:[8,7,5,5,5,8],               fingers:[3,2,1,1,1,4] },
+    { form:'E', frets:[8,10,10,9,8,8],             fingers:[1,3,4,2,1,1] },
+    { form:'D', frets:[null,null,10,12,13,12],     fingers:[0,0,1,3,4,2] },
+  ],
+  min: [ // C Eb G  (practical CAGED minor forms)
+    { form:'Am', frets:[null,3,5,5,4,3],           fingers:[0,1,3,4,2,1] },
+    { form:'Em', frets:[8,10,10,8,8,8],            fingers:[1,3,4,1,1,1] },
+    { form:'Dm', frets:[null,null,10,12,13,11],    fingers:[0,0,1,3,4,2] },
+  ],
+  dim: [ // C Eb Gb
+    { form:'Edim', frets:[8,9,10,8,null,null],     fingers:[1,2,3,1,0,0] },
+  ],
+  aug: [ // C E G#
+    { form:'Eaug', frets:[8,11,10,9,9,null],       fingers:[1,4,3,2,2,0] },
+  ],
+  sus2: [ // C D G
+    { form:'Esus2', frets:[8,10,12,12,8,8],        fingers:[1,2,4,4,1,1] },
+  ],
+  sus4: [ // C F G
+    { form:'Esus4', frets:[8,10,10,10,8,8],        fingers:[1,3,3,3,1,1] },
+  ],
 };
 
 // ══ STATE ═══════════════════════════════════════════════
+// Key locked to C for now (CAGED voicings authored for C only).
 const S = { root:'C', quality:'maj', voicing:0, disp:'int', lang:'en' };
 
 // ══ I18N ════════════════════════════════════════════════
@@ -222,25 +214,19 @@ function degOf(pc){ const i=chordPcs().indexOf(((pc%12)+12)%12); return i<0?null
 function inChord(pc){ return chordPcs().includes(((pc%12)+12)%12); }
 function isRootPc(pc){ return ((pc%12)+12)%12 === rootPc(); }
 
-// Build the active voicings (resolved to actual frets for the current root).
+// Build the active voicings for the current quality (key C, absolute frets).
 function getVoicings(){
-  const keys = QUALITY_SHAPES[S.quality] || [];
-  return keys.map(k=>{
-    const sh = SHAPES[k];
-    // Fret of the root on the anchor string so the whole shape sits in a low,
-    // playable position (lowest fret >= 0; prefer frets 0-12).
-    let anchorFret = (rootPc() - OPEN[sh.rootStr] + 12) % 12; // 0-11
-    // pos: [stringIndex, [fret]] for strings that are played
+  const list = C_VOICINGS[S.quality] || [];
+  return list.map(v=>{
     const pos = [];
     const fingerMap = {};
-    sh.offsets.forEach((off, s)=>{
-      if (off === null) return;            // muted
-      const fret = anchorFret + off;
+    v.frets.forEach((fret, s)=>{
+      if (fret === null) return;           // muted
       pos.push([s, [fret]]);
-      fingerMap[s+':'+fret] = sh.fingers[s];
+      fingerMap[s+':'+fret] = v.fingers[s];
     });
-    const muted = sh.offsets.map((o,s)=>o===null?s:null).filter(s=>s!==null);
-    return { key:k, label:sh.label, pos, fingerMap, muted, anchorFret };
+    const muted = v.frets.map((f,s)=>f===null?s:null).filter(s=>s!==null);
+    return { key:v.form, label:v.form, pos, fingerMap, muted };
   });
 }
 
@@ -332,8 +318,9 @@ function renderTheory(){
 
 function renderRootPills(){
   const el = document.getElementById('root-pills');
-  el.innerHTML = ROOTS.map(r=>`<button class="pill ${r===S.root?'root-on':''}" data-root="${r}">${r}</button>`).join('');
-  el.querySelectorAll('[data-root]').forEach(b=>b.addEventListener('click',()=>{ S.root=b.dataset.root; renderAll(); }));
+  const soon = S.lang==='th' ? 'คีย์อื่น เร็วๆ นี้' : 'more keys soon';
+  el.innerHTML = `<button class="pill root-on">C</button>`
+    + `<span style="font-size:11px;color:var(--muted);align-self:center;margin-left:6px">${soon}</span>`;
 }
 function renderQualityPills(){
   const el = document.getElementById('quality-pills');
