@@ -238,9 +238,9 @@ const xOf = f => f===0 ? FB.PL-22 : FB.PL + (f-0.5)*FB.FW;
 function getFbTheme(){
   const d = document.body.classList.contains('dark');
   return d ? { gradTop:'#3A2C18', gradBot:'#2C2010', nut:'#C4A060', fret:'#5A4828',
-    string:'#A08050', inlay:'#6A5530', numDark:'#C8A878', numLight:'#907050', label:'#C8A878', mute:'#9A6A4A' }
+    string:'#A08050', inlay:'#6A5530', numDark:'#C8A878', numLight:'#907050', label:'#C8A878', mute:'#9A6A4A', barre:'#5A4630' }
     : { gradTop:'#f2e4ce', gradBot:'#e8d4b4', nut:'#8B6340', fret:'#c4a878',
-    string:'#7a5c3a', inlay:'#c8b090', numDark:'#5a3e28', numLight:'#8a6a4a', label:'#5a3e28', mute:'#a05a30' };
+    string:'#7a5c3a', inlay:'#c8b090', numDark:'#5a3e28', numLight:'#8a6a4a', label:'#5a3e28', mute:'#a05a30', barre:'#9c7a52' };
 }
 
 function drawFb(){
@@ -276,6 +276,24 @@ function drawFb(){
     const muted = v.muted.includes(s);
     g+=`<text x="16" y="${yOf(s)+5}" text-anchor="middle" font-size="13" fill="${muted?fb.mute:fb.label}" font-family="monospace" font-weight="700">${muted?'✕':SLAB[s]}</text>`;
   }
+  // barre marks: same finger on >=2 strings at the same fret → draw a capsule
+  // behind the dots spanning from the highest to the lowest barred string.
+  const groups = {};
+  for(const [s,frets] of v.pos){
+    const f = frets[0]; const fin = v.fingerMap[s+':'+f];
+    if(!fin) continue;                       // skip open strings / no finger
+    (groups[fin+'@'+f] = groups[fin+'@'+f] || []).push(s);
+  }
+  Object.entries(groups).forEach(([key,strs])=>{
+    if(strs.length < 2) return;
+    const fret = +key.split('@')[1];
+    const x = xOf(fret);
+    const yTop = yOf(Math.max(...strs));     // higher string index = upper (smaller y)
+    const yBot = yOf(Math.min(...strs));     // lower string index = lower (larger y)
+    const bw = FB.NR * 1.05, pad = FB.NR * 0.55;
+    g += `<rect x="${x-bw/2}" y="${yTop-pad}" width="${bw}" height="${(yBot-yTop)+pad*2}" rx="${bw/2}" fill="${fb.barre}" opacity="0.85"/>`;
+  });
+
   // dots
   for(const [s,frets] of v.pos){
     for(const f of frets){
