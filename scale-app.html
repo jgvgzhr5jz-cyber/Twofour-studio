@@ -875,6 +875,18 @@ const HAR_MIN_CAGED_BASE = [
     pos:[ [0,[10,11,13]], [1,[10,11]], [2,[9,10,12]], [3,[8,10,12]], [4,[9,12,13]], [5,[10,11,13]] ] },
 ];
 
+// ══ HUNGARIAN MINOR CAGED BASE ════════════════════════════
+// Hungarian minor = harmonic minor with a ♯4 (C: C D Eb F♯ G Ab B).
+// Derived programmatically from HAR_MIN_CAGED_BASE: any note whose pitch class
+// is the 4th degree (F = pc 5 at root C) is raised one fret to the ♯4 (F♯ = pc 6).
+const HUNGARIAN_MIN_CAGED_BASE = HAR_MIN_CAGED_BASE.map(box => ({
+  ...box,
+  pos: box.pos.map(([s, frets]) => [
+    s,
+    frets.map(f => ((OPEN[s] + f) % 12) === 5 ? f + 1 : f),
+  ]),
+}));
+
 // getCaged(rootOverride): generate CAGED shapes for given root (default = current key root).
 // Pass a different root to get positions for a relative key (e.g. relative major of minor).
 function getCaged(rootOverride) {
@@ -1004,6 +1016,12 @@ function getShapes() {
   // Harmonic minor modes: use dedicated CAGED base (2-3 notes/string, non-3NPS).
   if (HAR_MODE_OFFSET[S.scale] !== undefined) return getModeShapes('har_minor', HAR_MODE_OFFSET, HAR_MIN_CAGED_BASE);
 
+  // Hungarian minor: dedicated CAGED base (harmonic minor with ♯4, 2-3 notes/string).
+  if (S.scale === 'hungarian_min') {
+    const hr = keyDef().root, hkn = keyDef().notes;
+    return buildShapeEntries(HUNGARIAN_MIN_CAGED_BASE, hr, i => hkn[i] ?? '');
+  }
+
   const r       = keyDef().root;
   const kn      = keyDef().notes;
 
@@ -1023,27 +1041,13 @@ function getShapes() {
   );
 }
 
-// ══ PENTATONIC MINOR BASE (C minor penta, fret offset 0) ═
-// 5 box positions, 2 notes per string. Degrees: 1 ♭3 4 5 ♭7 = C Eb F G Bb
-// Ordered by scale degree so kn[i] gives the correct note label.
-const PENTA_MIN_BASE = [
-  { color:'#E8960A',  // 1 (root) — frets 8-11
-    pos:[ [0,[8,11]], [1,[8,10]], [2,[8,10]], [3,[8,10]], [4,[8,11]], [5,[8,11]] ] },
-  { color:'#0B9488',  // ♭3 — frets 10-13
-    pos:[ [0,[11,13]], [1,[10,13]], [2,[10,13]], [3,[10,12]], [4,[11,13]], [5,[11,13]] ] },
-  { color:'#a8e063',  // 4 — frets 1-4 (open area for C key)
-    pos:[ [0,[1,3]], [1,[1,3]], [2,[1,3]], [3,[0,3]], [4,[1,4]], [5,[1,3]] ] },
-  { color:'#c77dff',  // 5 — frets 3-6
-    pos:[ [0,[3,6]], [1,[3,6]], [2,[3,5]], [3,[3,5]], [4,[4,6]], [5,[3,6]] ] },
-  { color:'#ffd166',  // ♭7 — frets 6-8
-    pos:[ [0,[6,8]], [1,[6,8]], [2,[5,8]], [3,[5,8]], [4,[6,8]], [5,[6,8]] ] },
-];
-
 // ══ BLUES SCALE BASE (C blues = minor penta + ♭5 passing note) ═
 // 5 positions matching minor-penta boxes; ♭5 added on each string where it
 // falls naturally within the box's fret range.
-// String order: 0=E 1=A 2=D 3=G 4=B 5=e  (same convention as PENTA_MIN_BASE)
+// String order: 0=E 1=A 2=D 3=G 4=B 5=e
 // ♭5 frets (for C root): E/e=2, A=9, D=4, G=11, B=7
+// (Plain minor pentatonic uses computeBoxes() — its 2NPS output matches these
+//  canonical box shapes exactly, so no dedicated base is needed.)
 const BLUES_BASE = [
   { color:'#E8960A',  // 1 (root) — frets 8-11, ♭5 on A[9] G[11]
     pos:[ [0,[8,11]], [1,[8,9,10]], [2,[8,10]], [3,[8,10,11]], [4,[8,11]], [5,[8,11]] ] },
