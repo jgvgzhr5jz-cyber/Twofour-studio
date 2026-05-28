@@ -53,6 +53,8 @@ body { font-family:'DM Sans',-apple-system,sans-serif; background:var(--bg); col
   font-family:'DM Sans',sans-serif; transition:all .15s; }
 .pill.on { background:var(--teal); border-color:var(--teal); color:#fff; }
 .pill.root-on { background:var(--acc); border-color:var(--acc); color:#fff; }
+.cat-pill { font-size:12px; padding:5px 12px; }
+.cat-pill.on { background:var(--text); border-color:var(--text); color:var(--bg); }
 
 .voicing-row { display:flex; gap:6px; flex-wrap:wrap; padding:10px 16px 0; align-items:center; }
 .voicing-row .ctrl-lbl { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-right:4px; }
@@ -106,6 +108,7 @@ body { font-family:'DM Sans',-apple-system,sans-serif; background:var(--bg); col
   <div class="sel-lbl" data-i18n="lblRoot">Root</div>
   <div class="pill-row" id="root-pills"></div>
   <div class="sel-lbl" data-i18n="lblQuality">Chord Quality</div>
+  <div class="pill-row" id="cat-pills" style="margin-bottom:6px"></div>
   <div class="pill-row" id="quality-pills"></div>
 </div>
 
@@ -158,6 +161,13 @@ const CHORDS = {
           en:{name:'Diminished 7', mood:'Very tense'}, th:{name:'ดิมินิช 7', mood:'ตึงมาก'} },
 };
 const QUALITY_ORDER = ['maj','min','dim','aug','sus2','sus4','maj7','m7','dom7','m7b5','dim7'];
+
+// Two-tier categories (category row → quality pills), like Scale Explorer.
+const CHORD_CATS = [
+  { id:'triad', en:'Triads',    th:'พื้นฐาน',   qualities:['maj','min','dim','aug'] },
+  { id:'sus',   en:'Suspended', th:'ซัสเพนเด็ด', qualities:['sus2','sus4'] },
+  { id:'7th',   en:'7th',       th:'เซเวนท์',    qualities:['maj7','m7','dom7','m7b5','dim7'] },
+];
 
 // ══ CAGED VOICINGS — KEY OF C (hand-authored, verified) ══
 // Absolute fret positions for C chords, as the 5 CAGED chord forms up the neck.
@@ -216,7 +226,7 @@ const C_VOICINGS = {
 
 // ══ STATE ═══════════════════════════════════════════════
 // Key locked to C for now (CAGED voicings authored for C only).
-const S = { root:'C', quality:'maj', voicing:0, disp:'int', lang:'en' };
+const S = { root:'C', category:'triad', quality:'maj', voicing:0, disp:'int', lang:'en' };
 
 // ══ I18N ════════════════════════════════════════════════
 const LANGS = {
@@ -373,9 +383,26 @@ function renderRootPills(){
   el.innerHTML = `<button class="pill root-on">C</button>`
     + `<span style="font-size:11px;color:var(--muted);align-self:center;margin-left:6px">${soon}</span>`;
 }
+function renderCategoryPills(){
+  const el = document.getElementById('cat-pills');
+  el.innerHTML = CHORD_CATS.map(c=>{
+    const nm = S.lang==='th' ? c.th : c.en;
+    return `<button class="pill cat-pill ${c.id===S.category?'on':''}" data-cat="${c.id}">${nm}</button>`;
+  }).join('');
+  el.querySelectorAll('[data-cat]').forEach(b=>b.addEventListener('click',()=>{
+    S.category = b.dataset.cat;
+    const cat = CHORD_CATS.find(c=>c.id===S.category);
+    S.quality = cat.qualities[0];   // jump to first quality in the new category
+    S.voicing = 0;
+    renderAll();
+  }));
+}
 function renderQualityPills(){
+  // Keep category in sync with the active quality.
+  const cat = CHORD_CATS.find(c=>c.qualities.includes(S.quality)) || CHORD_CATS[0];
+  S.category = cat.id;
   const el = document.getElementById('quality-pills');
-  el.innerHTML = QUALITY_ORDER.map(q=>{
+  el.innerHTML = cat.qualities.map(q=>{
     const nm = S.lang==='th' ? CHORDS[q].th.name : CHORDS[q].en.name;
     return `<button class="pill ${q===S.quality?'on':''}" data-q="${q}">${nm}</button>`;
   }).join('');
@@ -399,7 +426,7 @@ function renderInfo(){
      <div style="font-size:11px;color:var(--muted);margin-top:8px">${t('mutedHint')}</div>`;
 }
 
-function renderAll(){ renderHeader(); renderTheory(); renderRootPills(); renderQualityPills(); renderVoicingPills(); drawFb(); renderInfo(); }
+function renderAll(){ renderHeader(); renderTheory(); renderRootPills(); renderCategoryPills(); renderQualityPills(); renderVoicingPills(); drawFb(); renderInfo(); }
 
 // ══ DISPLAY / LANG / DARK ═══════════════════════════════
 function applyLang(){
