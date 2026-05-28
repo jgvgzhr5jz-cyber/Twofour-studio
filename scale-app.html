@@ -632,6 +632,12 @@ const SCALES = {
   har_m5: { itv:[0,1,4,5,7,8,10], deg:['1','♭2','3','4','5','♭6','♭7'],          en:'Phrygian Dom.',   th:'ฟรีเจียนโดมิแนนท์',   keySig:'mode', keySigOffset:4  },
   har_m6: { itv:[0,3,4,6,7,9,11], deg:['1','♯2','3','♯4','5','6','7'],           en:'Lydian ♯2',       th:'ลีเดียน ♯2',          keySig:'mode', keySigOffset:5  },
   har_m7: { itv:[0,1,3,4,6,8,9],  deg:['1','♭2','♭3','♭4','♭5','♭6','♭♭7'],     en:'Alt. Dim.',       th:'อัลเทอร์ดดิมินิช',    keySig:'mode', keySigOffset:8  },
+  // Symmetric / Other
+  whole_tone: { itv:[0,2,4,6,8,10],       deg:['1','2','3','♯4','♯5','♭7'],            en:'Whole Tone',       th:'โฮลโทน',           keySig:'none' },
+  dim_wh:     { itv:[0,2,3,5,6,8,9,11],   deg:['1','2','♭3','4','♭5','♯5','6','7'],   en:'Dim. (W-H)',       th:'ดิมินิช (W-H)',    keySig:'none' },
+  dim_hw:     { itv:[0,1,3,4,6,7,9,10],   deg:['1','♭2','♯2','3','♯4','5','6','♭7'],  en:'Dim. (H-W)',       th:'ดิมินิช (H-W)',    keySig:'none' },
+  bebop_dom:  { itv:[0,2,4,5,7,9,10,11],  deg:['1','2','3','4','5','6','♭7','7'],      en:'Bebop Dominant',   th:'บีบ็อปโดมิแนนท์',  keySig:'none' },
+  hungarian_min: { itv:[0,2,3,6,7,8,11],  deg:['1','2','♭3','♯4','5','♭6','7'],       en:'Hungarian Minor',  th:'ฮังกาเรียนไมเนอร์', keySig:'none' },
 };
 
 const SCALE_GROUPS = [
@@ -641,6 +647,7 @@ const SCALE_GROUPS = [
   { id:'modes',     en:'Major Modes',  th:'โหมดเมเจอร์',  scales:['ionian','dorian','phrygian','lydian','mixolydian','aeolian','locrian'] },
   { id:'mel_modes', en:'Mel. Modes',  th:'โหมดเมโลดิก',  scales:['mel_m2','mel_m3','mel_m4','mel_m5','mel_m6','mel_m7'] },
   { id:'har_modes', en:'Har. Modes',  th:'โหมดฮาร์โมนิก', scales:['har_m2','har_m3','har_m4','har_m5','har_m6','har_m7'] },
+  { id:'other',     en:'Other / Sym.', th:'อื่นๆ',        scales:['whole_tone','dim_wh','dim_hw','bebop_dom','hungarian_min'] },
 ];
 
 // ══ SCALE META (theory content) ═════════════════════════
@@ -754,6 +761,22 @@ const SCALE_META = {
   har_m7: { en:{ mood:'Maximum tension', desc:'Altered Diminished (Super Locrian ♭♭7) — a diminished-flavoured altered dominant.', use:'Jazz over dim7 / 7alt', tip:'For very dark dominant tension.' },
             th:{ mood:'ตึงสุดขีด', desc:'อัลเทอร์ดดิมินิช (Super Locrian ♭♭7) โดมิแนนท์ alter กลิ่นดิมินิช', use:'แจ๊สทับ dim7 / 7alt', tip:'ใช้สำหรับความตึงโดมิแนนท์ที่มืดมาก' },
             chords:'over dim7 / 7alt', related:['Harmonic Minor','Altered'] },
+  // Symmetric / Other
+  whole_tone: { en:{ mood:'Dreamy, suspended', desc:'Six notes a whole step apart — no semitones, no leading tone, so it feels weightless.', use:'Impressionism (Debussy), dream/film, over 7♯5', tip:'Only two distinct whole-tone scales exist — symmetry means every note can be the root.' },
+                th:{ mood:'ล่องลอย แขวนค้าง', desc:'หกโน้ตห่างกันขั้นละเต็มเสียง ไม่มีครึ่งเสียงและไม่มีเสียงนำ จึงรู้สึกไร้น้ำหนัก', use:'อิมเพรสชันนิสม์ (เดอบุสซี) แนวฝัน/หนัง ทับ 7♯5', tip:'มีโฮลโทนแค่ 2 ชุดในโลก เพราะสมมาตร ทุกโน้ตเป็นรากได้' },
+                chords:'over 7♯5 / aug', related:['Lydian Augmented'] },
+  dim_wh: { en:{ mood:'Tense, symmetric', desc:'Eight notes alternating whole–half — the classic scale for diminished-7 chords.', use:'Jazz over dim7, classical, metal', tip:'Repeats every minor 3rd, so one shape covers four roots.' },
+            th:{ mood:'ตึง สมมาตร', desc:'แปดโน้ตสลับเต็ม–ครึ่งเสียง สเกลคลาสสิกสำหรับคอร์ดดิมินิช-7', use:'แจ๊สทับ dim7 คลาสสิก เมทัล', tip:'ซ้ำทุกๆ ไมเนอร์เทิร์ด รูปนิ้วเดียวครอบ 4 ราก' },
+            chords:'over dim7', related:['Dim. (H-W)'] },
+  dim_hw: { en:{ mood:'Edgy, dominant', desc:'Eight notes alternating half–whole — the dominant diminished, full of altered tensions (♭9 ♯9 ♯11 13).', use:'Jazz/fusion over 7♭9', tip:'The go-to scale over a dominant 7♭9 chord.' },
+            th:{ mood:'คม โดมิแนนท์', desc:'แปดโน้ตสลับครึ่ง–เต็มเสียง ดิมินิชแบบโดมิแนนท์ เต็มไปด้วยเทนชั่น (♭9 ♯9 ♯11 13)', use:'แจ๊ส/ฟิวชั่นทับ 7♭9', tip:'สเกลตัวเลือกแรกเมื่อเล่นทับคอร์ด dominant 7♭9' },
+            chords:'over 7♭9', related:['Dim. (W-H)'] },
+  bebop_dom: { en:{ mood:'Jazzy, flowing', desc:'Mixolydian with an added natural 7 passing tone — 8 notes that keep chord tones on the beat.', use:'Bebop, jazz lines over dominant 7', tip:'Use the extra note as a chromatic passing tone, not a target.' },
+               th:{ mood:'แจ๊ส ลื่นไหล', desc:'มิกโซลีเดียนที่เติมโน้ตผ่านขั้น 7 ปกติ รวม 8 โน้ต ช่วยให้โน้ตคอร์ดตกบนจังหวะ', use:'บีบ็อป ไลน์แจ๊สทับ dominant 7', tip:'ใช้โน้ตที่เติมเป็นโน้ตผ่านโครมาติก อย่าค้างไว้' },
+               chords:'over 7 (dominant)', related:['Mixolydian'] },
+  hungarian_min: { en:{ mood:'Exotic, dramatic', desc:'Harmonic minor with a ♯4 — two augmented-2nd gaps give a strong Eastern-European/gypsy colour.', use:'Gypsy, folk, neoclassical, film', tip:'The ♯4 and natural 7 are the dramatic flavour notes.' },
+                   th:{ mood:'แปลกหู ดราม่า', desc:'ฮาร์โมนิกไมเนอร์ที่มี ♯4 ช่วงออคเมนเต็ด-2 สองจุดให้สีสันยุโรปตะวันออก/ยิปซีชัดเจน', use:'ยิปซี โฟล์ก นีโอคลาสสิก หนัง', tip:'♯4 และขั้น 7 ปกติคือโน้ตรสชาติดราม่า' },
+                   chords:'i  ♯iv°', related:['Harmonic Minor'] },
 };
 
 // Safe accessor — never throws for scales without meta yet.
