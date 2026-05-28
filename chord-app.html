@@ -146,8 +146,18 @@ const CHORDS = {
           en:{name:'Suspended 2', mood:'Open, airy'}, th:{name:'ซัส 2', mood:'โปร่ง'} },
   sus4: { sym:'sus4',itv:[0,5,7],  deg:['1','4','5'],
           en:{name:'Suspended 4', mood:'Unresolved'}, th:{name:'ซัส 4', mood:'ค้างคา'} },
+  maj7: { sym:'maj7',itv:[0,4,7,11], deg:['1','3','5','7'],
+          en:{name:'Major 7', mood:'Lush, jazzy'},   th:{name:'เมเจอร์ 7', mood:'หวานละมุน แจ๊ส'} },
+  m7:   { sym:'m7',  itv:[0,3,7,10], deg:['1','♭3','5','♭7'],
+          en:{name:'Minor 7', mood:'Smooth, mellow'}, th:{name:'ไมเนอร์ 7', mood:'นุ่ม กลมกล่อม'} },
+  dom7: { sym:'7',   itv:[0,4,7,10], deg:['1','3','5','♭7'],
+          en:{name:'Dominant 7', mood:'Bluesy, tense'}, th:{name:'โดมิแนนท์ 7', mood:'บลูส์ ตึง'} },
+  m7b5: { sym:'m7♭5',itv:[0,3,6,10], deg:['1','♭3','♭5','♭7'],
+          en:{name:'Min 7 ♭5', mood:'Half-diminished'}, th:{name:'ไมเนอร์ 7 ♭5', mood:'ฮาล์ฟดิม'} },
+  dim7: { sym:'dim7',itv:[0,3,6,9],  deg:['1','♭3','♭5','♭♭7'],
+          en:{name:'Diminished 7', mood:'Very tense'}, th:{name:'ดิมินิช 7', mood:'ตึงมาก'} },
 };
-const QUALITY_ORDER = ['maj','min','dim','aug','sus2','sus4'];
+const QUALITY_ORDER = ['maj','min','dim','aug','sus2','sus4','maj7','m7','dom7','m7b5','dim7'];
 
 // ══ CAGED VOICINGS — KEY OF C (hand-authored, verified) ══
 // Absolute fret positions for C chords, as the 5 CAGED chord forms up the neck.
@@ -178,6 +188,29 @@ const C_VOICINGS = {
   ],
   sus4: [ // C F G
     { form:'Esus4', frets:[8,10,10,10,8,8],        fingers:[1,3,3,3,1,1] },
+  ],
+  maj7: [ // C E G B
+    { form:'C',  frets:[null,3,2,0,0,0],           fingers:[0,3,2,0,0,0] },
+    { form:'A',  frets:[null,3,5,4,5,3],           fingers:[0,1,3,2,4,1] },
+    { form:'E',  frets:[8,10,9,9,8,8],             fingers:[1,4,2,3,1,1] },
+  ],
+  m7: [ // C Eb G Bb
+    { form:'Am', frets:[null,3,5,3,4,3],           fingers:[0,1,3,1,2,1] },
+    { form:'Em', frets:[8,10,8,8,8,8],             fingers:[1,3,1,1,1,1] },
+    { form:'Dm', frets:[null,null,10,12,11,11],    fingers:[0,0,1,4,2,2] },
+  ],
+  dom7: [ // C E G Bb
+    { form:'C',  frets:[null,3,2,3,1,0],           fingers:[0,3,2,4,1,0] },
+    { form:'A',  frets:[null,3,5,3,5,3],           fingers:[0,1,3,1,4,1] },
+    { form:'E',  frets:[8,10,8,9,8,8],             fingers:[1,3,1,2,1,1] },
+  ],
+  m7b5: [ // C Eb Gb Bb
+    { form:'Em', frets:[8,9,8,8,null,null],        fingers:[2,3,1,1,0,0] },
+    { form:'A',  frets:[null,3,4,3,4,null],        fingers:[0,1,3,2,4,0] },
+  ],
+  dim7: [ // C Eb Gb Bbb(=A)
+    { form:'E',  frets:[8,9,7,8,null,null],        fingers:[2,3,1,2,0,0] },
+    { form:'A',  frets:[null,3,4,2,4,null],        fingers:[0,2,3,1,4,0] },
   ],
 };
 
