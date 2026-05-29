@@ -243,7 +243,7 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',-apple-sys
 
 /* ── Theory Panel ────────────────────────────────────── */
 .theory-panel {
-  margin:10px 20px 0; padding:14px 16px;
+  margin:14px 20px 24px; padding:14px 16px;
   background:var(--card); border:1.5px solid var(--brd);
   border-radius:12px;
 }
@@ -276,9 +276,9 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',-apple-sys
   color:var(--muted); font-size:11.5px; font-weight:600;
   border-radius:6px; padding:2px 8px;
 }
-@media (max-width:600px){ .theory-panel { margin:8px 12px 0; padding:11px 13px; } }
-@media (min-width:768px){ .theory-panel { margin:12px 24px 0; } }
-@media (min-width:1024px){ .theory-panel { margin:14px 48px 0; } }
+@media (max-width:600px){ .theory-panel { margin:10px 12px 20px; padding:11px 13px; } }
+@media (min-width:768px){ .theory-panel { margin:14px 24px 24px; } }
+@media (min-width:1024px){ .theory-panel { margin:16px 48px 28px; } }
 
 /* ── Site Nav (matches index.html style) ─────────────── */
 .site-nav {
@@ -490,9 +490,6 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',-apple-sys
   <div class="scale-pills" id="scale-pills"></div>
 </div>
 
-<!-- ═══ THEORY PANEL ══════════════════════════════════ -->
-<div class="theory-panel" id="theory-panel"></div>
-
 <!-- ═══ TABS ══════════════════════════════════════════ -->
 <div class="tabs">
   <button class="tab-btn on"  data-tab="caged" data-i18n="tabCaged">CAGED System</button>
@@ -556,6 +553,9 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',-apple-sys
   <div class="piano-wrap" id="piano-kb-wrap"></div>
   <div class="staff-wrap" id="piano-staff-wrap"></div>
 </div>
+
+<!-- ═══ THEORY PANEL (below the board) ════════════════ -->
+<div class="theory-panel" id="theory-panel"></div>
 
 <script>
 // ══ TRANSLATIONS ════════════════════════════════════════
