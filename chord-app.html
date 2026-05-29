@@ -46,6 +46,21 @@ body { font-family:'DM Sans',-apple-system,sans-serif; background:var(--bg); col
 .tool-item:hover { background:var(--surf); }
 .tool-item.on { color:var(--acc); background:var(--ctrl-bg); }
 .tool-item.all { color:var(--muted); font-weight:500; border-top:1px solid var(--brd); margin-top:4px; }
+.nav-right { display:flex; align-items:center; gap:8px; }
+.donate-btn { display:inline-flex; align-items:center; gap:5px; cursor:pointer; border:1.5px solid var(--acc);
+  background:transparent; color:var(--acc); border-radius:100px; padding:5px 13px; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:700; white-space:nowrap; transition:all .15s; }
+.donate-btn:hover { background:var(--acc); color:#fff; }
+.donate-btn.solid { background:var(--acc); color:#fff; }
+.donate-card { margin:0 16px 24px; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+  background:var(--ctrl-bg); border:1.5px dashed var(--brd); border-radius:12px; font-size:13px; color:var(--text); }
+.donate-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1000; display:none; align-items:center; justify-content:center; padding:20px; }
+.donate-overlay.open { display:flex; }
+.donate-modal { position:relative; background:var(--card); border:1.5px solid var(--brd); border-radius:18px; padding:26px 24px 22px; max-width:340px; width:100%; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.4); }
+.donate-close { position:absolute; top:12px; right:14px; background:none; border:none; font-size:18px; color:var(--muted); cursor:pointer; }
+.donate-title { font-family:'Prompt',sans-serif; font-weight:900; font-size:1.1rem; color:var(--text); }
+.donate-sub { font-size:.84rem; color:var(--muted); margin:6px 0 14px; line-height:1.55; }
+.donate-qr { width:100%; max-width:280px; border-radius:12px; display:block; margin:0 auto; border:1px solid var(--brd); }
+.donate-thanks { font-size:.8rem; color:var(--muted); margin-top:12px; }
 
 .hdr { display:flex; align-items:flex-start; justify-content:space-between; gap:8px 12px;
   flex-wrap:wrap; padding:12px 16px 8px; }
@@ -94,23 +109,41 @@ body { font-family:'DM Sans',-apple-system,sans-serif; background:var(--bg); col
 
 <nav class="site-nav">
   <a href="/" class="site-logo">TWOFOUR <span>STUDIO</span></a>
-  <div class="tool-menu">
-    <button class="tool-btn" id="toolBtn" aria-expanded="false">🎹 Chord Explorer <span class="caret">▾</span></button>
-    <div class="tool-dropdown" id="toolDropdown">
-      <div class="tool-dd-label">สื่อฟรี · Free Tools</div>
-      <a href="/scale-app.html" class="tool-item">🎸 Scale Explorer</a>
-      <a href="/chord-app.html" class="tool-item on">🎹 Chord Explorer</a>
-      <a href="/#learn" class="tool-item all">📚 ดูสื่อทั้งหมด…</a>
+  <div class="nav-right">
+    <button class="donate-btn" onclick="openDonate()">♡ <span>สนับสนุน</span></button>
+    <div class="tool-menu">
+      <button class="tool-btn" id="toolBtn" aria-expanded="false">🎹 Chord Explorer <span class="caret">▾</span></button>
+      <div class="tool-dropdown" id="toolDropdown">
+        <div class="tool-dd-label">สื่อฟรี · Free Tools</div>
+        <a href="/scale-app.html" class="tool-item">🎸 Scale Explorer</a>
+        <a href="/chord-app.html" class="tool-item on">🎹 Chord Explorer</a>
+        <a href="/#learn" class="tool-item all">📚 ดูสื่อทั้งหมด…</a>
+      </div>
     </div>
   </div>
 </nav>
+
+<!-- ═══ DONATE MODAL ══════════════════════════════════ -->
+<div class="donate-overlay" id="donateOverlay" onclick="if(event.target===this)closeDonate()">
+  <div class="donate-modal">
+    <button class="donate-close" onclick="closeDonate()" aria-label="close">✕</button>
+    <div class="donate-title">สนับสนุน Twofour Studio ☕</div>
+    <div class="donate-sub">เครื่องมือทั้งหมดฟรีเสมอ — ถ้าชอบ เลี้ยงกาแฟกันได้นะครับ 🙏</div>
+    <img class="donate-qr" src="/promptpay-qr.jpg" alt="PromptPay QR — สแกนเพื่อโอน">
+    <div class="donate-thanks">สแกน QR ด้วยแอปธนาคารใดก็ได้</div>
+  </div>
+</div>
 <script>
 (function(){
   const btn=document.getElementById('toolBtn'), dd=document.getElementById('toolDropdown');
-  if(!btn) return;
-  btn.addEventListener('click', e=>{ e.stopPropagation(); const open=dd.classList.toggle('open'); btn.setAttribute('aria-expanded', open); });
-  document.addEventListener('click', e=>{ if(!dd.contains(e.target)&&e.target!==btn){ dd.classList.remove('open'); btn.setAttribute('aria-expanded','false'); } });
+  if(btn){
+    btn.addEventListener('click', e=>{ e.stopPropagation(); const open=dd.classList.toggle('open'); btn.setAttribute('aria-expanded', open); });
+    document.addEventListener('click', e=>{ if(!dd.contains(e.target)&&e.target!==btn){ dd.classList.remove('open'); btn.setAttribute('aria-expanded','false'); } });
+  }
 })();
+function openDonate(){ document.getElementById('donateOverlay').classList.add('open'); }
+function closeDonate(){ document.getElementById('donateOverlay').classList.remove('open'); }
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeDonate(); });
 </script>
 
 <div class="hdr">
@@ -147,6 +180,12 @@ body { font-family:'DM Sans',-apple-system,sans-serif; background:var(--bg); col
 </div>
 <div class="fb-wrap"><svg id="sv-fb"></svg></div>
 <div class="info" id="inf-fb"></div>
+
+<!-- ═══ DONATE CARD ═══════════════════════════════════ -->
+<div class="donate-card">
+  <div>☕ <b>เครื่องมือนี้ฟรีเสมอ</b> — ถ้ามีประโยชน์ ช่วยสนับสนุนค่ากาแฟได้นะครับ</div>
+  <button class="donate-btn solid" onclick="openDonate()">♡ สนับสนุน</button>
+</div>
 
 <script>
 // ══ NOTE / KEY DATA ═════════════════════════════════════
