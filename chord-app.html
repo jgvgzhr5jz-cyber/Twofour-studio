@@ -296,6 +296,15 @@ function getVoicings(){
   });
 }
 
+// Index of the voicing nearest the nut (open strings count as fret 0) — used so
+// that picking a key always starts on the lowest, most accessible shape.
+function lowestVoicingIndex(){
+  const vs = getVoicings();
+  let best = 0, bestMin = Infinity;
+  vs.forEach((v,i)=>{ const mn = Math.min(...v.pos.flatMap(p=>p[1])); if(mn < bestMin){ bestMin = mn; best = i; } });
+  return best;
+}
+
 // ══ FRETBOARD RENDER ════════════════════════════════════
 const FB = { PL:46, PR:16, PT:30, PB:14, FW:46, SH:30, NR:13 };
 const yOf = s => FB.PT + (5-s)*FB.SH;     // string 0 (low E) at bottom
@@ -433,7 +442,7 @@ function mkCof(){
   s += `<text x="${CX}" y="${CY+SIZE*0.05}" text-anchor="middle" font-size="${SIZE*0.16}" font-weight="900" fill="#E8960A" font-family="'Prompt',sans-serif">${S.root}</text>`;
   s += '</svg>';
   wrap.innerHTML = s;
-  wrap.querySelectorAll('[data-k]').forEach(g=>g.addEventListener('click',()=>{ S.root=g.dataset.k; S.voicing=0; renderAll(); }));
+  wrap.querySelectorAll('[data-k]').forEach(g=>g.addEventListener('click',()=>{ S.root=g.dataset.k; S.voicing=lowestVoicingIndex(); renderAll(); }));
 }
 function renderQualityPills(){
   const el = document.getElementById('quality-pills');
