@@ -175,17 +175,19 @@ const CHORD_CATS = [
 // fingers[stringIndex]: fretting-hand finger (0 = open/none).
 // Each form is the open chord shape (C-A-G-E-D) transposed so it spells the C chord.
 const C_VOICINGS = {
-  maj: [ // C E G
+  maj: [ // C E G — Guitar Pro voicings
     { form:'C', frets:[null,3,2,0,1,0],            fingers:[0,3,2,0,1,0] },
-    { form:'A', frets:[null,3,5,5,5,3],            fingers:[0,1,3,3,3,1] },
+    { form:'A', frets:[null,3,5,5,5,3],            fingers:[0,1,2,3,4,1] },
     { form:'G', frets:[8,7,5,5,5,8],               fingers:[3,2,1,1,1,4] },
     { form:'E', frets:[8,10,10,9,8,8],             fingers:[1,3,4,2,1,1] },
-    { form:'D', frets:[null,null,10,12,13,12],     fingers:[0,0,1,3,4,2] },
+    { form:'D', frets:[null,null,10,12,13,12],     fingers:[0,0,1,3,4,3] },
   ],
-  min: [ // C Eb G  (practical CAGED minor forms)
-    { form:'Am', frets:[null,3,5,5,4,3],           fingers:[0,1,3,4,2,1] },
-    { form:'Em', frets:[8,10,10,8,8,8],            fingers:[1,3,4,1,1,1] },
-    { form:'Dm', frets:[null,null,10,12,13,11],    fingers:[0,0,1,3,4,2] },
+  min: [ // C Eb G — Guitar Pro voicings (neck order)
+    { form:'open', frets:[null,3,1,0,null,null],   fingers:[0,3,1,0,0,0] },
+    { form:'Am',   frets:[null,3,5,5,4,3],         fingers:[0,1,3,4,2,1] },
+    { form:'5fr',  frets:[8,6,5,5,null,null],      fingers:[4,2,1,1,0,0] },
+    { form:'Em',   frets:[8,10,10,8,8,8],          fingers:[1,3,4,1,1,1] },
+    { form:'Dm',   frets:[null,null,10,12,13,11],  fingers:[0,0,1,3,4,2] },
   ],
   dim: [ // C Eb Gb
     { form:'Edim', frets:[8,9,10,8,null,null],     fingers:[1,2,3,1,0,0] },
