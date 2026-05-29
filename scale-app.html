@@ -307,6 +307,31 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',-apple-sys
 .site-tool.on  { background: var(--acc); border-color: var(--acc); color: #fff; cursor: pointer; }
 .site-tool.soon { font-style: italic; opacity: .55; }
 
+/* ── Free-tools dropdown ─────────────────────────────── */
+.tool-menu { position: relative; flex-shrink: 0; }
+.tool-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 13px; border-radius: 100px; cursor: pointer;
+  border: 1.5px solid var(--acc); background: var(--acc); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700; white-space: nowrap;
+}
+.tool-btn .caret { font-size: 9px; transition: transform .18s; }
+.tool-btn[aria-expanded="true"] .caret { transform: rotate(180deg); }
+.tool-dropdown {
+  position: absolute; right: 0; top: calc(100% + 8px); min-width: 210px;
+  background: var(--card); border: 1.5px solid var(--brd); border-radius: 14px; padding: 6px;
+  box-shadow: 0 10px 34px rgba(0,0,0,0.18); display: none; z-index: 300;
+}
+.tool-dropdown.open { display: block; }
+.tool-dd-label { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); padding: 6px 10px 5px; }
+.tool-item {
+  display: flex; align-items: center; gap: 8px; padding: 9px 11px; border-radius: 9px;
+  text-decoration: none; color: var(--text); font-size: 13px; font-weight: 600; transition: background .12s;
+}
+.tool-item:hover { background: var(--surf); }
+.tool-item.on { color: var(--acc); background: var(--ctrl-bg); }
+.tool-item.all { color: var(--muted); font-weight: 500; border-top: 1px solid var(--brd); margin-top: 4px; }
+
 /* ── Piano & Staff ───────────────────────────────────── */
 .piano-wrap, .staff-wrap {
   padding:16px 20px 8px; overflow-x:auto;
@@ -411,11 +436,24 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',-apple-sys
 <!-- ═══ SITE NAV ═══════════════════════════════════════ -->
 <nav class="site-nav">
   <a href="/" class="site-logo">TWOFOUR <span>STUDIO</span></a>
-  <div class="site-tools">
-    <a href="/scale-app.html" class="site-tool on">🎸 Scale Explorer</a>
-    <span class="site-tool soon">📚 สื่อเพิ่มเติม เร็วๆ นี้</span>
+  <div class="tool-menu">
+    <button class="tool-btn" id="toolBtn" aria-expanded="false">🎸 Scale Explorer <span class="caret">▾</span></button>
+    <div class="tool-dropdown" id="toolDropdown">
+      <div class="tool-dd-label">สื่อฟรี · Free Tools</div>
+      <a href="/scale-app.html" class="tool-item on">🎸 Scale Explorer</a>
+      <a href="/chord-app.html" class="tool-item">🎹 Chord Explorer</a>
+      <a href="/#learn" class="tool-item all">📚 ดูสื่อทั้งหมด…</a>
+    </div>
   </div>
 </nav>
+<script>
+(function(){
+  const btn=document.getElementById('toolBtn'), dd=document.getElementById('toolDropdown');
+  if(!btn) return;
+  btn.addEventListener('click', e=>{ e.stopPropagation(); const open=dd.classList.toggle('open'); btn.setAttribute('aria-expanded', open); });
+  document.addEventListener('click', e=>{ if(!dd.contains(e.target)&&e.target!==btn){ dd.classList.remove('open'); btn.setAttribute('aria-expanded','false'); } });
+})();
+</script>
 
 <!-- ═══ HEADER ═══════════════════════════════════════ -->
 <div class="hdr">
