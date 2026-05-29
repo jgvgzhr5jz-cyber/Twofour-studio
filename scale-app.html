@@ -289,11 +289,11 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',-apple-sys
   border-bottom: 1px solid var(--brd); box-shadow: 0 1px 10px rgba(0,0,0,0.06);
 }
 .site-logo {
-  font-family: 'Bebas Neue', Impact, 'Arial Black', sans-serif;
-  font-size: 1.25rem; letter-spacing: 2px; text-decoration: none; color: var(--text);
-  flex-shrink: 0;
+  font-family: 'Prompt', sans-serif; font-weight: 900;
+  font-size: 18px; letter-spacing: -.5px; text-decoration: none; color: var(--text);
+  flex-shrink: 0; line-height: 1;
 }
-.site-logo span { color: var(--acc); }
+.site-logo span { color: var(--acc); display: block; }
 .site-tools { display: flex; gap: 6px; align-items: center; overflow-x: auto; scrollbar-width: none; }
 .site-tools::-webkit-scrollbar { display: none; }
 .site-tool {
@@ -511,7 +511,6 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeDonate(); })
     <div class="hdr-name" id="hdr-name">C Major</div>
     <div class="hdr-sub"  id="hdr-sub" >C · D · E · F · G · A · B</div>
   </div>
-  <div class="chips" id="chips"></div>
   <div class="hdr-right">
     <div class="btn-row">
       <button class="icon-btn on"  id="dInt"    data-i18n="dispInterval">Interval</button>
@@ -1971,7 +1970,9 @@ function mkKey() {
 
 // ══ CONTROLS ════════════════════════════════════════════
 function mkChips() {
-  document.getElementById('chips').innerHTML = keyDef().notes.map((n,i)=>`
+  const el = document.getElementById('chips');
+  if (!el) return;   // chips row removed from the header
+  el.innerHTML = keyDef().notes.map((n,i)=>`
     <div class="chip ${i===0?'root':''}">
       <span class="cn">${n}</span><span class="ci">${scaleDeg()[i]}</span>
     </div>`).join('');

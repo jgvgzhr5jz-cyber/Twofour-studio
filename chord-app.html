@@ -25,8 +25,8 @@ body { font-family:'DM Sans',-apple-system,sans-serif; background:var(--bg); col
 .site-nav { display:flex; align-items:center; justify-content:space-between; gap:12px;
   padding:10px 16px; background:var(--nav-bg); border-bottom:1px solid var(--brd);
   position:sticky; top:0; z-index:20; backdrop-filter:blur(8px); }
-.site-logo { font-family:'Prompt',sans-serif; font-weight:900; font-size:18px; letter-spacing:-.5px; color:var(--text); text-decoration:none; }
-.site-logo span { color:var(--acc); }
+.site-logo { font-family:'Prompt',sans-serif; font-weight:900; font-size:18px; letter-spacing:-.5px; color:var(--text); text-decoration:none; flex-shrink:0; line-height:1; }
+.site-logo span { color:var(--acc); display:block; }
 .site-tools { display:flex; gap:8px; flex-wrap:wrap; }
 .site-tool { font-size:.82rem; text-decoration:none; padding:6px 13px; border-radius:100px;
   border:1px solid var(--brd); color:var(--muted); background:var(--card); white-space:nowrap; }
@@ -377,6 +377,16 @@ function drawFb(){
     }
   }
   svg.innerHTML = g;
+
+  // Auto-scroll the board so the voicing's frets are in view (e.g. barre forms
+  // up the neck). Open/low shapes stay at the start.
+  const wrap = svg.parentElement;
+  if (wrap) {
+    const fretsNZ = v.pos.flatMap(p => p[1]).filter(f => f > 0);
+    const mn = fretsNZ.length ? Math.min(...fretsNZ) : 0;
+    const scrollX = mn <= 1 ? 0 : Math.max(0, FB.PL + (mn - 1) * FB.FW - 24);
+    wrap.scrollTo({ left: scrollX, behavior: 'smooth' });
+  }
 }
 
 // ══ UI RENDER ═══════════════════════════════════════════
