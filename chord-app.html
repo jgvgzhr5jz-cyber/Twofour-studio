@@ -105,10 +105,9 @@ body { font-family:'DM Sans',-apple-system,sans-serif; background:var(--bg); col
 </div>
 
 <div class="sel-wrap">
-  <div class="sel-lbl" data-i18n="lblRoot">Root</div>
-  <div class="pill-row" id="root-pills"></div>
+  <div class="sel-lbl" data-i18n="lblRoot">Key / Root</div>
+  <div id="cof-wrap" style="display:flex;justify-content:center;padding:2px 0 4px"></div>
   <div class="sel-lbl" data-i18n="lblQuality">Chord Quality</div>
-  <div class="pill-row" id="cat-pills" style="margin-bottom:6px"></div>
   <div class="pill-row" id="quality-pills"></div>
 </div>
 
@@ -141,33 +140,8 @@ const CHORDS = {
           en:{name:'Major', mood:'Stable, bright'}, th:{name:'เมเจอร์', mood:'มั่นคง สดใส'} },
   min:  { sym:'m',   itv:[0,3,7],  deg:['1','♭3','5'],
           en:{name:'Minor', mood:'Sad, dark'},     th:{name:'ไมเนอร์', mood:'เศร้า ขรึม'} },
-  dim:  { sym:'dim', itv:[0,3,6],  deg:['1','♭3','♭5'],
-          en:{name:'Diminished', mood:'Tense, unstable'}, th:{name:'ดิมินิช', mood:'ตึง ไม่นิ่ง'} },
-  aug:  { sym:'aug', itv:[0,4,8],  deg:['1','3','♯5'],
-          en:{name:'Augmented', mood:'Dreamy, suspended'}, th:{name:'ออกเมนเต็ด', mood:'ล่องลอย'} },
-  sus2: { sym:'sus2',itv:[0,2,7],  deg:['1','2','5'],
-          en:{name:'Suspended 2', mood:'Open, airy'}, th:{name:'ซัส 2', mood:'โปร่ง'} },
-  sus4: { sym:'sus4',itv:[0,5,7],  deg:['1','4','5'],
-          en:{name:'Suspended 4', mood:'Unresolved'}, th:{name:'ซัส 4', mood:'ค้างคา'} },
-  maj7: { sym:'maj7',itv:[0,4,7,11], deg:['1','3','5','7'],
-          en:{name:'Major 7', mood:'Lush, jazzy'},   th:{name:'เมเจอร์ 7', mood:'หวานละมุน แจ๊ส'} },
-  m7:   { sym:'m7',  itv:[0,3,7,10], deg:['1','♭3','5','♭7'],
-          en:{name:'Minor 7', mood:'Smooth, mellow'}, th:{name:'ไมเนอร์ 7', mood:'นุ่ม กลมกล่อม'} },
-  dom7: { sym:'7',   itv:[0,4,7,10], deg:['1','3','5','♭7'],
-          en:{name:'Dominant 7', mood:'Bluesy, tense'}, th:{name:'โดมิแนนท์ 7', mood:'บลูส์ ตึง'} },
-  m7b5: { sym:'m7♭5',itv:[0,3,6,10], deg:['1','♭3','♭5','♭7'],
-          en:{name:'Min 7 ♭5', mood:'Half-diminished'}, th:{name:'ไมเนอร์ 7 ♭5', mood:'ฮาล์ฟดิม'} },
-  dim7: { sym:'dim7',itv:[0,3,6,9],  deg:['1','♭3','♭5','♭♭7'],
-          en:{name:'Diminished 7', mood:'Very tense'}, th:{name:'ดิมินิช 7', mood:'ตึงมาก'} },
 };
-const QUALITY_ORDER = ['maj','min','dim','aug','sus2','sus4','maj7','m7','dom7','m7b5','dim7'];
-
-// Two-tier categories (category row → quality pills), like Scale Explorer.
-const CHORD_CATS = [
-  { id:'triad', en:'Triads',    th:'พื้นฐาน',   qualities:['maj','min','dim','aug'] },
-  { id:'sus',   en:'Suspended', th:'ซัสเพนเด็ด', qualities:['sus2','sus4'] },
-  { id:'7th',   en:'7th',       th:'เซเวนท์',    qualities:['maj7','m7','dom7','m7b5','dim7'] },
-];
+const QUALITY_ORDER = ['maj','min'];
 
 // ══ CAGED VOICINGS — KEY OF C (hand-authored, verified) ══
 // Absolute fret positions for C chords, as the 5 CAGED chord forms up the neck.
@@ -182,53 +156,18 @@ const C_VOICINGS = {
     { form:'E', frets:[8,10,10,9,8,8],             fingers:[1,3,4,2,1,1] },
     { form:'D', frets:[null,null,10,12,13,12],     fingers:[0,0,1,3,4,3] },
   ],
-  min: [ // C Eb G — Guitar Pro voicings (neck order)
-    { form:'open', frets:[null,3,1,0,null,null],   fingers:[0,3,1,0,0,0] },
-    { form:'Am',   frets:[null,3,5,5,4,3],         fingers:[0,1,3,4,2,1] },
-    { form:'5fr',  frets:[8,6,5,5,null,null],      fingers:[4,2,1,1,0,0] },
-    { form:'Em',   frets:[8,10,10,8,8,8],          fingers:[1,3,4,1,1,1] },
-    { form:'Dm',   frets:[null,null,10,12,13,11],  fingers:[0,0,1,3,4,2] },
-  ],
-  dim: [ // C Eb Gb
-    { form:'Edim', frets:[8,9,10,8,null,null],     fingers:[1,2,3,1,0,0] },
-  ],
-  aug: [ // C E G#
-    { form:'Eaug', frets:[8,11,10,9,9,null],       fingers:[1,4,3,2,2,0] },
-  ],
-  sus2: [ // C D G
-    { form:'Esus2', frets:[8,10,12,12,8,8],        fingers:[1,2,4,4,1,1] },
-  ],
-  sus4: [ // C F G
-    { form:'Esus4', frets:[8,10,10,10,8,8],        fingers:[1,3,3,3,1,1] },
-  ],
-  maj7: [ // C E G B
-    { form:'C',  frets:[null,3,2,0,0,0],           fingers:[0,3,2,0,0,0] },
-    { form:'A',  frets:[null,3,5,4,5,3],           fingers:[0,1,3,2,4,1] },
-    { form:'E',  frets:[8,10,9,9,8,8],             fingers:[1,4,2,3,1,1] },
-  ],
-  m7: [ // C Eb G Bb
-    { form:'Am', frets:[null,3,5,3,4,3],           fingers:[0,1,3,1,2,1] },
-    { form:'Em', frets:[8,10,8,8,8,8],             fingers:[1,3,1,1,1,1] },
-    { form:'Dm', frets:[null,null,10,12,11,11],    fingers:[0,0,1,4,2,2] },
-  ],
-  dom7: [ // C E G Bb
-    { form:'C',  frets:[null,3,2,3,1,0],           fingers:[0,3,2,4,1,0] },
-    { form:'A',  frets:[null,3,5,3,5,3],           fingers:[0,1,3,1,4,1] },
-    { form:'E',  frets:[8,10,8,9,8,8],             fingers:[1,3,1,2,1,1] },
-  ],
-  m7b5: [ // C Eb Gb Bb
-    { form:'Em', frets:[8,9,8,8,null,null],        fingers:[2,3,1,1,0,0] },
-    { form:'A',  frets:[null,3,4,3,4,null],        fingers:[0,1,3,2,4,0] },
-  ],
-  dim7: [ // C Eb Gb Bbb(=A)
-    { form:'E',  frets:[8,9,7,8,null,null],        fingers:[2,3,1,2,0,0] },
-    { form:'A',  frets:[null,3,4,2,4,null],        fingers:[0,2,3,1,4,0] },
+  min: [ // C Eb G — Guitar Pro voicings, CAGED forms (C A G E D), neck order
+    { form:'C', frets:[null,3,1,0,null,null],   fingers:[0,3,1,0,0,0] },
+    { form:'A', frets:[null,3,5,5,4,3],         fingers:[0,1,3,4,2,1] },
+    { form:'G', frets:[8,6,5,5,null,null],      fingers:[4,2,1,1,0,0] },
+    { form:'E', frets:[8,10,10,8,8,8],          fingers:[1,3,4,1,1,1] },
+    { form:'D', frets:[null,null,10,12,13,11],  fingers:[0,0,1,3,4,2] },
   ],
 };
 
 // ══ STATE ═══════════════════════════════════════════════
 // Key locked to C for now (CAGED voicings authored for C only).
-const S = { root:'C', category:'triad', quality:'maj', voicing:0, disp:'int', lang:'en' };
+const S = { root:'C', quality:'maj', voicing:0, disp:'int', lang:'en' };
 
 // ══ I18N ════════════════════════════════════════════════
 const LANGS = {
@@ -259,18 +198,33 @@ function degOf(pc){ const i=chordPcs().indexOf(((pc%12)+12)%12); return i<0?null
 function inChord(pc){ return chordPcs().includes(((pc%12)+12)%12); }
 function isRootPc(pc){ return ((pc%12)+12)%12 === rootPc(); }
 
-// Build the active voicings for the current quality (key C, absolute frets).
+// Barre-aware fingering from absolute frets: open = 0, lowest fretted strings
+// = index barre (1), higher strings get 2-3-4 by ascending fret then string.
+function computeFingers(frets){
+  const fretted = frets.map((f,s)=>({s,f})).filter(x=>x.f!==null && x.f>0);
+  if(!fretted.length) return frets.map(()=>0);
+  const minF = Math.min(...fretted.map(x=>x.f));
+  const fmap = {};
+  fretted.forEach(x=>{ if(x.f===minF) fmap[x.s]=1; });
+  fretted.filter(x=>x.f>minF).sort((a,b)=> a.f-b.f || a.s-b.s)
+         .forEach((x,i)=> fmap[x.s]=Math.min(4,i+2));
+  return frets.map((f,s)=> (f===null||f===0)?0 : (fmap[s]??1));
+}
+
+// Transpose the verified C voicings to the selected root (notes always correct).
+// delta = semitones above C. Open strings become fretted (barred) off key C;
+// shapes sitting at fret 12+ wrap down an octave to stay playable.
 function getVoicings(){
   const list = C_VOICINGS[S.quality] || [];
+  const delta = rootPc();
   return list.map(v=>{
-    const pos = [];
-    const fingerMap = {};
-    v.frets.forEach((fret, s)=>{
-      if (fret === null) return;           // muted
-      pos.push([s, [fret]]);
-      fingerMap[s+':'+fret] = v.fingers[s];
-    });
-    const muted = v.frets.map((f,s)=>f===null?s:null).filter(s=>s!==null);
+    let frets = v.frets.map(f => f===null ? null : (f===0 ? delta : f+delta));
+    const nz = frets.filter(f => f!==null && f>0);
+    if (nz.length && Math.min(...nz) >= 12) frets = frets.map(f => (f===null||f===0)?f:f-12);
+    const fingers = delta===0 ? v.fingers : computeFingers(frets);
+    const pos=[], fingerMap={};
+    frets.forEach((f,s)=>{ if(f===null) return; pos.push([s,[f]]); fingerMap[s+':'+f]=fingers[s]; });
+    const muted = frets.map((f,s)=>f===null?s:null).filter(s=>s!==null);
     return { key:v.form, label:v.form, pos, fingerMap, muted };
   });
 }
@@ -379,32 +333,34 @@ function renderTheory(){
     `<div class="theory-desc"><b>${txt.mood}</b> &nbsp;·&nbsp; <span class="theory-formula">${formula}</span></div>`;
 }
 
-function renderRootPills(){
-  const el = document.getElementById('root-pills');
-  const soon = S.lang==='th' ? 'คีย์อื่น เร็วๆ นี้' : 'more keys soon';
-  el.innerHTML = `<button class="pill root-on">C</button>`
-    + `<span style="font-size:11px;color:var(--muted);align-self:center;margin-left:6px">${soon}</span>`;
-}
-function renderCategoryPills(){
-  const el = document.getElementById('cat-pills');
-  el.innerHTML = CHORD_CATS.map(c=>{
-    const nm = S.lang==='th' ? c.th : c.en;
-    return `<button class="pill cat-pill ${c.id===S.category?'on':''}" data-cat="${c.id}">${nm}</button>`;
-  }).join('');
-  el.querySelectorAll('[data-cat]').forEach(b=>b.addEventListener('click',()=>{
-    S.category = b.dataset.cat;
-    const cat = CHORD_CATS.find(c=>c.id===S.category);
-    S.quality = cat.qualities[0];   // jump to first quality in the new category
-    S.voicing = 0;
-    renderAll();
-  }));
+// Circle-of-fifths root selector (C at top, clockwise by fifths).
+const COF_ORDER = ['C','G','D','A','E','B','F#','Db','Ab','Eb','Bb','F'];
+function mkCof(){
+  const wrap = document.getElementById('cof-wrap');
+  const dark = document.body.classList.contains('dark');
+  const cof = dark
+    ? { ring:'#221E14', ringStroke:'#3A3020', keyFill:'#2E2818', keyStroke:'#4A3E28', keyText:'#9A8B6E' }
+    : { ring:'#FAF4EB', ringStroke:'#E4D4BC', keyFill:'#ffffff', keyStroke:'#E4D4BC', keyText:'#8B7A60' };
+  const SIZE = Math.min((window.innerWidth||360)-32, 200);
+  const CX=SIZE/2, CY=SIZE/2, CR=SIZE*0.38, BR=SIZE*0.088;
+  const fsN=+(SIZE*0.055).toFixed(1), fsS=+(SIZE*0.045).toFixed(1);
+  let s = `<svg width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}" style="overflow:visible">`;
+  s += `<circle cx="${CX}" cy="${CY}" r="${CR}" fill="${cof.ring}" stroke="${cof.ringStroke}" stroke-width="${BR*2+8}"/>`;
+  COF_ORDER.forEach((id,i)=>{
+    const ang=(i*30-90)*Math.PI/180, x=CX+CR*Math.cos(ang), y=CY+CR*Math.sin(ang);
+    const on=id===S.root, fill=on?'#E8960A':cof.keyFill, stroke=on?'#C97D08':cof.keyStroke, tc=on?'#fff':cof.keyText;
+    const fs=id.length>1?fsS:fsN;
+    s += `<g data-k="${id}" style="cursor:pointer"><circle cx="${x}" cy="${y}" r="${BR}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`
+       + `<text x="${x}" y="${y+BR*0.22}" text-anchor="middle" dominant-baseline="middle" font-size="${fs}" font-weight="${on?900:700}" fill="${tc}" font-family="'DM Sans',sans-serif">${id}</text></g>`;
+  });
+  s += `<text x="${CX}" y="${CY+SIZE*0.05}" text-anchor="middle" font-size="${SIZE*0.16}" font-weight="900" fill="#E8960A" font-family="'Prompt',sans-serif">${S.root}</text>`;
+  s += '</svg>';
+  wrap.innerHTML = s;
+  wrap.querySelectorAll('[data-k]').forEach(g=>g.addEventListener('click',()=>{ S.root=g.dataset.k; S.voicing=0; renderAll(); }));
 }
 function renderQualityPills(){
-  // Keep category in sync with the active quality.
-  const cat = CHORD_CATS.find(c=>c.qualities.includes(S.quality)) || CHORD_CATS[0];
-  S.category = cat.id;
   const el = document.getElementById('quality-pills');
-  el.innerHTML = cat.qualities.map(q=>{
+  el.innerHTML = QUALITY_ORDER.map(q=>{
     const nm = S.lang==='th' ? CHORDS[q].th.name : CHORDS[q].en.name;
     return `<button class="pill ${q===S.quality?'on':''}" data-q="${q}">${nm}</button>`;
   }).join('');
@@ -428,7 +384,8 @@ function renderInfo(){
      <div style="font-size:11px;color:var(--muted);margin-top:8px">${t('mutedHint')}</div>`;
 }
 
-function renderAll(){ renderHeader(); renderTheory(); renderRootPills(); renderCategoryPills(); renderQualityPills(); renderVoicingPills(); drawFb(); renderInfo(); }
+function renderAll(){ renderHeader(); renderTheory(); mkCof(); renderQualityPills(); renderVoicingPills(); drawFb(); renderInfo(); }
+let _cofRT; window.addEventListener('resize', ()=>{ clearTimeout(_cofRT); _cofRT=setTimeout(mkCof,150); });
 
 // ══ DISPLAY / LANG / DARK ═══════════════════════════════
 function applyLang(){
