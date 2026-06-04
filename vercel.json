@@ -1,12 +1,19 @@
 {
-  "headers": [
+  "redirects": [
+    {
+      "source": "/chord-app.html",
+      "destination": "https://groove-os-delta.vercel.app/chord-app.html",
+      "permanent": true
+    },
+    {
+      "source": "/scale-app.html",
+      "destination": "https://groove-os-delta.vercel.app/scale-app.html",
+      "permanent": true
+    },
     {
       "source": "/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
-        { "key": "Pragma", "value": "no-cache" },
-        { "key": "Expires", "value": "0" }
-      ]
+      "destination": "https://groove-os-delta.vercel.app/twofour",
+      "permanent": true
     }
   ]
 }
