@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video Chord Sync · Twofour Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800;900&family=Prompt:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#FDFCF8; --surf:#F5EDE0; --brd:#E4D4BC; --acc:#E8960A; --teal:#0B9488;
+  --text:#1A1208; --muted:#8B7A60; --gold:#C97D08; --card:#ffffff; --ctrl-bg:#FAF4EB;
+  --nav-bg:rgba(253,252,248,0.94); --scroll-thumb:#d0c4b4; --danger:#C0392B;
+}
+body.dark {
+  --bg:#18150F; --surf:#221E14; --brd:#3A3020; --acc:#E8960A; --teal:#0FA898;
+  --text:#EDE4D0; --muted:#9A8B6E; --gold:#D98E10; --card:#272116; --ctrl-bg:#201C12;
+  --nav-bg:rgba(24,21,15,0.94); --scroll-thumb:#4A3E2A;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+html,body { height:100%; }
+body { font-family:'DM Sans',-apple-system,sans-serif; background:var(--bg); color:var(--text); transition:background .25s,color .25s; }
+
+/* ── NAV ── */
+.site-nav { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 16px;
+  background:var(--nav-bg); border-bottom:1px solid var(--brd); position:sticky; top:0; z-index:20; backdrop-filter:blur(8px); }
+.site-logo { font-family:'Prompt',sans-serif; font-weight:900; font-size:18px; letter-spacing:-.5px;
+  color:var(--text); text-decoration:none; flex-shrink:0; line-height:1; }
+.site-logo span { color:var(--acc); display:block; }
+.nav-right { display:flex; align-items:center; gap:8px; }
+.tool-menu { position:relative; flex-shrink:0; }
+.tool-btn { display:flex; align-items:center; gap:6px; padding:5px 13px; border-radius:100px; cursor:pointer;
+  border:1.5px solid var(--acc); background:var(--acc); color:#fff; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:700; white-space:nowrap; }
+.tool-btn .caret { font-size:9px; transition:transform .18s; }
+.tool-btn[aria-expanded="true"] .caret { transform:rotate(180deg); }
+.tool-dropdown { position:absolute; right:0; top:calc(100% + 8px); min-width:220px;
+  background:var(--card); border:1.5px solid var(--brd); border-radius:14px; padding:6px;
+  box-shadow:0 10px 34px rgba(0,0,0,0.18); display:none; z-index:300; }
+.tool-dropdown.open { display:block; }
+.tool-dd-label { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); padding:6px 10px 5px; }
+.tool-item { display:flex; align-items:center; gap:8px; padding:9px 11px; border-radius:9px;
+  text-decoration:none; color:var(--text); font-size:13px; font-weight:600; transition:background .12s; }
+.tool-item:hover { background:var(--surf); }
+.tool-item.on { color:var(--acc); background:var(--ctrl-bg); }
+.tool-item.all { color:var(--muted); font-weight:500; border-top:1px solid var(--brd); margin-top:4px; }
+.icon-btn { border:1.5px solid var(--brd); background:var(--card); color:var(--muted); border-radius:8px;
+  padding:6px 11px; font-size:13px; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .15s; }
+.icon-btn.on { background:var(--text); border-color:var(--text); color:var(--bg); }
+
+/* ── LAYOUT ── */
+.main { display:flex; height:calc(100vh - 53px); overflow:hidden; }
+.video-col { flex:1; min-width:0; display:flex; flex-direction:column; border-right:1px solid var(--brd); overflow:hidden; }
+.sidebar { width:370px; flex-shrink:0; display:flex; flex-direction:column; overflow:hidden; }
+@media(max-width:900px){
+  .main { flex-direction:column; height:auto; overflow:auto; }
+  .video-col { border-right:none; border-bottom:1px solid var(--brd); }
+  .sidebar { width:100%; }
+}
+
+/* ── UPLOAD ── */
+.upload-area { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:12px; padding:40px 20px; cursor:pointer; border:2px dashed var(--brd); border-radius:14px;
+  margin:16px; background:var(--ctrl-bg); transition:all .2s; text-align:center; }
+.upload-area:hover,.upload-area.drag { border-color:var(--acc); background:rgba(232,150,10,.07); }
+.upload-icon { font-size:48px; line-height:1; }
+.upload-title { font-size:16px; font-weight:700; }
+.upload-sub { font-size:13px; color:var(--muted); }
+.upload-btn { background:var(--acc); color:#fff; border:none; border-radius:100px;
+  padding:10px 24px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:700; cursor:pointer; }
+.upload-btn:hover { opacity:.85; }
+
+/* ── VIDEO PLAYER ── */
+.video-wrap { display:none; flex-direction:column; flex:1; min-height:0; overflow:hidden; }
+.video-wrap.active { display:flex; }
+video { width:100%; background:#000; display:block; flex:1; min-height:0; object-fit:contain; }
+.vctrl { display:flex; align-items:center; gap:10px; padding:9px 14px; background:var(--ctrl-bg); border-top:1px solid var(--brd); flex-shrink:0; flex-wrap:wrap; }
+.play-btn { background:var(--acc); border:none; color:#fff; border-radius:8px; padding:6px 14px;
+  font-size:14px; cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:700; min-width:44px; transition:opacity .15s; }
+.play-btn:hover { opacity:.85; }
+.vtime { font-size:12px; font-family:monospace; color:var(--muted); white-space:nowrap; }
+.add-here-btn { margin-left:auto; background:var(--teal); border:none; color:#fff; border-radius:100px;
+  padding:7px 16px; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:700; cursor:pointer;
+  white-space:nowrap; transition:opacity .15s; }
+.add-here-btn:hover { opacity:.85; }
+
+/* ── TIMELINE ── */
+.tl-wrap { padding:10px 14px 12px; border-top:1px solid var(--brd); flex-shrink:0; }
+.tl-lbl { font-size:9px; letter-spacing:1.8px; text-transform:uppercase; color:var(--muted); margin-bottom:7px; }
+.tl-track { position:relative; height:38px; background:var(--surf); border-radius:8px; cursor:pointer; overflow:visible; }
+.tl-bar { position:absolute; left:0; top:0; bottom:0; background:var(--acc); opacity:.2; border-radius:8px 0 0 8px; pointer-events:none; }
+.tl-head { position:absolute; top:-3px; bottom:-3px; width:3px; background:var(--acc); border-radius:2px; pointer-events:none; margin-left:-1.5px; }
+.tl-chip { position:absolute; top:4px; bottom:4px; min-width:28px; padding:0 5px; margin-left:-14px;
+  border-radius:5px; background:var(--teal); cursor:pointer; display:flex; align-items:center;
+  justify-content:center; font-size:9px; font-weight:800; color:#fff; letter-spacing:.3px;
+  z-index:2; transition:transform .1s, background .15s; white-space:nowrap; }
+.tl-chip:hover { transform:scaleY(1.18); }
+.tl-chip.active { background:var(--acc); }
+
+/* ── SIDEBAR: CHORD DISPLAY ── */
+.chord-display { padding:14px 14px 10px; border-bottom:1px solid var(--brd); flex-shrink:0; }
+.no-chord { display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:28px 20px; color:var(--muted); font-size:13px; text-align:center; gap:8px; }
+.no-chord-icon { font-size:34px; opacity:.35; }
+.chord-now { display:none; }
+.chord-name-row { display:flex; align-items:baseline; gap:8px; margin-bottom:4px; }
+.chord-name { font-family:'Prompt',sans-serif; font-weight:900; font-size:30px; letter-spacing:-.5px; line-height:1; }
+.chord-name .acc-c { color:var(--acc); }
+.chord-quality-lbl { font-size:13px; color:var(--muted); }
+.voicing-pills { display:flex; gap:5px; margin:8px 0 6px; flex-wrap:wrap; }
+.v-pill { border:1.5px solid var(--brd); background:var(--card); color:var(--text); border-radius:100px;
+  padding:4px 10px; font-size:11px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .15s; }
+.v-pill.on { background:var(--teal); border-color:var(--teal); color:#fff; }
+.fb-out { overflow-x:auto; }
+.fb-out::-webkit-scrollbar { height:4px; }
+.fb-out::-webkit-scrollbar-thumb { background:var(--scroll-thumb); border-radius:2px; }
+
+/* ── SIDEBAR: MARKER LIST ── */
+.mlist-hdr { display:flex; align-items:center; justify-content:space-between; padding:9px 14px 7px; border-bottom:1px solid var(--brd); flex-shrink:0; }
+.mlist-title { font-size:10px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:var(--muted); }
+.btn-add { background:var(--teal); border:none; color:#fff; border-radius:100px; padding:6px 14px;
+  font-family:'DM Sans',sans-serif; font-size:11px; font-weight:700; cursor:pointer; transition:opacity .15s; }
+.btn-add:hover { opacity:.85; }
+.btn-add:disabled { opacity:.35; cursor:not-allowed; }
+.mlist { flex:1; overflow-y:auto; min-height:0; }
+.mlist::-webkit-scrollbar { width:4px; }
+.mlist::-webkit-scrollbar-thumb { background:var(--scroll-thumb); border-radius:2px; }
+.mlist-empty { display:flex; flex-direction:column; align-items:center; padding:28px 16px;
+  gap:7px; color:var(--muted); font-size:13px; text-align:center; }
+.mlist-empty small { font-size:11px; }
+.m-item { display:flex; align-items:center; gap:8px; padding:8px 14px; border-bottom:1px solid var(--brd);
+  cursor:pointer; transition:background .12s; }
+.m-item:hover { background:var(--surf); }
+.m-item.active { background:var(--ctrl-bg); }
+.m-time { font-family:monospace; font-size:11px; color:var(--muted); width:42px; flex-shrink:0; }
+.m-chord { font-weight:800; font-size:14px; flex:1; }
+.m-chord .r { color:var(--acc); }
+.m-chord small { color:var(--muted); font-weight:500; font-size:11px; }
+.m-act { background:none; border:none; cursor:pointer; padding:3px 5px; border-radius:5px;
+  font-size:13px; color:var(--muted); opacity:.5; transition:all .12s; }
+.m-act:hover { opacity:1; }
+.m-act.edit:hover { color:var(--teal); }
+.m-act.del:hover { color:var(--danger); }
+
+/* ── EXPORT BAR ── */
+.export-bar { padding:10px 14px; border-top:1px solid var(--brd); display:flex; gap:7px; align-items:center; flex-shrink:0; }
+.export-bar .lbl { font-size:9px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); flex-shrink:0; }
+.exp-btn { flex:1; background:var(--surf); border:1.5px solid var(--brd); color:var(--text); border-radius:8px;
+  padding:7px 10px; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:700; cursor:pointer;
+  transition:all .15s; white-space:nowrap; }
+.exp-btn:hover { border-color:var(--acc); color:var(--acc); background:var(--card); }
+.exp-btn:disabled { opacity:.35; cursor:not-allowed; }
+
+/* ── MODAL ── */
+.modal-ov { position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:1000; display:none; align-items:center; justify-content:center; padding:20px; }
+.modal-ov.open { display:flex; }
+.modal { position:relative; background:var(--card); border:1.5px solid var(--brd); border-radius:18px;
+  padding:24px; max-width:360px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,.4); }
+.modal-close { position:absolute; top:12px; right:14px; background:none; border:none; font-size:17px; color:var(--muted); cursor:pointer; }
+.modal-title { font-family:'Prompt',sans-serif; font-weight:900; font-size:1.05rem; margin-bottom:16px; }
+.field { margin-bottom:13px; }
+.field-lbl { display:block; font-size:9px; font-weight:700; letter-spacing:1.8px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+.t-input { width:100%; background:var(--surf); border:1.5px solid var(--brd); border-radius:8px;
+  padding:9px 12px; font-family:monospace; font-size:14px; color:var(--text); outline:none; transition:border-color .15s; }
+.t-input:focus { border-color:var(--acc); }
+.pill-row { display:flex; gap:5px; flex-wrap:wrap; }
+.pill { border:1.5px solid var(--brd); background:var(--card); color:var(--text); border-radius:100px;
+  padding:5px 11px; font-size:12px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .15s; }
+.pill.on { background:var(--teal); border-color:var(--teal); color:#fff; }
+.pill.ron { background:var(--acc); border-color:var(--acc); color:#fff; }
+.modal-footer { display:flex; gap:8px; margin-top:18px; }
+.btn-cancel { flex:1; background:none; border:1.5px solid var(--brd); color:var(--muted); border-radius:8px;
+  padding:10px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:700; cursor:pointer; transition:all .15s; }
+.btn-cancel:hover { border-color:var(--text); color:var(--text); }
+.btn-ok { flex:2; background:var(--acc); border:none; color:#fff; border-radius:8px; padding:10px;
+  font-family:'DM Sans',sans-serif; font-size:13px; font-weight:700; cursor:pointer; transition:opacity .15s; }
+.btn-ok:hover { opacity:.85; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="site-nav">
+  <a href="/" class="site-logo">TWOFOUR <span>STUDIO</span></a>
+  <div class="nav-right">
+    <button class="icon-btn" id="darkToggle" title="Dark mode">☀️</button>
+    <div class="tool-menu">
+      <button class="tool-btn" id="toolBtn" aria-expanded="false">🎬 Video Chord Sync <span class="caret">▾</span></button>
+      <div class="tool-dropdown" id="toolDropdown">
+        <div class="tool-dd-label">สื่อฟรี · Free Tools</div>
+        <a href="/chord-app.html" class="tool-item">🎹 Chord Explorer</a>
+        <a href="/scale-app.html" class="tool-item">🎸 Scale Explorer</a>
+        <a href="/video-chord.html" class="tool-item on">🎬 Video Chord Sync</a>
+        <a href="/#learn" class="tool-item all">📚 ดูสื่อทั้งหมด…</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- VIDEO COL -->
+  <div class="video-col">
+
+    <!-- Upload area -->
+    <div class="upload-area" id="uploadArea">
+      <div class="upload-icon">🎬</div>
+      <div class="upload-title">เลือกหรือลากวางไฟล์วิดิโอ</div>
+      <div class="upload-sub">รองรับ MP4, MOV, WebM, MKV</div>
+      <button class="upload-btn" onclick="document.getElementById('fileIn').click()">เลือกไฟล์วิดิโอ</button>
+      <input type="file" id="fileIn" accept="video/*" style="display:none">
+    </div>
+
+    <!-- Video player (hidden until loaded) -->
+    <div class="video-wrap" id="videoWrap">
+      <video id="vid" playsinline></video>
+      <div class="vctrl">
+        <button class="play-btn" id="playBtn" onclick="togglePlay()">▶</button>
+        <span class="vtime" id="vtime">0:00 / 0:00</span>
+        <button class="add-here-btn" onclick="openAdd(true)">+ Chord ที่ตำแหน่งนี้</button>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="tl-wrap" id="tlWrap" style="display:none">
+      <div class="tl-lbl">Timeline — คลิกเพื่อ Seek</div>
+      <div class="tl-track" id="tlTrack">
+        <div class="tl-bar" id="tlBar"></div>
+        <div class="tl-head" id="tlHead" style="left:0%"></div>
+      </div>
+    </div>
+
+  </div><!-- /video-col -->
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <!-- Chord display -->
+    <div class="chord-display">
+      <div class="no-chord" id="noChord">
+        <div class="no-chord-icon">🎸</div>
+        <div>เล่นวิดิโอหรือคลิก marker<br>เพื่อแสดง chord diagram</div>
+      </div>
+      <div class="chord-now" id="chordNow">
+        <div class="chord-name-row">
+          <div class="chord-name" id="chordNameEl">–</div>
+          <div class="chord-quality-lbl" id="chordQualEl">–</div>
+        </div>
+        <div class="voicing-pills" id="voicingPills"></div>
+        <div class="fb-out" id="fbOut"></div>
+      </div>
+    </div>
+
+    <!-- Marker list -->
+    <div class="mlist-hdr">
+      <span class="mlist-title">Chord Markers</span>
+      <button class="btn-add" id="btnAdd" onclick="openAdd(false)" disabled>+ เพิ่ม</button>
+    </div>
+    <div class="mlist" id="mList"></div>
+
+    <!-- Export -->
+    <div class="export-bar">
+      <span class="lbl">Export</span>
+      <button class="exp-btn" id="btnJson" onclick="exportJSON()" disabled>↓ JSON</button>
+      <button class="exp-btn" id="btnFcp" onclick="exportFCPXML()" disabled>↓ FCPXML</button>
+    </div>
+
+  </div><!-- /sidebar -->
+</div><!-- /main -->
+
+<!-- MODAL: Add / Edit chord marker -->
+<div class="modal-ov" id="modalOv" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modalTitle">เพิ่ม Chord</div>
+    <div class="field">
+      <label class="field-lbl">เวลา (วินาที)</label>
+      <input class="t-input" type="number" id="modalTime" step="0.1" min="0" placeholder="0.0">
+    </div>
+    <div class="field">
+      <label class="field-lbl">Root</label>
+      <div class="pill-row" id="mRoots"></div>
+    </div>
+    <div class="field">
+      <label class="field-lbl">Quality</label>
+      <div class="pill-row" id="mQuals"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn-ok" onclick="saveModal()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── CHORD DATA (same engine as chord-app.html) ─────── */
+const NOTE_FLAT  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+const NOTE_SHARP = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const FLAT_ROOTS = new Set(['F','Bb','Eb','Ab','Db','Gb']);
+const ROOTS = ['C','Db','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+const ROOT_PC = {C:0,'C#':1,Db:1,D:2,'D#':3,Eb:3,E:4,F:5,'F#':6,Gb:6,G:7,'G#':8,Ab:8,A:9,'A#':10,Bb:10,B:11};
+const OPEN = [4,9,2,7,11,4];
+const SLAB = ['E','A','D','G','B','e'];
+
+const CHORDS = {
+  maj:{ sym:'',  itv:[0,4,7], deg:['1','3','5'],  name:'Major' },
+  min:{ sym:'m', itv:[0,3,7], deg:['1','♭3','5'], name:'Minor' },
+  dom7:{ sym:'7',  itv:[0,4,7,10], deg:['1','3','5','♭7'], name:'Dom 7' },
+  maj7:{ sym:'maj7',itv:[0,4,7,11],deg:['1','3','5','7'],  name:'Major 7' },
+  min7:{ sym:'m7', itv:[0,3,7,10], deg:['1','♭3','5','♭7'],name:'Minor 7' },
+  sus2:{ sym:'sus2',itv:[0,2,7],   deg:['1','2','5'],       name:'Sus2' },
+  sus4:{ sym:'sus4',itv:[0,5,7],   deg:['1','4','5'],       name:'Sus4' },
+};
+const QUAL_ORDER = ['maj','min','dom7','maj7','min7','sus2','sus4'];
+
+/* CAGED voicings for C (hand-authored, same as chord-app.html) */
+const C_V = {
+  maj:[ {f:'C',fr:[null,3,2,0,1,0],fi:[0,3,2,0,1,0]},{f:'A',fr:[null,3,5,5,5,3],fi:[0,1,2,3,4,1]},
+        {f:'G',fr:[8,7,5,5,5,8],fi:[3,2,1,1,1,4]},{f:'E',fr:[8,10,10,9,8,8],fi:[1,3,4,2,1,1]},
+        {f:'D',fr:[null,null,10,12,13,12],fi:[0,0,1,3,4,3]} ],
+  min:[ {f:'C',fr:[null,3,1,0,null,null],fi:[0,3,1,0,0,0]},{f:'A',fr:[null,3,5,5,4,3],fi:[0,1,3,4,2,1]},
+        {f:'G',fr:[8,6,5,5,null,null],fi:[4,2,1,1,0,0]},{f:'E',fr:[8,10,10,8,8,8],fi:[1,3,4,1,1,1]},
+        {f:'D',fr:[null,null,10,12,13,11],fi:[0,0,1,3,4,2]} ],
+  dom7:[ {f:'E',fr:[0,2,2,1,0,0],fi:[0,2,3,1,0,0]},{f:'A',fr:[null,0,2,0,2,0],fi:[0,0,2,0,3,0]},
+         {f:'D',fr:[null,null,0,2,1,2],fi:[0,0,0,2,1,3]} ],
+  maj7:[ {f:'E',fr:[0,2,2,1,0,0],fi:[0,2,3,1,0,0]},{f:'A',fr:[null,3,2,4,4,3],fi:[0,2,1,4,3,1]},
+         {f:'D',fr:[null,null,2,4,4,3],fi:[0,0,1,3,4,2]} ],
+  min7:[ {f:'E',fr:[0,2,2,0,3,0],fi:[0,1,2,0,3,0]},{f:'A',fr:[null,3,5,3,4,3],fi:[0,1,3,1,2,1]},
+         {f:'D',fr:[null,null,0,2,1,1],fi:[0,0,0,2,1,1]} ],
+  sus2:[ {f:'A',fr:[null,0,2,2,0,0],fi:[0,0,1,2,0,0]},{f:'D',fr:[null,null,0,2,3,0],fi:[0,0,0,1,2,0]} ],
+  sus4:[ {f:'A',fr:[null,0,0,2,3,0],fi:[0,0,0,1,2,0]},{f:'D',fr:[null,null,0,2,3,3],fi:[0,0,0,1,2,3]} ],
+};
+
+/* ── STATE ────────────────────────────────────────────── */
+const S = {
+  markers: [], nextId:1,
+  activeId: null,
+  duration: 0, loaded: false,
+  displayVoicing: 0,
+  modal: { mode:'add', editId:null, root:'C', quality:'maj' }
+};
+
+/* ── CHORD / FRETBOARD HELPERS ────────────────────────── */
+function rpc(root){ return ROOT_PC[root]??0; }
+function computeFingers(frets){
+  const ft=frets.map((f,s)=>({s,f})).filter(x=>x.f!==null&&x.f>0);
+  if(!ft.length) return frets.map(()=>0);
+  const mn=Math.min(...ft.map(x=>x.f)), fm={};
+  ft.forEach(x=>{ if(x.f===mn) fm[x.s]=1; });
+  ft.filter(x=>x.f>mn).sort((a,b)=>a.f-b.f||a.s-b.s).forEach((x,i)=>{ fm[x.s]=Math.min(4,i+2); });
+  return frets.map((f,s)=>(f===null||f===0)?0:(fm[s]??1));
+}
+function getVoicing(root,quality,vi){
+  const list=C_V[quality]||C_V.maj;
+  const v=list[vi]||list[0];
+  const delta=rpc(root);
+  let frets=v.fr.map(f=>f===null?null:(f===0?delta:f+delta));
+  const nz=frets.filter(f=>f!==null&&f>0);
+  if(nz.length&&Math.min(...nz)>=12) frets=frets.map(f=>(f===null||f===0)?f:f-12);
+  const fingers=delta===0?v.fi:computeFingers(frets);
+  const pos=[],fm={};
+  frets.forEach((f,s)=>{ if(f===null)return; pos.push([s,[f]]); fm[s+':'+f]=fingers[s]; });
+  const muted=frets.map((f,s)=>f===null?s:null).filter(s=>s!==null);
+  return {pos,fingerMap:fm,muted,form:v.f};
+}
+
+const FB={PL:40,PR:14,PT:26,PB:12,FW:40,SH:26,NR:11};
+const yOf=s=>FB.PT+(5-s)*FB.SH;
+const xOf=f=>f===0?FB.PL-19:FB.PL+(f-0.5)*FB.FW;
+function fbTheme(){
+  const d=document.body.classList.contains('dark');
+  return d?{gt:'#3A2C18',gb:'#2C2010',nut:'#C4A060',fret:'#5A4828',str:'#A08050',inl:'#6A5530',nd:'#C8A878',nl:'#907050',lbl:'#C8A878',mute:'#9A6A4A',bar:'#5A4630'}
+          :{gt:'#f2e4ce',gb:'#e8d4b4',nut:'#8B6340',fret:'#c4a878',str:'#7a5c3a',inl:'#c8b090',nd:'#5a3e28',nl:'#8a6a4a',lbl:'#5a3e28',mute:'#a05a30',bar:'#9c7a52'};
+}
+function drawFretboard(root,quality,vi,containerId){
+  const v=getVoicing(root,quality,vi??0);
+  const c=CHORDS[quality];
+  const rootPcVal=rpc(root);
+  const chordPcs=c.itv.map(i=>(rootPcVal+i)%12);
+  const el=document.getElementById(containerId);
+  if(!el)return;
+  const fb=fbTheme();
+  const allFrets=v.pos.flatMap(p=>p[1]);
+  const maxF=Math.max(4,...allFrets);
+  const nF=Math.max(5,maxF+1);
+  const W=FB.PL+nF*FB.FW+FB.PR, H=FB.PT+5*FB.SH+FB.PB;
+  let g=`<defs><linearGradient id="fbg3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${fb.gt}"/><stop offset="100%" stop-color="${fb.gb}"/></linearGradient></defs>`;
+  g+=`<rect width="${W}" height="${H}" fill="url(#fbg3)" rx="8"/>`;
+  for(const f of[3,5,7,9,12,15]){
+    if(f>nF)continue;
+    const x=FB.PL+(f-.5)*FB.FW;
+    if(f===12){g+=`<circle cx="${x}" cy="${yOf(1.5)}" r="3.5" fill="${fb.inl}" opacity=".6"/><circle cx="${x}" cy="${yOf(3.5)}" r="3.5" fill="${fb.inl}" opacity=".6"/>`;}
+    else g+=`<circle cx="${x}" cy="${yOf(2.5)}" r="3.5" fill="${fb.inl}" opacity=".6"/>`;
+  }
+  const ty=yOf(5)-6,by=yOf(0)+6;
+  g+=`<line x1="${FB.PL}" y1="${ty}" x2="${FB.PL}" y2="${by}" stroke="${fb.nut}" stroke-width="4" stroke-linecap="round"/>`;
+  for(let f=1;f<=nF;f++){const x=FB.PL+f*FB.FW;g+=`<line x1="${x}" y1="${ty}" x2="${x}" y2="${by}" stroke="${fb.fret}" stroke-width="1.5"/>`;}
+  for(let s=0;s<6;s++){const y=yOf(s),sw=.5+(5-s)*.25;g+=`<line x1="${FB.PL-19}" y1="${y}" x2="${FB.PL+nF*FB.FW+2}" y2="${y}" stroke="${fb.str}" stroke-width="${sw}" opacity=".55"/>`;}
+  const mkr=new Set([3,5,7,9,12,15]);
+  for(let f=1;f<=nF;f++)g+=`<text x="${xOf(f)}" y="15" text-anchor="middle" font-size="9" fill="${mkr.has(f)?fb.nd:fb.nl}" font-family="monospace">${f}</text>`;
+  for(let s=0;s<6;s++){
+    const muted=v.muted.includes(s);
+    g+=`<text x="14" y="${yOf(s)+4}" text-anchor="middle" font-size="11" fill="${muted?fb.mute:fb.lbl}" font-family="monospace" font-weight="700">${muted?'✕':SLAB[s]}</text>`;
+  }
+  const grps={};
+  for(const[s,frets]of v.pos){const f=frets[0],fin=v.fingerMap[s+':'+f];if(!fin)continue;(grps[fin+'@'+f]=grps[fin+'@'+f]||[]).push(s);}
+  Object.entries(grps).forEach(([k,strs])=>{
+    if(strs.length<2)return;
+    const fret=+k.split('@')[1],x=xOf(fret);
+    const yt=yOf(Math.max(...strs)),yb=yOf(Math.min(...strs)),bw=FB.NR*1.05,pad=FB.NR*.5;
+    g+=`<rect x="${x-bw/2}" y="${yt-pad}" width="${bw}" height="${(yb-yt)+pad*2}" rx="${bw/2}" fill="${fb.bar}" opacity=".85"/>`;
+  });
+  function isRoot(pc){return((pc%12)+12)%12===rootPcVal;}
+  function degOf(pc){const i=chordPcs.indexOf(((pc%12)+12)%12);return i<0?null:c.deg[i];}
+  for(const[s,frets]of v.pos){
+    for(const f of frets){
+      const x=xOf(f),y=yOf(s),pc=(OPEN[s]+f)%12,isR=isRoot(pc);
+      const fill=isR?'#E8960A':'#0B9488',stroke=isR?'#C97D08':'rgba(0,0,0,0.08)';
+      if(isR)g+=`<circle cx="${x}" cy="${y}" r="${FB.NR+3}" fill="#E8960A" opacity=".2"/>`;
+      g+=`<circle cx="${x}" cy="${y}" r="${FB.NR}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`;
+      const lbl=degOf(pc)||'?';
+      g+=`<text x="${x}" y="${y+4}" text-anchor="middle" dominant-baseline="middle" font-size="9.5" font-weight="800" fill="#fff" font-family="monospace,sans-serif">${lbl}</text>`;
+    }
+  }
+  el.innerHTML=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block">${g}</svg>`;
+}
+
+/* ── VIDEO SETUP ─────────────────────────────────────── */
+const vid=document.getElementById('vid');
+document.getElementById('fileIn').addEventListener('change',e=>{const f=e.target.files[0];if(f)initVideo(f);});
+const ua=document.getElementById('uploadArea');
+ua.addEventListener('click',()=>document.getElementById('fileIn').click());
+ua.addEventListener('dragover',e=>{e.preventDefault();ua.classList.add('drag');});
+ua.addEventListener('dragleave',()=>ua.classList.remove('drag'));
+ua.addEventListener('drop',e=>{e.preventDefault();ua.classList.remove('drag');const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('video/'))initVideo(f);});
+
+function initVideo(file){
+  vid.src=URL.createObjectURL(file);
+  ua.style.display='none';
+  document.getElementById('videoWrap').classList.add('active');
+  document.getElementById('tlWrap').style.display='block';
+  document.getElementById('btnAdd').disabled=false;
+  S.loaded=true;
+}
+vid.addEventListener('loadedmetadata',()=>{
+  S.duration=vid.duration;
+  document.getElementById('vtime').textContent=fmtTime(0)+' / '+fmtTime(vid.duration);
+  renderTimeline();
+});
+vid.addEventListener('timeupdate',onTick);
+vid.addEventListener('play',()=>document.getElementById('playBtn').textContent='⏸');
+vid.addEventListener('pause',()=>document.getElementById('playBtn').textContent='▶');
+vid.addEventListener('ended',()=>document.getElementById('playBtn').textContent='▶');
+
+function togglePlay(){vid.paused?vid.play():vid.pause();}
+
+function onTick(){
+  const ct=vid.currentTime;
+  document.getElementById('vtime').textContent=fmtTime(ct)+' / '+fmtTime(S.duration);
+  const pct=S.duration>0?(ct/S.duration)*100:0;
+  document.getElementById('tlBar').style.width=pct+'%';
+  document.getElementById('tlHead').style.left=pct+'%';
+  const sorted=[...S.markers].sort((a,b)=>a.time-b.time);
+  let cur=null;
+  for(const m of sorted){ if(m.time<=ct+0.05)cur=m; else break; }
+  if(cur&&cur.id!==S.activeId){ S.activeId=cur.id; showChord(cur); renderMList(); renderTimeline(); }
+  else if(!cur&&S.activeId!==null){ S.activeId=null; hideChord(); renderMList(); renderTimeline(); }
+}
+
+/* ── CHORD DISPLAY ───────────────────────────────────── */
+function showChord(m){
+  S.activeId=m.id;
+  document.getElementById('noChord').style.display='none';
+  document.getElementById('chordNow').style.display='block';
+  const c=CHORDS[m.quality];
+  document.getElementById('chordNameEl').innerHTML=`<span class="acc-c">${m.root}</span>${c.sym}`;
+  document.getElementById('chordQualEl').textContent=c.name;
+  S.displayVoicing=m.voicing??0;
+  renderVoicingPills(m);
+  drawFretboard(m.root,m.quality,S.displayVoicing,'fbOut');
+}
+function hideChord(){
+  S.activeId=null;
+  document.getElementById('noChord').style.display='';
+  document.getElementById('chordNow').style.display='none';
+}
+function renderVoicingPills(m){
+  const forms=(C_V[m.quality]||C_V.maj).map(v=>v.f);
+  document.getElementById('voicingPills').innerHTML=forms.map((f,i)=>
+    `<button class="v-pill ${i===S.displayVoicing?'on':''}" onclick="switchVoicing(${i})">${f}</button>`
+  ).join('');
+}
+function switchVoicing(i){
+  S.displayVoicing=i;
+  const m=S.markers.find(x=>x.id===S.activeId);
+  if(!m)return;
+  m.voicing=i;
+  renderVoicingPills(m);
+  drawFretboard(m.root,m.quality,i,'fbOut');
+}
+
+/* ── TIMELINE ────────────────────────────────────────── */
+function renderTimeline(){
+  const track=document.getElementById('tlTrack');
+  track.querySelectorAll('.tl-chip').forEach(el=>el.remove());
+  if(S.duration<=0)return;
+  S.markers.forEach(m=>{
+    const pct=(m.time/S.duration)*100;
+    const c=CHORDS[m.quality];
+    const lbl=m.root+(c.sym||'');
+    const el=document.createElement('div');
+    el.className='tl-chip'+(m.id===S.activeId?' active':'');
+    el.style.left=pct+'%';
+    el.textContent=lbl.length>4?lbl.slice(0,4):lbl;
+    el.title=`${lbl} @ ${fmtTime(m.time)}`;
+    el.addEventListener('click',e=>{e.stopPropagation();vid.currentTime=m.time;});
+    track.appendChild(el);
+  });
+}
+document.getElementById('tlTrack').addEventListener('click',e=>{
+  if(!S.duration)return;
+  const r=e.currentTarget.getBoundingClientRect();
+  vid.currentTime=((e.clientX-r.left)/r.width)*S.duration;
+});
+
+/* ── MARKER LIST ─────────────────────────────────────── */
+function renderMList(){
+  const sorted=[...S.markers].sort((a,b)=>a.time-b.time);
+  const el=document.getElementById('mList');
+  if(!sorted.length){
+    el.innerHTML=`<div class="mlist-empty"><div>ยังไม่มี chord marker</div><small>กด "+ Chord ที่ตำแหน่งนี้" ขณะเล่นวิดิโอ<br>หรือกด "+ เพิ่ม" เพื่อกรอกเวลาเอง</small></div>`;
+    return;
+  }
+  el.innerHTML=sorted.map(m=>{
+    const c=CHORDS[m.quality];
+    return `<div class="m-item${m.id===S.activeId?' active':''}" onclick="seekTo(${m.id})">
+      <span class="m-time">${fmtTime(m.time)}</span>
+      <span class="m-chord"><span class="r">${m.root}</span>${c.sym} <small>${c.name}</small></span>
+      <button class="m-act edit" onclick="event.stopPropagation();openEdit(${m.id})" title="แก้ไข">✏</button>
+      <button class="m-act del" onclick="event.stopPropagation();delMarker(${m.id})" title="ลบ">✕</button>
+    </div>`;
+  }).join('');
+}
+function seekTo(id){
+  const m=S.markers.find(x=>x.id===id);
+  if(!m)return;
+  vid.currentTime=m.time;
+  showChord(m);
+  renderMList();
+  renderTimeline();
+}
+function delMarker(id){
+  S.markers=S.markers.filter(x=>x.id!==id);
+  if(S.activeId===id)hideChord();
+  renderMList();
+  renderTimeline();
+  updExport();
+}
+
+/* ── MODAL ───────────────────────────────────────────── */
+function buildModalRoots(){
+  document.getElementById('mRoots').innerHTML=ROOTS.map(r=>
+    `<button class="pill ${r===S.modal.root?'ron':''}" onclick="setMRoot('${r}')">${r}</button>`
+  ).join('');
+}
+function buildModalQuals(){
+  document.getElementById('mQuals').innerHTML=QUAL_ORDER.map(q=>{
+    const c=CHORDS[q];
+    return `<button class="pill ${q===S.modal.quality?'on':''}" onclick="setMQual('${q}')">${c.sym||'maj'} <span style="font-weight:500;font-size:10px">${c.name}</span></button>`;
+  }).join('');
+}
+function setMRoot(r){S.modal.root=r;buildModalRoots();}
+function setMQual(q){S.modal.quality=q;buildModalQuals();}
+
+function openAdd(atCurrentTime){
+  S.modal={mode:'add',editId:null,root:'C',quality:'maj'};
+  document.getElementById('modalTitle').textContent='เพิ่ม Chord';
+  document.getElementById('modalTime').value=atCurrentTime&&S.loaded?vid.currentTime.toFixed(2):'0';
+  buildModalRoots();buildModalQuals();
+  document.getElementById('modalOv').classList.add('open');
+  if(atCurrentTime&&S.loaded) vid.pause();
+}
+function openEdit(id){
+  const m=S.markers.find(x=>x.id===id);
+  if(!m)return;
+  S.modal={mode:'edit',editId:id,root:m.root,quality:m.quality};
+  document.getElementById('modalTitle').textContent='แก้ไข Chord';
+  document.getElementById('modalTime').value=m.time.toFixed(2);
+  buildModalRoots();buildModalQuals();
+  document.getElementById('modalOv').classList.add('open');
+}
+function saveModal(){
+  const t=parseFloat(document.getElementById('modalTime').value);
+  if(isNaN(t)||t<0){alert('กรุณากรอกเวลาที่ถูกต้อง');return;}
+  if(S.modal.mode==='add'){
+    S.markers.push({id:S.nextId++,time:t,root:S.modal.root,quality:S.modal.quality,voicing:0});
+  } else {
+    const m=S.markers.find(x=>x.id===S.modal.editId);
+    if(m){m.time=t;m.root=S.modal.root;m.quality=S.modal.quality;}
+  }
+  closeModal();
+  renderMList();
+  renderTimeline();
+  updExport();
+}
+function closeModal(){document.getElementById('modalOv').classList.remove('open');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+/* ── EXPORT ──────────────────────────────────────────── */
+function updExport(){
+  const has=S.markers.length>0;
+  document.getElementById('btnJson').disabled=!has;
+  document.getElementById('btnFcp').disabled=!has;
+}
+function fmtTime(s){
+  const m=Math.floor(s/60),sec=Math.floor(s%60);
+  return m+':'+sec.toString().padStart(2,'0');
+}
+function toFrac(sec){
+  if(sec===0)return'0s';
+  const fr=Math.round(sec*30000/1001);
+  return`${fr*1001}/30000s`;
+}
+function xmlEsc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function dlFile(name,content,mime){
+  const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([content],{type:mime})),download:name});
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+
+function exportJSON(){
+  const sorted=[...S.markers].sort((a,b)=>a.time-b.time);
+  const data=sorted.map(m=>({time:m.time,chord:m.root+(CHORDS[m.quality].sym||''),root:m.root,quality:m.quality,qualityName:CHORDS[m.quality].name}));
+  dlFile('chord-markers.json',JSON.stringify(data,null,2),'application/json');
+}
+
+function exportFCPXML(){
+  const sorted=[...S.markers].sort((a,b)=>a.time-b.time);
+  const dur=S.duration>0?S.duration:(sorted.length?sorted[sorted.length-1].time+5:60);
+
+  /* Chapter markers for navigation */
+  const mkXML=sorted.map(m=>{
+    const lbl=m.root+(CHORDS[m.quality].sym||'');
+    return `      <chapter-marker start="${toFrac(m.time)}" duration="0s" value="${xmlEsc(lbl)}" note="${xmlEsc(CHORDS[m.quality].name)}" posterOffset="0s"/>`;
+  }).join('\n');
+
+  /* Connected Basic Title clips for visual chord text overlays */
+  const titleXML=sorted.map((m,i)=>{
+    const next=sorted[i+1];
+    const titleDur=next?next.time-m.time:Math.max(2,dur-m.time);
+    const lbl=m.root+(CHORDS[m.quality].sym||'');
+    const tsId=`ts${i+1}`;
+    return `      <title ref="r2" name="${xmlEsc(lbl)}" lane="1" offset="${toFrac(m.time)}" duration="${toFrac(titleDur)}" start="91/24s">
+        <param name="Text" key="9999/999166631/999166633/2/354/999169573" value="${xmlEsc(lbl)}"/>
+        <text><text-style ref="${tsId}">${xmlEsc(lbl)}</text-style></text>
+        <text-style-def id="${tsId}">
+          <text-style font="Helvetica Neue" fontSize="96" fontFace="Bold" fontColor="1 1 1 1" alignment="center"/>
+        </text-style-def>
+      </title>`;
+  }).join('\n');
+
+  const xml=`<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+<fcpxml version="1.9">
+  <resources>
+    <format id="r1" name="FFVideoFormat1080p2997" frameDuration="1001/30000s" width="1920" height="1080"/>
+    <effect id="r2" name="Basic Title" uid=".../Titles.localized/Build In:Out.localized/Basic Title.localized/Basic Title.moti"/>
+  </resources>
+  <library>
+    <event name="Chord Sync">
+      <project name="Chord Sync">
+        <sequence format="r1" duration="${toFrac(dur)}" tcStart="0s" tcFormat="NDF" audioLayout="stereo" audioRate="48k">
+          <spine>
+            <gap name="Chord Timeline" offset="0s" duration="${toFrac(dur)}" start="0s">
+${mkXML}
+${titleXML}
+            </gap>
+          </spine>
+        </sequence>
+      </project>
+    </event>
+  </library>
+</fcpxml>`;
+  dlFile('chord-markers.fcpxml',xml,'application/xml');
+}
+
+/* ── DARK MODE ───────────────────────────────────────── */
+function applyDark(d){
+  document.body.classList.toggle('dark',d);
+  document.getElementById('darkToggle').textContent=d?'🌙':'☀️';
+  document.getElementById('darkToggle').classList.toggle('on',d);
+  if(S.activeId!==null){const m=S.markers.find(x=>x.id===S.activeId);if(m)drawFretboard(m.root,m.quality,S.displayVoicing,'fbOut');}
+}
+document.getElementById('darkToggle').addEventListener('click',()=>{
+  const d=!document.body.classList.contains('dark');
+  localStorage.setItem('twofour-dark',d?'1':'0');applyDark(d);
+});
+
+/* ── TOOL MENU ───────────────────────────────────────── */
+(function(){
+  const btn=document.getElementById('toolBtn'),dd=document.getElementById('toolDropdown');
+  btn.addEventListener('click',e=>{e.stopPropagation();const o=dd.classList.toggle('open');btn.setAttribute('aria-expanded',o);});
+  document.addEventListener('click',e=>{if(!dd.contains(e.target)&&e.target!==btn){dd.classList.remove('open');btn.setAttribute('aria-expanded','false');}});
+})();
+
+/* ── BOOT ────────────────────────────────────────────── */
+const _sd=localStorage.getItem('twofour-dark');
+applyDark(_sd!==null?_sd==='1':window.matchMedia('(prefers-color-scheme: dark)').matches);
+renderMList();
+</script>
+</body>
+</html>
